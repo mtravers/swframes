@@ -108,3 +108,16 @@ ie:
 		  (push elt result)))))))))
 
 
+
+;;; Diseasome
+(setq *default-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/diseasome/sparql"))
+
+;;; Fails due to SQL errror!  
+(pprint
+ (setq xx (sparql-query `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ))))
+
+;;; Drugbank
+(setq *default-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
+
+
+;;; ah, this works

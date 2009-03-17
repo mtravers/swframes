@@ -138,12 +138,23 @@ Tests:
 |#
 
 
-;;; Unfortunately we get crap XHTML back, and can't parse it.
+(defun name-eq (s1 s2)
+  (equal (symbol-name s1) (symbol-name s2)))
+
+; This one works at least some of the time.
+; #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00022
+; this stuff is weird, it contains mostly back links rather than forward links.  Sigh.
 (defmethod dereference ((frame frame))
   (multiple-value-bind (body response-code response-headers uri)
       ;; turns out this processes the 303 redirect
-      (utils:get-url (frame-uri frame))
+      (utils:get-url (frame-uri frame) :accept "application/rdf+xml")
 ;    (print (list response-code response-headers uri))
-    (let ((xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
-      xml
-      )))
+    (let* ((xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
+      (assert (name-eq :rdf (car (car xml))))
+      (dolist (desc (lxml-subelements xml '|rdf|:|Description|))
+	(let ((about (lxml-attribute desc '|rdf|:|about|)))
+	  (cond ((not (equal about (frame-uri frame)))
+		 (format t "~%Entry about ~A" about)))))
+      xml)))
+	   
+

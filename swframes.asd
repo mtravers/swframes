@@ -10,6 +10,7 @@
    (:file "swframes")
    (:file "namespace")
    (:file "lsparql")
+   (:file "xml")
    )
   :depends-on
   ())
