@@ -2,8 +2,6 @@
 
 ;;; Mostly borrowed from LSW
 
-(import 'knewos::run-sparql)
-
 (defvar *sparql-namespace-uses*)
 
 (defun sparql-query (form &key (server *default-frame-source*) (timeout 1000))
@@ -177,5 +175,5 @@
 	    (emit-blank-node '[] stream)
 	    (concatenate 'string "_:" name)))))
 
-
-
+(defun sparql-binding-elt (bindings name)
+  (cadar (member name bindings :key #'car :test #'string-equal)))

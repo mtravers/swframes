@@ -10,7 +10,10 @@
    (:file "swframes")
    (:file "namespace")
    (:file "lsparql")
+   (:file "browse")
+   (:file "sw-frame-grid")
    (:file "xml")
+   (:file "druggy")
    )
   :depends-on
   ())

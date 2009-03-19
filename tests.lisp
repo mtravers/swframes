@@ -118,6 +118,59 @@ ie:
 
 ;;; Drugbank
 (setq *default-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
+(setq *drugbank-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
 
 
 ;;; ah, this works
+
+
+;;; Let's replicate some stuff
+(defun db-target (gene-name)
+ (swframes::sparql-query
+  `(:select (?target) ()
+    (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
+    )
+  :server *drugbank-frame-source*))
+
+(defun test ()
+  `(frame-fresh? #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName))
+
+(defun db-drugs (gene-name)
+ (swframes::sparql-query
+  `(:select (?drug ?name ?target) ()
+	    (?drug #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/target ?target)
+	    (?drug #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName ?name)
+	    (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
+    )
+  :server *drugbank-frame-source*))
+
+(run-sparql "http://quebec.bio2rdf.org/sparql"
+"SELECT ?s1, ?type1, ?label1, count(*)
+WHERE {
+?s1 ?p1 ?o1 .
+?o1 bif:contains \"HK1\" .
+?s1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type1 .
+?s1 <http://www.w3.org/2000/01/rdf-schema#label> ?label1 .
+}" 
+:make-uri #'intern-uri
+:eager-make-uri? t)
+
+
+
+
+
+
+(let ((wb::*sessionid* :blither)
+      (wb::*html-stream* *standard-output*))
+  (wb::out-record-to-html (drug-grid "EGFR") "foo"))
+
+
+;;; Works except results are tagged wrong, so URIs don't get built
+(run-sparql "http://quebec.bio2rdf.org/sparql"
+"SELECT ?type1, ?label1, count(*)
+WHERE {
+?s1 ?p1 ?o1 .
+?o1 bif:contains \"HK1\" .
+?s1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type1 .
+?s1 <http://www.w3.org/2000/01/rdf-schema#label> ?label1 .
+}" :make-uri #'intern-uri)

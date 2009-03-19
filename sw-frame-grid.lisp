@@ -1,4 +1,4 @@
-;;; Not yet working (or loaded)
+;;; Not yet working 
 
 (in-package :wb)
 
@@ -22,6 +22,19 @@
   (if (null slots)
       (setq slots (delete #$fname (frame-slots (car frames)))))
   (make-frame-grid :frames frames :slots slots :row-limit row-limit))
+
+(defun frame-grid-value (grid row column)
+  (declare (ignore grid))
+  (if (framep column)
+      (slotv row column)
+    (funcall column row)))
+
+(defstruct frame-grid 
+  frames
+  slots 
+  (row-limit nil)
+  (sorting? nil)
+  )
 
 (defmethod out-record-to-html ((grid frame-grid) (string string) &rest ignore)
   (declare (ignore ignore))
@@ -99,12 +112,39 @@
 					  (with-output-to-string (out)
 					    (let ((*html-stream* out))
 					      (if (swframes::frame-p slot)
-						  (frame::emit-slot-value slot (slotv realframe slot))
+						  (frames::emit-slot-value slot (swframes::slotv realframe slot))
 						  (frame::emit-value (funcall slot realframe)))
 					      )))))
 				    "foo"))
 				 ;; synchronous
 				 (if (swframes::frame-p slot)
-				     (frame::emit-slot-value slot (slotv frame slot))
+				     (frames::emit-slot-value slot (swframes::slotv frame slot))
 				     (frame::emit-value (funcall slot frame)))
 				 )))))))))))))))
+
+(defun frames::emit-slot-value (slot-frame slot-value)
+;;   (vif (html-generator
+;; 	(and (not *print-lispy*) 
+;; 	     (slotv slot-frame #$HTMLGenerator)))
+;;        (funcall html-generator slot-value)
+       (frames::emit-value slot-value)
+       )
+
+(defmethod frames::emit-value 
+           ((object swframes::frame) &optional (print-limit nil))
+  (declare (ignore print-limit))
+  (html
+   ((:a :href (frames::wob-url object))
+    (:princ-safe (swframes::frame-label object)))
+   :newline
+   ))
+
+
+(defmethod frames::wob-url ((object swframes::frame))
+  (formatn
+   (one-string
+    "/frame"
+;    (wob-state-variable-values-url-argstring)
+    "?name=~A")
+   (url-safe-string (swframes::frame-name object))
+   ))

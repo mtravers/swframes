@@ -25,6 +25,21 @@ Idle thoughts:
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
 
+(defun frame-label (frame)
+  (or (car (slotv frame #$http://www.w3.org/2000/01/rdf-schema#label nil))
+      (frame-name frame)))
+
+;;; names should be reversed
+(defun %frame-slots (frame)
+  (wlisp::hash-keys (frame-slots frame)))
+
+;;; Temporary hack until new frame system replaces existing one.  
+
+;;; this isn't working for some reason...interned  objects are not frames?
+(defmethod make-load-form ((frame frame) &optional ignore)
+  (declare (ignore ignore))
+  `(intern-uri ,(frame-uri frame)))
+
 ;;; reader 
 (defun uri (thing)
   (typecase thing
@@ -46,11 +61,23 @@ Idle thoughts:
 (defun reset-frames ()
   (clrhash *uri->frame-ht*))
 
+(defmacro for-all-frames ((var) &body body)
+  `(maphash #'(lambda (uri ,var)
+		(declare (ignore uri))
+		,@body)
+	    *uri->frame-ht*))
+
 ;;; +++
 (defmethod reset-frame ((frame frame))
   (clrhash (frame-slots frame))
   (setf (frame-loaded? frame) nil)
   (setf (frame-inverse-slots frame) nil))
+
+;;; debugging
+(defun frame-fresh? (frame)
+  (unless (eq frame (intern-uri (frame-uri frame)))
+    (error "~A is stale" frame))
+  t)
 
 ;;; +++ namespace hackery (steal LSW)
 (defun frame-uri-namespaced (frame)
@@ -96,8 +123,10 @@ Idle thoughts:
 	    (gethash (sparql-binding-elt binding "p") (frame-inverse-slots frame)))
       ))))
   
-(defmethod slotv ((frame frame) (slot frame))
-  (fill-sframe frame)
+(defmethod slotv ((frame frame) (slot frame) &optional (fill? t))
+  (frame-fresh? frame)
+  (frame-fresh? slot)
+  (if fill? (fill-sframe frame))			;+++ warning: this could get ugly!  But it has to be done...
   (gethash slot (frame-slots frame)))
 
 (defmethod slotv-inverse ((frame frame) (slot frame))
@@ -144,17 +173,35 @@ Tests:
 ; This one works at least some of the time.
 ; #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00022
 ; this stuff is weird, it contains mostly back links rather than forward links.  Sigh.
+
+;#$http://dbpedia.org/page/Aminophylline
+;  returns HTML with embedded RDFa(?) but it can't be XML parsed.
+; But you can substitute in 
+; (dereference #$http://dbpedia.org/resource/Panitumumab)
+; and apparently: 
+;  http://dbpedia.org/data/Panitumumab.rdf
+;  http://dbpedia.org/data/Panitumumab.n3
+
+
+;;;
+;(dereference #$http://bio2rdf.org/proteinlinks/cas:317-34-0)
+
+
 (defmethod dereference ((frame frame))
   (multiple-value-bind (body response-code response-headers uri)
       ;; turns out this processes the 303 redirect
       (utils:get-url (frame-uri frame) :accept "application/rdf+xml")
 ;    (print (list response-code response-headers uri))
-    (let* ((xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
-      (assert (name-eq :rdf (car (car xml))))
-      (dolist (desc (lxml-subelements xml '|rdf|:|Description|))
-	(let ((about (lxml-attribute desc '|rdf|:|about|)))
+    (let* ( (s-xml::*ignore-namespaces* t)
+	   (xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
+      (assert (name-eq :|rdf:RDF| (car (car xml))))
+      (dolist (desc (lxml-subelements xml :|rdf:Description|))
+	(let ((about (lxml-attribute desc :|rdf:about|)))
 	  (cond ((not (equal about (frame-uri frame)))
 		 (format t "~%Entry about ~A" about)))))
       xml)))
-	   
+
+
+
+  
 
