@@ -21,7 +21,7 @@
           (html-for-browse-frame name)))))))
 
 (defun html-for-browse-frame (name)
-  (let* ((frame (intern-uri name))
+  (let* ((frame (frame-named name))
          (title (formatn "Frame #$~A" name)))
     (fill-sframe frame)
     (wb::with-standard-weblistener-page-header (title)
@@ -56,7 +56,7 @@
 
 (defmethod frames::wob-html ((frame frame))
 
-;  (frame-display-hook frame)		;experimental +++
+					;  (frame-display-hook frame)		;experimental +++
 
   ;; Generate HTML output for a frame
 
@@ -65,12 +65,12 @@
            (emit-section-show-hide-control (hide-varname)
              (let ((opposite-value (null (symbol-value hide-varname))))
                (html
-                ((:a :href 
-                  (progv (list hide-varname) (list opposite-value)
-                    (frames::wob-url frame)))
-                 (if opposite-value "[Hide]" "[Show]"))
-                :newline
-                )))
+		 ((:a :href 
+		      (progv (list hide-varname) (list opposite-value)
+			(frames::wob-url frame)))
+		  (if opposite-value "[Hide]" "[Show]"))
+		 :newline
+		 )))
            (emit-section-header (title hide-variable)
              (emit-section-title title)
              (emit-section-show-hide-control hide-variable)))
@@ -82,58 +82,57 @@
       ;; in a format controlled by the state variables.
 
       (html 
-       ((:table :border 1 :cellpadding 3 :cellspacing 0)
-        :newline
-	(:tr
-	 (:th "Slot Name")
-	 (:th "Slot Value"))
-        :newline
-        ;; general frame description 
-        ;; (should leave out ones done as hierarchy)
-        (let ((slots (copy-list (%frame-slots frame))))
-          ;; display slots and values in alphabetical order by slot name.
-          (setq slots (sort slots 'string-lessp
-                            :key #'frame-label))
-          (loop for slot-frame in slots do
-	       ;; THis sort of stuff almost surely doesn't want to live in the display code.
-	       (setq slot-value (slotv frame slot-frame))
-                (html
-                 (:tr
-                  (:td
-                   ((:a :href 
-                     (forward-funcall 
-                      'wb::make-weblistener-evalstring-url
-                      :evalstring
-                      (url-safe-string 
-                       (prin1-to-string `(slotv ,frame ,slot-frame)))
-                      :pkg (forward-funcall 'wb::user-session-id)
-                      ))
-                    :newline
-                    ((:font :color :green) (:princ-safe "#^")))
-                   ((:a :href (frames::wob-url slot-frame))
-                    (:princ-safe (frame-name slot-frame)))
-                   :newline
-                    )
-                  (:td
-		   (frames::emit-slot-value slot-frame slot-value)
-		   ))
-                 :newline
-                 )))))
+	((:table :border 1 :cellpadding 3 :cellspacing 0)
+	 :newline
+	 (:tr
+	  (:th "Slot Name")
+	  (:th "Slot Value"))
+	 :newline
+	 ;; general frame description 
+	 ;; (should leave out ones done as hierarchy)
+	 (let ((slots (copy-list (%frame-slots frame))))
+	   ;; display slots and values in alphabetical order by slot name.
+	   (setq slots (sort slots 'string-lessp
+			     :key #'frame-label))
+	   (loop for slot-frame in slots 
+	      do (let ((slot-value (slotv frame slot-frame)))
+		   (html
+		     (:tr
+		      (:td
+		       ((:a :href 
+			    (forward-funcall 
+			     'wb::make-weblistener-evalstring-url
+			     :evalstring
+			     (url-safe-string 
+			      (prin1-to-string `(slotv ,frame ,slot-frame)))
+			     :pkg (forward-funcall 'wb::user-session-id)
+			     ))
+			:newline
+			((:font :color :green) (:princ-safe "#^")))
+		       ((:a :href (frames::wob-url slot-frame))
+			(:princ-safe (frame-name slot-frame)))
+		       :newline
+		       )
+		      (:td
+		       (frames::emit-slot-value slot-frame slot-value)
+		       ))
+		     :newline
+		     ))))))
 
-#|
+      #|
       (when (slotv frame #$isA)
-        (emit-section-header "Parents" '*hide-parents*)
-        (emit-parents frame #$isA))
+      (emit-section-header "Parents" '*hide-parents*)
+      (emit-parents frame #$isA))
       (when (slotv frame #$subclasses)
-        (emit-section-header "Children" '*hide-children*)
-        (emit-hierarchy frame #$subclasses))
+      (emit-section-header "Children" '*hide-children*)
+      (emit-hierarchy frame #$subclasses))
       (when (slotv frame #$partOf)
-        (emit-section-header "SuperParts" '*hide-superparts*)
-        (emit-parents frame #$partOf))
+      (emit-section-header "SuperParts" '*hide-superparts*)
+      (emit-parents frame #$partOf))
       (when (slotv frame #$parts)
-        (emit-section-header "Parts" '*hide-parts*)
-        (emit-hierarchy frame #$parts))
-|#
+      (emit-section-header "Parts" '*hide-parts*)
+      (emit-hierarchy frame #$parts))
+      |#
 
       )))
 

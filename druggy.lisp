@@ -4,7 +4,7 @@
 
 (setq *default-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
 (setq *drugbank-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
-
+(sw-register-namespace "drugbank" "http://www4.wiwiss.fu-berlin.de/drugbank/")
 
 (defun db-target (gene-name)
  (swframes::sparql-query
@@ -28,6 +28,7 @@
 			      (sparql-binding-elt bindings "drug"))
 			  (db-drugs target-gene))
 	      (list #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName
+		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/synonym
 		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/description
 		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/target
 		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugType)))

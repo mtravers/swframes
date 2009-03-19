@@ -5,7 +5,7 @@
 
 (defun sw-register-namespace (abbrev full)
   ;; +++ detect redefinitions
-  (push (list abbrev full) *namespaces*))
+  (push (list abbrev full) *sw-namespaces*))
 
 (defun abbreviate-uri (uri)
   (dolist (namespace *sw-namespaces*)

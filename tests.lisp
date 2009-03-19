@@ -158,11 +158,22 @@ WHERE {
 
 
 
+;;; To get error handling: patch this in BioLisp/Weblisten/special-output.lisp
+(defmethod out-record-to-html :around ((form t) (string string) &rest ignore)
+  (declare (ignore ignore))
+  (call-next-method))
 
 
+
+;;; test the grid
 (let ((wb::*sessionid* :blither)
       (wb::*html-stream* *standard-output*))
   (wb::out-record-to-html (drug-grid "EGFR") "foo"))
+
+;;; test the browser
+(let ((wb::*sessionid* :blither)
+      (wb::*html-stream* *standard-output*))
+  (html-for-browse-frame "http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00002"))
 
 
 ;;; Works except results are tagged wrong, so URIs don't get built

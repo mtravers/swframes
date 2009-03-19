@@ -7,6 +7,7 @@
   :components
   (;; setup and utilities
    (:file "package")
+   (:file "swframes-0")
    (:file "swframes")
    (:file "namespace")
    (:file "lsparql")

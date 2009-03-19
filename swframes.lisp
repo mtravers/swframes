@@ -9,21 +9,11 @@ Idle thoughts:
 
 |#
 
-(defstruct (frame (:print-function frame-printer))
-  uri
-  source
-  loaded?				;T if slots have been loaded
-  dirty?				;T if needs to be written back out, or list of preds to write out.
-  (slots (make-hash-table :test #'eq)) ;ht mapping preds to values (poss. multiple)
-  (inverse-slots nil)
-  )
-
-(defun frame-printer (frame stream ignore)
-  (mt:report-and-ignore-errors
-    (format stream "#$~A" (frame-name frame))))
-
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
+
+(defun frame-named (name)
+  (intern-uri (expand-uri name)))
 
 (defun frame-label (frame)
   (or (car (slotv frame #$http://www.w3.org/2000/01/rdf-schema#label nil))
@@ -33,30 +23,7 @@ Idle thoughts:
 (defun %frame-slots (frame)
   (wlisp::hash-keys (frame-slots frame)))
 
-;;; Temporary hack until new frame system replaces existing one.  
-
-;;; this isn't working for some reason...interned  objects are not frames?
-(defmethod make-load-form ((frame frame) &optional ignore)
-  (declare (ignore ignore))
-  `(intern-uri ,(frame-uri frame)))
-
-;;; reader 
-(defun uri (thing)
-  (typecase thing
-    (frame thing)
-    (string (intern-uri (expand-uri thing)))
-    (t (error "Can't turn ~A into a URI" thing))))
-    
-(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader)
-
-;;; +++ would be good to allow #$"sdasdad" for hard to parse names
-(defun pound-dollar-frame-reader (stream char arg)
-  (declare (ignore char arg))
-  (uri (frames::read-fname stream)))
-
 (defvar *default-frame-source* nil)
-
-(defvar *uri->frame-ht* (make-hash-table :test 'equal))
 
 (defun reset-frames ()
   (clrhash *uri->frame-ht*))
@@ -83,10 +50,7 @@ Idle thoughts:
 (defun frame-uri-namespaced (frame)
   (frame-uri frame))			;not yet
 
-(defun intern-uri (uri)
-  (or (gethash uri *uri->frame-ht*)
-      (setf (gethash uri *uri->frame-ht*)
-	    (make-frame :uri uri :source *default-frame-source*))))
+
 
 (defun sparql-binding-elt (binding v)
   (cadr (find v binding :key #'car :test #'equal)))

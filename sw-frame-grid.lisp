@@ -23,7 +23,7 @@
       (setq slots (delete #$fname (frame-slots (car frames)))))
   (make-frame-grid :frames frames :slots slots :row-limit row-limit))
 
-(defun frame-grid-value (grid row column)
+'(defun frame-grid-value (grid row column)
   (declare (ignore grid))
   (if (framep column)
       (slotv row column)
@@ -148,3 +148,5 @@
     "?name=~A")
    (url-safe-string (swframes::frame-name object))
    ))
+
+;;
