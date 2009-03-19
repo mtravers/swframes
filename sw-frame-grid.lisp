@@ -19,15 +19,7 @@
 			 (and (symbolp (car slot)) (fboundp (car slot)))))
 		)))
   ;; Could do something smarter like take the union or intersection of all slots
-  (if (null slots)
-      (setq slots (delete #$fname (frame-slots (car frames)))))
   (make-frame-grid :frames frames :slots slots :row-limit row-limit))
-
-'(defun frame-grid-value (grid row column)
-  (declare (ignore grid))
-  (if (framep column)
-      (slotv row column)
-    (funcall column row)))
 
 (defstruct frame-grid 
   frames
@@ -35,6 +27,39 @@
   (row-limit nil)
   (sorting? nil)
   )
+
+(defmethod add-column-ui ((grid frame-grid))
+  (let* ((sample-frame  (car (frame-grid-frames grid)))
+	 (potential-slots (and sample-frame
+			       (set-difference (swframes::%frame-slots sample-frame) (frame-grid-slots grid))))
+	 (id (session-persist-object grid)))
+    (html
+      ((:form
+	:action "add-column"
+	:method "POST")
+       ((:input :type "hidden" :name "grid-id" :value id))
+       ((:select :name "slot")
+	(dolist (pslot potential-slots)
+	  (html
+	    ((:option :value (swframes::frame-uri pslot))
+	     (:princ (swframes::frame-label pslot))))))
+       ((:input :type "submit" :value "Add"))))))
+    
+
+(publish :path "/add-column"
+	 :function 'do-add-column)
+
+
+(defun do-add-column (req ent)
+  (with-http-response (req ent)
+    (with-session (req ent)
+      (let* ((grid (session-persisted-object (net.aserve::request-query-value "grid-id" req)))
+	     (slot (swframes::frame-named  (net.aserve::request-query-value "slot" req))))
+	(setf (frame-grid-slots grid)
+	      (append (frame-grid-slots grid) (list slot)))
+	(net.aserve::redirect-to req ent "/redisplay.html")))))
+	      
+
 
 (defmethod out-record-to-html ((grid frame-grid) (string string) &rest ignore)
   (declare (ignore ignore))
@@ -88,7 +113,10 @@
 	   (:tr
 	    (column-header 'identity t)	
 	    (dolist (slot slots)
-	      (column-header slot)))
+	      (column-header slot))
+	    (:th
+	     (add-column-ui grid)
+	     ))
 	   ;; add slot column?
 	   (dolist (frame (if (frame-grid-row-limit grid)
 			      (first-n (frame-grid-row-limit grid) frames)

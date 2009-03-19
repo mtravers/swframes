@@ -27,8 +27,10 @@
   (wb::frame-grid (mapcar #'(lambda (bindings)
 			      (sparql-binding-elt bindings "drug"))
 			  (db-drugs target-gene))
-	      (list #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName
-		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/synonym
-		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/description
-		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/target
-		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugType)))
+		  nil
+;;	      (list #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName
+;; 		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/synonym
+;; 		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/description
+;; 		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/target
+;; 		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugType
+		    ))
