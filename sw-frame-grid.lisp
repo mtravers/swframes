@@ -43,12 +43,19 @@
 	  (html
 	    ((:option :value (swframes::frame-uri pslot))
 	     (:princ (swframes::frame-label pslot))))))
-       ((:input :type "submit" :value "Add"))))))
+       ((:input :type "submit" :value "Add slot")))
+      ((:form
+	:action "add-function"
+	:method "POST")
+       ((:input :type "hidden" :name "grid-id" :value id))
+       Name: ((:input :name "name"))
+       Def: ((:textarea :name "sexp" :cols 100 :rows 5))
+       ((:input :type "submit" :value "Add function")))
+      )))
     
 
 (publish :path "/add-column"
 	 :function 'do-add-column)
-
 
 (defun do-add-column (req ent)
   (with-http-response (req ent)
@@ -57,6 +64,19 @@
 	     (slot (swframes::frame-named  (net.aserve::request-query-value "slot" req))))
 	(setf (frame-grid-slots grid)
 	      (append (frame-grid-slots grid) (list slot)))
+	(net.aserve::redirect-to req ent "/redisplay.html")))))
+
+(publish :path "/add-function"
+	 :function 'do-add-function)
+
+(defun do-add-function (req ent)
+  (with-http-response (req ent)
+    (with-session (req ent)
+      (let* ((grid (session-persisted-object (net.aserve::request-query-value "grid-id" req)))
+	     (fun-text (net.aserve::request-query-value "sexp" req))
+	     (fun (compile (gensym) (read-from-string fun-text))))
+	(setf (frame-grid-slots grid)
+	      (append (frame-grid-slots grid) (list fun)))
 	(net.aserve::redirect-to req ent "/redisplay.html")))))
 	      
 
