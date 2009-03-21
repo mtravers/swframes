@@ -48,8 +48,8 @@
 	:action "add-function"
 	:method "POST")
        ((:input :type "hidden" :name "grid-id" :value id))
-       Name: ((:input :name "name"))
-       Def: ((:textarea :name "sexp" :cols 100 :rows 5))
+       "Name:" ((:input :name "name")) :br
+       "Def:" ((:textarea :name "sexp" :cols 80 :rows 5)) :br
        ((:input :type "submit" :value "Add function")))
       )))
     
@@ -73,8 +73,10 @@
   (with-http-response (req ent)
     (with-session (req ent)
       (let* ((grid (session-persisted-object (net.aserve::request-query-value "grid-id" req)))
+	     (name (net.aserve::request-query-value "name" req))
+	     (name-sym (intern name (find-package *username*)))
 	     (fun-text (net.aserve::request-query-value "sexp" req))
-	     (fun (compile (gensym) (read-from-string fun-text))))
+	     (fun (compile name-sym (read-from-string fun-text))))
 	(setf (frame-grid-slots grid)
 	      (append (frame-grid-slots grid) (list fun)))
 	(net.aserve::redirect-to req ent "/redisplay.html")))))
@@ -102,22 +104,22 @@
 				    (html (:b (frame::emit-value rslot)) :br)))
 			      (if (and (frame-grid-sorting? grid) ;was commented out, not sure why
 				       (column-sortable? grid rslot))
-				  (html ((:a :href (eval-link `(frame-grid-sort ,(ref-to-current-output) ,rslot :up)) 
+				  (html ((:a :href (eval-link `(frame-grid-sort ,(ref-to-current-output) ',rslot :up)) 
 					     :title "Sort up")
 					 "U")
 					"&nbsp;"
-					((:a :href (eval-link `(frame-grid-sort ,(ref-to-current-output) ,rslot :down))
+					((:a :href (eval-link `(frame-grid-sort ,(ref-to-current-output) ',rslot :down))
 					     :title "Sort down")
 					 "D")
 					"&nbsp;"
 					))
-			      (html ((:a :href (eval-link `(frame-grid-export-column (session-persisted-object ,id) ,rslot))
+			      (html ((:a :href (eval-link `(frame-grid-export-column (session-persisted-object ,id) ',rslot))
 					 :title "Export column to list")
 				     "E")
 				    (unless label?
 				      (html
 					"&nbsp;"
-					((:a :href (eval-link `(frame-grid-delete-column ,(ref-to-current-output) ,rslot))
+					((:a :href (eval-link `(frame-grid-delete-column ,(ref-to-current-output) ',rslot))
 					     :title "Delete column")
 					 "X")))
 				    (when label?
@@ -165,9 +167,12 @@
 					      )))))
 				    "foo"))
 				 ;; synchronous
-				 (if (swframes::frame-p slot)
-				     (frames::emit-slot-value slot (swframes::slotv frame slot))
-				     (frame::emit-value (funcall slot frame)))
+				 (handler-case 
+				     (if (swframes::frame-p slot)
+					 (frames::emit-slot-value slot (swframes::slotv frame slot))
+					 (frame::emit-value (funcall slot frame)))
+				   (error (e)
+				     (format *html-stream* "<i>Error: ~A</i>" e)))
 				 )))))))))))))))
 
 (defun frames::emit-slot-value (slot-frame slot-value)
@@ -198,3 +203,4 @@
    ))
 
 ;;
+

@@ -1,11 +1,13 @@
 (in-package :swframes)
 
-;;; was colliding with s-xml.  Actually, why don't I just reuse it, it's orbably the same code.  Oh well
+;;; was colliding with s-xml.  Actually, why don't I just reuse it, it's about the same code.  
 (defparameter *sw-namespaces* nil)
 
 (defun sw-register-namespace (abbrev full)
-  ;; +++ detect redefinitions
-  (push (list abbrev full) *sw-namespaces*))
+  (aif (member abbrev *sw-namespaces* :key #'car :test #'string-equal)
+      (unless (equal (cadr it) full)
+	(warn "Attempt to redefine namespace ~A from ~A to ~A" abbrev (cadr it) full))
+      (push (list abbrev full) *sw-namespaces*)))
 
 (defun abbreviate-uri (uri)
   (dolist (namespace *sw-namespaces*)
@@ -31,6 +33,10 @@
 	      (format nil "~A~A" (cadr namespace) (subseq uri (1+ colonpos)))
 	      uri))
 	uri)))
-		      
-		   
+
+(defun expand-uri-0 (ns string)
+  (let ((namespace (namespace-lookup ns)))
+    (if namespace
+	(format nil "~A~A" (cadr namespace) string)
+	(error "No namespace ~A" ns))))
 

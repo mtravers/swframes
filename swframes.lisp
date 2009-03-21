@@ -9,6 +9,9 @@ Idle thoughts:
 
 |#
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defvar *default-frame-source* nil))
+
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
 
@@ -23,8 +26,6 @@ Idle thoughts:
 (defun %frame-slots (frame)
   (wlisp::hash-keys (frame-slots frame)))
 
-(defvar *default-frame-source* nil)
-
 (defun reset-frames ()
   (clrhash *uri->frame-ht*))
 
@@ -33,6 +34,9 @@ Idle thoughts:
 		(declare (ignore uri))
 		,@body)
 	    *uri->frame-ht*))
+
+(defun all-frames ()
+  (collecting (for-all-frames (f) (utils::collect f))))
 
 ;;; +++
 (defmethod reset-frame ((frame frame))
@@ -87,11 +91,19 @@ Idle thoughts:
 	    (gethash (sparql-binding-elt binding "p") (frame-inverse-slots frame)))
       ))))
   
-(defmethod slotv ((frame frame) (slot frame) &optional (fill? t))
+(defvar *fill-by-default?* nil)
+
+(defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
   (frame-fresh? frame)
   (frame-fresh? slot)
-  (if fill? (fill-sframe frame))			;+++ warning: this could get ugly!  But it has to be done...
+  ;;+++ need a theory of this.
+  (if fill? (fill-sframe frame))
   (gethash slot (frame-slots frame)))
+
+(defsetf slotv set-slotv)
+
+(defmethod set-slotv ((frame frame) (slot frame) value)
+  (setf (gethash slot (frame-slots frame)) value))
 
 (defmethod slotv-inverse ((frame frame) (slot frame))
   (fill-sframe-inverse frame)
@@ -106,12 +118,13 @@ Idle thoughts:
 ;;; query (sexpy sparql syntax from lsw) ___
 
 (defun describe-sframe (frame)
-  (fill-sframe frame)
+;  (fill-sframe frame)
   (princ "Forward:")
   (pprint (mt:ht-contents (frame-slots frame)))
   (princ "Inverse:")
-  (fill-sframe-inverse frame)
-  (pprint (mt:ht-contents (frame-inverse-slots frame)))  )
+;  (fill-sframe-inverse frame)
+;  (pprint (mt:ht-contents (frame-inverse-slots frame)))
+  )
 
 #|
 Tests:
@@ -150,20 +163,57 @@ Tests:
 ;;;
 ;(dereference #$http://bio2rdf.org/proteinlinks/cas:317-34-0)
 
+(defpackage :|rdf|)
+
+;;; An incomplete parser of RDF/XML
 
 (defmethod dereference ((frame frame))
   (multiple-value-bind (body response-code response-headers uri)
       ;; turns out this processes the 303 redirect
       (utils:get-url (frame-uri frame) :accept "application/rdf+xml")
 ;    (print (list response-code response-headers uri))
-    (let* ( (s-xml::*ignore-namespaces* t)
+    (let* (; (s-xml::*ignore-namespaces* t)
 	   (xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
-      (assert (name-eq :|rdf:RDF| (car (car xml))))
-      (dolist (desc (lxml-subelements xml :|rdf:Description|))
-	(let ((about (lxml-attribute desc :|rdf:about|)))
-	  (cond ((not (equal about (frame-uri frame)))
-		 (format t "~%Entry about ~A" about)))))
-      xml)))
+      (pprint xml)
+      (labels ((symbol->frame (symbol)
+	       (let ((ns (package-name (symbol-package symbol)))
+		     (text (symbol-name symbol)))
+		 (intern-uri (expand-uri-0 ns text) )))
+	       (add-value (v frame slot)
+		 (print `(add-value ,frame ,slot ,v))
+		 (pushnew v (slotv frame slot)) ;push?
+		 )
+	       (process-description (desc)
+		 (print `(processing ,desc))
+		 (let* ((about (intern-uri (lxml-attribute desc '|rdf|::|about|))))
+		   (assert about)	;+++ could be blank node...in which case we are somewhat fucked.
+		   (unless (eq (lxml-tag desc) '|rdf|::|Description|)
+		     (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
+		   (dolist (elt (lxml-all-subelements desc))
+		     (let ((property (symbol->frame (lxml-tag elt)))
+			   )
+		       (acond ((lxml-attribute elt '|rdf|::|resource|)
+			       (add-value (intern-uri it) about property))
+			      ((symbolp elt)
+			       (warn "Empty elt ~A" elt))
+			      ((stringp (cadr elt))
+			      ;; no resource, so a literal? or another description?
+			       (add-value (cadr elt) about property))
+			      (t (dolist (sub (lxml-all-subelements elt))
+				   (add-value (process-description sub) about property)))
+;			     (t (error "Cant figure out what to do with ~A" elt))
+			      )
+		       ))
+		   about)))
+	(assert (name-eq '|rdf|::RDF (car (car xml))))
+	(do ((namespaces (cdr (car xml)) (cddr namespaces)))
+	    ((null namespaces))
+	  (let ((ns (cadr (utils:string-split (string (car namespaces)) #\:  )))
+		(full (cadr namespaces)))
+	    (sw-register-namespace ns full)))
+      (dolist (desc (lxml-all-subelements xml))
+	(process-description desc))
+      xml))))
 
 
 

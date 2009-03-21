@@ -31,9 +31,14 @@ This file has the minimum needed to get the frame system working (esp. the reade
     (string (intern-uri (expand-uri thing)))
     (t (error "Can't turn ~A into a URI" thing))))
 
+;;; Gets redefed later
+(defun expand-uri (string)
+  string)
+
 (defvar *uri->frame-ht* (make-hash-table :test 'equal))
 
 (defun intern-uri (uri)
+  (assert (stringp uri))
   (or (gethash uri *uri->frame-ht*)
       (setf (gethash uri *uri->frame-ht*)
 	    (make-frame :uri uri :source *default-frame-source*))))
