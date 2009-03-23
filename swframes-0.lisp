@@ -6,11 +6,13 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defstruct (frame (:print-function frame-printer))
   uri
+  (slots (make-hash-table :test #'eq)) ;ht mapping preds to values (poss. multiple)
+  (inverse-slots nil)
+  ;; Below here is various state-manipulation info; very in flux
   source
   loaded?				;T if slots have been loaded
   dirty?				;T if needs to be written back out, or list of preds to write out.
-  (slots (make-hash-table :test #'eq)) ;ht mapping preds to values (poss. multiple)
-  (inverse-slots nil)
+  dereferenced? 
   )
 
 (defun frame-printer (frame stream ignore)

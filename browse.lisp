@@ -23,7 +23,8 @@
 (defun html-for-browse-frame (name)
   (let* ((frame (frame-named name))
          (title (formatn "Frame #$~A" name)))
-    (fill-sframe frame)
+;    (fill-sframe frame)
+    (dereference frame)
     (wb::with-standard-weblistener-page-header (title)
       (if frame
           (progn
@@ -85,8 +86,8 @@
 	((:table :border 1 :cellpadding 3 :cellspacing 0)
 	 :newline
 	 (:tr
-	  (:th "Slot Name")
-	  (:th "Slot Value"))
+	  (:th "Predicate")
+	  (:th "Objects"))
 	 :newline
 	 ;; general frame description 
 	 ;; (should leave out ones done as hierarchy)
@@ -117,7 +118,48 @@
 		       (frames::emit-slot-value slot-frame slot-value)
 		       ))
 		     :newline
-		     ))))))
+		     )))))
+	;;; Inverse table
+	(:h3 "Inverse slots")
+	((:table :border 1 :cellpadding 3 :cellspacing 0)
+	 :newline
+	 (:tr
+	  (:th "Subjects")
+	  (:th "Predicate"))
+	 :newline
+	 ;; general frame description 
+	 ;; (should leave out ones done as hierarchy)
+	 (let ((slots (copy-list (%frame-inverse-slots frame))))
+	   ;; display slots and values in alphabetical order by slot name.
+	   (setq slots (sort slots 'string-lessp
+			     :key #'frame-label))
+	   (loop for slot-frame in slots 
+	      do (let ((slot-value (slotv-inverse frame slot-frame)))
+		   (html
+		     (:tr
+		      (:td
+		       (frames::emit-slot-value slot-frame slot-value)
+		       )
+		      (:td
+		       ((:a :href 
+			    (forward-funcall 
+			     'wb::make-weblistener-evalstring-url
+			     :evalstring
+			     (url-safe-string 
+			      (prin1-to-string `(slotv ,frame ,slot-frame)))
+			     :pkg (forward-funcall 'wb::user-session-id)
+			     ))
+			:newline
+			((:font :color :green) (:princ-safe "#^")))
+		       ((:a :href (frames::wob-url slot-frame))
+			(:princ-safe (frame-name slot-frame)))
+		       :newline
+		       ))
+		     :newline
+		     )))))
+
+
+)
 
       #|
       (when (slotv frame #$isA)

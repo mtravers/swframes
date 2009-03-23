@@ -31,6 +31,9 @@ Idle thoughts:
 (defun %frame-slots (frame)
   (wlisp::hash-keys (frame-slots frame)))
 
+(defun %frame-inverse-slots (frame)
+  (wlisp::hash-keys (frame-inverse-slots frame)))
+
 (defun reset-frames ()
   (clrhash *uri->frame-ht*))
 
@@ -91,9 +94,6 @@ Idle thoughts:
 	(warn "Attempt to dereference ~A failed" frame))
       ;; +++ inverses))
     ))
-
-
-
 		   
 ;;; Not sure how we really will handle inverses, so broken out and not very symmetical with forward links for now...might
 ;;;  what to be done standardly as part of fill
@@ -128,12 +128,22 @@ Idle thoughts:
 
 (defmethod slotv-inverse ((frame frame) (slot frame))
 ;  (fill-sframe-inverse frame)
-  (gethash slot (frame-inverse-slots frame)))
+  (and (frame-inverse-slots frame)
+       (gethash slot (frame-inverse-slots frame))))
 
 (defsetf slotv-inverse set-slotv-inverse)
 
 (defmethod set-slotv-inverse ((frame frame) (slot frame) value)
+  (unless (frame-inverse-slots frame)
+    (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
   (setf (gethash slot (frame-inverse-slots frame)) value))
+
+;;; this is really what we should use, I suppose
+(defun add-triple (s p o)
+  (pushnew o (slotv s p))
+  (if (frame-p o)
+      (pushnew s (slotv-inverse o p)))
+  nil)					;makes tracing saner
 
 ;;; temp -- these probably want to be objects
 (defun make-sparql-source (endpoint)
@@ -146,9 +156,10 @@ Idle thoughts:
 ;  (fill-sframe frame)
   (princ "Forward:")
   (pprint (mt:ht-contents (frame-slots frame)))
-  (princ "Inverse:")
 ;  (fill-sframe-inverse frame)
-;  (pprint (mt:ht-contents (frame-inverse-slots frame)))
+  (when (frame-inverse-slots frame)
+    (princ "Inverse:")
+    (pprint (mt:ht-contents (frame-inverse-slots frame))))
   )
 
 #|
@@ -172,76 +183,3 @@ Tests:
 (defun name-eq (s1 s2)
   (equal (symbol-name s1) (symbol-name s2)))
 
-; This one works at least some of the time.
-; #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00022
-; this stuff is weird, it contains mostly back links rather than forward links.  Sigh.
-
-;#$http://dbpedia.org/page/Aminophylline
-;  returns HTML with embedded RDFa(?) but it can't be XML parsed.
-; But you can substitute in 
-; (dereference #$http://dbpedia.org/resource/Panitumumab)
-; and apparently: 
-;  http://dbpedia.org/data/Panitumumab.rdf
-;  http://dbpedia.org/data/Panitumumab.n3
-
-
-;;;
-;(dereference #$http://bio2rdf.org/proteinlinks/cas:317-34-0)
-
-(defpackage :|rdf|)
-
-;;; An incomplete parser of RDF/XML
-
-(defmethod dereference ((frame frame))
-  (multiple-value-bind (body response-code response-headers uri)
-      ;; turns out this processes the 303 redirect
-      (utils:get-url (frame-uri frame) :accept "application/rdf+xml")
-;    (print (list response-code response-headers uri))
-    (let* (; (s-xml::*ignore-namespaces* t)
-	   (xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
-;      (pprint xml)
-      (labels ((symbol->frame (symbol)
-	       (let ((ns (package-name (symbol-package symbol)))
-		     (text (symbol-name symbol)))
-		 (intern-uri (expand-uri-0 ns text) )))
-	       (add-value (v frame slot)
-		 (print `(add-value ,frame ,slot ,v))
-		 (pushnew v (slotv frame slot)) ;push?
-		 )
-	       (process-description (desc)
-;		 (print `(processing ,desc))
-		 (let* ((about (intern-uri (lxml-attribute desc '|rdf|::|about|))))
-		   (assert about)	;+++ could be blank node...in which case we are somewhat fucked.
-		   (unless (eq (lxml-tag desc) '|rdf|::|Description|)
-		     (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
-		   (dolist (elt (lxml-all-subelements desc))
-		     (let ((property (symbol->frame (lxml-tag elt)))
-			   )
-		       (acond ((lxml-attribute elt '|rdf|::|resource|)
-			       (add-value (intern-uri it) about property))
-			      ((symbolp elt)
-			       (warn "Empty elt ~A" elt))
-			      ((stringp (cadr elt))
-			      ;; no resource, so a literal? or another description?
-			       (add-value (cadr elt) about property))
-			      (t (dolist (sub (lxml-all-subelements elt))
-				   (add-value (process-description sub) about property)))
-;			     (t (error "Cant figure out what to do with ~A" elt))
-			      )
-		       ))
-		   about)))
-	(assert (name-eq '|rdf|::RDF (car (car xml))))
-	(do ((namespaces (cdr (car xml)) (cddr namespaces)))
-	    ((null namespaces))
-	  (let ((ns (cadr (utils:string-split (string (car namespaces)) #\:  )))
-		(full (cadr namespaces)))
-	    (sw-register-namespace ns full)))
-      (dolist (desc (lxml-all-subelements xml))
-	(process-description desc))
-      xml))))
-  
-;;; this is really what we should use
-(defun add-triple (s p o)
-  (pushnew o (slotv s p))
-  (if (frame-p o)
-      (pushnew s (slotv o p))))
