@@ -185,3 +185,11 @@ WHERE {
 ?s1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type1 .
 ?s1 <http://www.w3.org/2000/01/rdf-schema#label> ?label1 .
 }" :make-uri #'intern-uri)
+
+
+;;;; Dereference worker.
+(defun wail-on-dereferencer ()
+  (for-all-frames (f)
+    (print `(dereferencing ,f))
+    (report-and-ignore-errors
+      (dereference f))))

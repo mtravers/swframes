@@ -1,5 +1,3 @@
-;;; Not yet working 
-
 (in-package :wb)
 
 (defun frame-grid (frames &optional slots row-limit)

@@ -18,6 +18,11 @@ Idle thoughts:
 (defun frame-named (name)
   (intern-uri (expand-uri name)))
 
+;; hook into old code, including listener
+(defun frames::frame-fnamed (name &optional force?)
+  (declare (ignore force?))
+  (frame-named name))
+
 (defun frame-label (frame)
   (or (car (slotv frame #$http://www.w3.org/2000/01/rdf-schema#label nil))
       (frame-name frame)))
@@ -75,6 +80,20 @@ Idle thoughts:
       ;; +++ inverses))
       ))
   )
+
+
+;;; Try via dereferencing
+(defmethod fill-sframe ((frame frame) &key force?)
+  (when (or force? (not (frame-loaded? frame)))
+    (if (ignore-errors
+	  (dereference frame))
+	(setf (frame-loaded? frame) t)
+	(warn "Attempt to dereference ~A failed" frame))
+      ;; +++ inverses))
+    ))
+
+
+
 		   
 ;;; Not sure how we really will handle inverses, so broken out and not very symmetical with forward links for now...might
 ;;;  what to be done standardly as part of fill
@@ -93,6 +112,8 @@ Idle thoughts:
   
 (defvar *fill-by-default?* nil)
 
+
+
 (defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
   (frame-fresh? frame)
   (frame-fresh? slot)
@@ -106,9 +127,13 @@ Idle thoughts:
   (setf (gethash slot (frame-slots frame)) value))
 
 (defmethod slotv-inverse ((frame frame) (slot frame))
-  (fill-sframe-inverse frame)
+;  (fill-sframe-inverse frame)
   (gethash slot (frame-inverse-slots frame)))
 
+(defsetf slotv-inverse set-slotv-inverse)
+
+(defmethod set-slotv-inverse ((frame frame) (slot frame) value)
+  (setf (gethash slot (frame-inverse-slots frame)) value))
 
 ;;; temp -- these probably want to be objects
 (defun make-sparql-source (endpoint)
@@ -174,7 +199,7 @@ Tests:
 ;    (print (list response-code response-headers uri))
     (let* (; (s-xml::*ignore-namespaces* t)
 	   (xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
-      (pprint xml)
+;      (pprint xml)
       (labels ((symbol->frame (symbol)
 	       (let ((ns (package-name (symbol-package symbol)))
 		     (text (symbol-name symbol)))
@@ -184,7 +209,7 @@ Tests:
 		 (pushnew v (slotv frame slot)) ;push?
 		 )
 	       (process-description (desc)
-		 (print `(processing ,desc))
+;		 (print `(processing ,desc))
 		 (let* ((about (intern-uri (lxml-attribute desc '|rdf|::|about|))))
 		   (assert about)	;+++ could be blank node...in which case we are somewhat fucked.
 		   (unless (eq (lxml-tag desc) '|rdf|::|Description|)
@@ -214,8 +239,9 @@ Tests:
       (dolist (desc (lxml-all-subelements xml))
 	(process-description desc))
       xml))))
-
-
-
   
-
+;;; this is really what we should use
+(defun add-triple (s p o)
+  (pushnew o (slotv s p))
+  (if (frame-p o)
+      (pushnew s (slotv o p))))
