@@ -140,9 +140,9 @@ Idle thoughts:
 
 ;;; this is really what we should use, I suppose
 (defun add-triple (s p o)
-  (pushnew o (slotv s p))
+  (pushnew o (slotv s p) :test #'equal)
   (if (frame-p o)
-      (pushnew s (slotv-inverse o p)))
+      (pushnew s (slotv-inverse o p) :test #'equal))
   nil)					;makes tracing saner
 
 ;;; temp -- these probably want to be objects

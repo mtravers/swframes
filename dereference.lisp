@@ -46,8 +46,9 @@ Returns XML prefaced by two garbage chars.
 
 (defmethod dereference ((frame frame))
   (unless (frame-dereferenced? frame)
-    (dereference-1 frame)
-    (setf (frame-dereferenced? frame) t)))
+    (when (string-prefix-equals (frame-uri frame) "http")
+      (dereference-1 frame)
+      (setf (frame-dereferenced? frame) t))))
 
 (defmethod dereference-1 ((frame frame))
   (multiple-value-bind (body response-code response-headers uri)
@@ -62,9 +63,16 @@ Returns XML prefaced by two garbage chars.
 	       (add-value (v frame slot)
 		 (add-triple frame slot v)
 		 )
+	       ;; +++ probably wants to be pulled out, this is a fundamental piece of RDF unfortunately
+	       (make-blank-node (type)
+		 (intern-uri (format nil "bnode:~A" (gensym (symbol-name type)))))
 	       (process-description (desc)
-		 (let* ((about (intern-uri (lxml-attribute desc '|rdf|::|about|))))
-		   (assert about)	;+++ could be blank node...in which case we are somewhat fucked.
+;		 (print `(process-description ,desc))
+		 (let* ((about0 (lxml-attribute desc '|rdf|::|about|))
+			(about (if about0
+				   (intern-uri about0)
+				   (make-blank-node (lxml-tag desc))
+				   )))
 		   (unless (eq (lxml-tag desc) '|rdf|::|Description|)
 		     (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
 		   (dolist (elt (lxml-all-subelements desc))
