@@ -13,7 +13,7 @@ Idle thoughts:
   (defvar *default-frame-source* nil))
 
 (defun frame-name (frame)
-  (abbreviate-uri (frame-uri frame)))
+  (abbreviate-uri (frame-uri frame)))  
 
 (defun frame-named (name)
   (intern-uri (expand-uri name)))
@@ -39,9 +39,9 @@ Idle thoughts:
 
 (defmacro for-all-frames ((var) &body body)
   `(maphash #'(lambda (uri ,var)
-                (declare (ignore uri))
-                ,@body)
-            *uri->frame-ht*))
+		(declare (ignore uri))
+		,@body)
+	    *uri->frame-ht*))
 
 (defun all-frames ()
   (collecting (for-all-frames (f) (utils::collect f))))
@@ -60,30 +60,30 @@ Idle thoughts:
 
 ;;; +++ namespace hackery (steal LSW)
 (defun frame-uri-namespaced (frame)
-  (frame-uri frame))                    ;not yet
+  (frame-uri frame))			;not yet
 
 (defmethod fill-frame-inverse ((frame frame))
   (fill-frame frame))
 
 ;;; via sparql
-'(defmethod fill-frame ((frame frame))
+(defmethod fill-frame ((frame frame) &key force?)
   (when (or force? (not (frame-loaded? frame)))
     (if (ignore-errors
-          (fill-frame-sparql frame)
-          (fill-frame-inverse-sparql frame)
-          t)
-        (setf (frame-loaded? frame) t)
-        (warn "Attempt to dereference ~A failed" frame))
+	  (fill-frame-sparql frame)
+	  (fill-frame-inverse-sparql frame)
+	  t)
+	(setf (frame-loaded? frame) t)
+	(warn "Attempt to dereference ~A failed" frame))
     ))
 
 ;;;  via dereferencing
 (defmethod fill-frame ((frame frame) &key force?)
   (when (or force? (not (frame-loaded? frame)))
     (if (ignore-errors
-          (dereference frame)
-          t)
-        (setf (frame-loaded? frame) t)
-        (warn "Attempt to dereference ~A failed" frame))
+	  (dereference frame)
+	  t)
+	(setf (frame-loaded? frame) t)
+	(warn "Attempt to dereference ~A failed" frame))
     ))
 
 (defun sparql-binding-elt (binding v)
@@ -91,31 +91,31 @@ Idle thoughts:
 
 (defmethod fill-frame-sparql ((frame frame) &key force?)
     (let ((*default-frame-source* (or (frame-source frame)
-                                      *default-frame-source*)))
-      (dolist (binding (knewos::run-sparql
-                        *default-frame-source*
-                        (format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame))
-                        :make-uri #'intern-uri))
-        (push (sparql-binding-elt binding "o")
-              (gethash (sparql-binding-elt binding "p") (frame-slots frame)))
-        )
+				      *default-frame-source*)))
+      (dolist (binding (knewos::run-sparql 
+			*default-frame-source*
+			(format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame))
+			:make-uri #'intern-uri))
+	(push (sparql-binding-elt binding "o")
+	      (gethash (sparql-binding-elt binding "p") (frame-slots frame)))
+	)
       (setf (frame-loaded? frame) t)
       ))
 
-
+		   
 (defmethod fill-frame-inverse-sparql ((frame frame))
   (unless (frame-inverse-slots frame)
     (setf (frame-inverse-slots frame) (make-hash-table :test #'eq))
   (let ((*default-frame-source* (or (frame-source frame)
-                                    *default-frame-source*)))
-    (dolist (binding (knewos::run-sparql
-                      *default-frame-source*
-                      (generate-sparql `(:select (?s ?p) () (?s ?p ,frame)))
-                      :make-uri #'intern-uri))
+				    *default-frame-source*)))
+    (dolist (binding (knewos::run-sparql 
+		      *default-frame-source*
+		      (generate-sparql `(:select (?s ?p) () (?s ?p ,frame)))
+		      :make-uri #'intern-uri))
       (push (sparql-binding-elt binding "s")
-            (gethash (sparql-binding-elt binding "p") (frame-inverse-slots frame)))
+	    (gethash (sparql-binding-elt binding "p") (frame-inverse-slots frame)))
       ))))
-
+  
 (defvar *fill-by-default?* nil)
 
 
@@ -148,7 +148,7 @@ Idle thoughts:
   (pushnew o (slotv s p) :test #'equal)
   (if (frame-p o)
       (pushnew s (slotv-inverse o p) :test #'equal))
-  nil)                                  ;makes tracing saner
+  nil)					;makes tracing saner
 
 ;;; temp -- these probably want to be objects
 (defun make-sparql-source (endpoint)
@@ -169,9 +169,9 @@ Idle thoughts:
 
 #|
 Tests:
-(setq f1 (make-frame
-           :source "http://data.linkedct.org/sparql"
-           :uri "http://data.linkedct.org/resource/trials/NCT00696657"))
+(setq f1 (make-frame 
+	   :source "http://data.linkedct.org/sparql" 
+	   :uri "http://data.linkedct.org/resource/trials/NCT00696657"))
 
 (fill-sframe f1)
 (setq f2 (car (slotv f1 (intern-uri "http://data.linkedct.org/resource/linkedct/location")))
@@ -193,12 +193,12 @@ Tests:
   (collecting
     (for-all-frames (f)
       (block frame
-        (if slot
-            (when (member v (slotv f pred) :test #'equal)
-              (utils::collect f)
-              (return-from frame))
-          (dolist (slot (%frame-slots f))
-            (when (member v (slotv f slot) :test #'equal)
-              (utils::collect f)
-              (return-from frame))))))))
+	(if slot
+	    (when (member v (slotv f pred) :test #'equal)
+	      (utils::collect f)
+	      (return-from frame))
+	  (dolist (slot (%frame-slots f))
+	    (when (member v (slotv f slot) :test #'equal)
+	      (utils::collect f)
+	      (return-from frame))))))))
 
