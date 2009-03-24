@@ -28,10 +28,14 @@
   (sorting? nil)
   )
 
+(defmethod potential-slots ((grid frame-grid))
+  (sort (mapunion #'swframes::%frame-slots (frame-grid-frames grid))
+	#'string-lessp
+	:key #'swframes::frame-label))
+  
+
 (defmethod add-column-ui ((grid frame-grid))
-  (let* ((sample-frame  (car (frame-grid-frames grid)))
-	 (potential-slots (and sample-frame
-			       (set-difference (swframes::%frame-slots sample-frame) (frame-grid-slots grid))))
+  (let* ((potential-slots (potential-slots grid))
 	 (id (session-persist-object grid)))
     (html
       ((:form

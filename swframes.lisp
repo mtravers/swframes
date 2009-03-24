@@ -66,7 +66,7 @@ Idle thoughts:
   (fill-frame frame))
 
 ;;; via sparql
-(defmethod fill-frame ((frame frame))
+(defmethod fill-frame ((frame frame) &key force?)
   (when (or force? (not (frame-loaded? frame)))
     (if (ignore-errors
 	  (fill-frame-sparql frame)
