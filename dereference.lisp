@@ -11,8 +11,7 @@ can't usually deal with typical syntactically sloppy HTML.
 Dereferencing piecemeal is going to be too slow.  Probably this should be part of a crawler that
 dereferences things en masse and brings them into a local store...
 
-
-Here we'll keep track of 
+Here we'll keep track of some of the available data sources:
 
 ; This one works at least some of the time.
 ; #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00022
@@ -30,13 +29,37 @@ Here we'll keep track of
 ;;;
 ;(dereference #$http://bio2rdf.org/proteinlinks/cas:317-34-0)
 
+Many linked data sets here:
+http://esw.w3.org/topic/TaskForces/CommunityProjects/LinkingOpenData/DataSets
+
 
 http://www.rdfabout.com/rdf/usgov/sec/id/cik0001308161
+- Returns XML prefaced by two garbage chars (fixed by improving adjust-sparql-string)
+- Has some blank nodes, so deal with them now.
 
-Returns XML prefaced by two garbage chars.
+http://www.rdfabout.com/rdf/usgov/geo/us
+
+- Returns headers like this:
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?xml-stylesheet type="text/xsl" href="http://sw.opencyc.org/xsl/OpenCycOWLCollectionDisplayLatest.xsl"?>
+
+<!DOCTYPE rdf:RDF [
+     <!ENTITY ocyc "http://sw.opencyc.org/concept/" >
+     <!ENTITY cyc  "http://sw.cyc.com/concept/" >
+     <!ENTITY rdf  "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+
+Which our XML parser can't handle.  Forget it.
+
+http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
+- Works!
+
+#$http://rdf.freebase.com/ns/en.blade_runner
+- Works!
 
 
-
+#$db:diseasome/diseases
+- Works 
 |#
 
 

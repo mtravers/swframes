@@ -95,14 +95,14 @@ ie:
 	 (mt:collecting
 	   (dolist (trial-res (trials-for-drug drugname))
 	     (let ((intervention (sparql-binding-elt trial-res "intervention")))
-	       (fill-sframe intervention) ;should get done automagically
+	       (fill-frame intervention) ;should get done automagically
 	       (dolist (syn (slotv intervention (intern-uri "http://www.w3.org/2002/07/owl#sameAs")))
 		 (mt::collect-new syn)))))))
     (let ((result nil))
       (dolist (syn synonyms)
 	(let ((intervention2 (mapcar #'cadar (sparql-query `(:select (?other) () (?other ,(intern-uri "http://www.w3.org/2002/07/owl#sameAs") ,syn)))))) 
 	  (dolist (i intervention2)
-	    (fill-sframe i)
+	    (fill-frame i)
 	    (dolist (elt (slotv i (intern-uri (expand-uri "linkedct:intervention_name"))))
 	      (if (not (find elt result :test #'string-equal))
 		  (push elt result)))))))))

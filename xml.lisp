@@ -15,8 +15,7 @@
 ;; curl 'http://localhost:8002/frame.xml?uri=http://data.linkedct.org/resource/trials/NCT00000102'
 
 (defmethod xml-dump ((frame frame))
-  (fill-sframe frame)
-;  (fill-sframe-inverse frame)
+  (fill-frame frame)
   (setq huh
   `(:|frame-xml|
      ,@(mt:collecting

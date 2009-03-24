@@ -6,7 +6,9 @@
      "If SLOTS is missing, use the slots of the first frame.")
   ;; Include error checks because otherwise you can get errors in the weblistener redisplay, which fucks things up rather badly.
   (dolist (frame frames)
-    (assert (swframes::frame-p frame)))
+    (assert (swframes::frame-p frame))
+    (swframes::fill-frame frame)
+    )
   (dolist (slot slots)
     (assert (or (swframes::frame-p slot)
 		(functionp slot)

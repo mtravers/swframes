@@ -13,11 +13,11 @@
   (intern-uri name))
 
 (defun %frame-slots (frame)
-  (fill-sframe frame)
+  (fill-frame frame)
   (utils:hash-table-keys (frame-slots frame)))
 
 (defun %frame-inverse-slots (frame)
-  (fill-sframe-inverse frame)
+  (fill-frame-inverse frame)
   (utils:hash-table-keys (frame-inverse-slots frame)))
 
 (defun frames::slotv (frame slot)

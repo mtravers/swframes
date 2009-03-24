@@ -62,14 +62,34 @@ Idle thoughts:
 (defun frame-uri-namespaced (frame)
   (frame-uri frame))			;not yet
 
+(defmethod fill-frame-inverse ((frame frame))
+  (fill-frame frame))
 
+;;; via sparql
+(defmethod fill-frame ((frame frame))
+  (when (or force? (not (frame-loaded? frame)))
+    (if (ignore-errors
+	  (fill-frame-sparql frame)
+	  (fill-frame-inverse-sparql frame)
+	  t)
+	(setf (frame-loaded? frame) t)
+	(warn "Attempt to dereference ~A failed" frame))
+    ))
+
+;;;  via dereferencing
+(defmethod fill-frame ((frame frame) &key force?)
+  (when (or force? (not (frame-loaded? frame)))
+    (if (ignore-errors
+	  (dereference frame)
+	  t)
+	(setf (frame-loaded? frame) t)
+	(warn "Attempt to dereference ~A failed" frame))
+    ))
 
 (defun sparql-binding-elt (binding v)
   (cadr (find v binding :key #'car :test #'equal)))
 
-;;; +++ use new sparql syntax
-(defmethod fill-sframe ((frame frame) &key force?)
-  (when (or force? (not (frame-loaded? frame)))
+(defmethod fill-frame-sparql ((frame frame) &key force?)
     (let ((*default-frame-source* (or (frame-source frame)
 				      *default-frame-source*)))
       (dolist (binding (knewos::run-sparql 
@@ -80,24 +100,10 @@ Idle thoughts:
 	      (gethash (sparql-binding-elt binding "p") (frame-slots frame)))
 	)
       (setf (frame-loaded? frame) t)
-      ;; +++ inverses))
       ))
-  )
 
-
-;;; Try via dereferencing
-(defmethod fill-sframe ((frame frame) &key force?)
-  (when (or force? (not (frame-loaded? frame)))
-    (if (ignore-errors
-	  (dereference frame))
-	(setf (frame-loaded? frame) t)
-	(warn "Attempt to dereference ~A failed" frame))
-      ;; +++ inverses))
-    ))
 		   
-;;; Not sure how we really will handle inverses, so broken out and not very symmetical with forward links for now...might
-;;;  what to be done standardly as part of fill
-(defmethod fill-sframe-inverse ((frame frame))
+(defmethod fill-frame-inverse-sparql ((frame frame))
   (unless (frame-inverse-slots frame)
     (setf (frame-inverse-slots frame) (make-hash-table :test #'eq))
   (let ((*default-frame-source* (or (frame-source frame)
@@ -117,8 +123,7 @@ Idle thoughts:
 (defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
   (frame-fresh? frame)
   (frame-fresh? slot)
-  ;;+++ need a theory of this.
-  (if fill? (fill-sframe frame))
+  (if fill? (fill-frame frame))
   (gethash slot (frame-slots frame)))
 
 (defsetf slotv set-slotv)
@@ -126,8 +131,8 @@ Idle thoughts:
 (defmethod set-slotv ((frame frame) (slot frame) value)
   (setf (gethash slot (frame-slots frame)) value))
 
-(defmethod slotv-inverse ((frame frame) (slot frame))
-;  (fill-sframe-inverse frame)
+(defmethod slotv-inverse ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
+  (if fill? (fill-frame frame))
   (and (frame-inverse-slots frame)
        (gethash slot (frame-inverse-slots frame))))
 
@@ -152,8 +157,8 @@ Idle thoughts:
 ;;; bulk fill +++
 ;;; query (sexpy sparql syntax from lsw) ___
 
-(defun describe-sframe (frame)
-;  (fill-sframe frame)
+(defun describe-sframe (frame &optional (fill? t))
+  (when fill? (fill-frame frame))
   (princ "Forward:")
   (pprint (mt:ht-contents (frame-slots frame)))
 ;  (fill-sframe-inverse frame)
@@ -182,4 +187,18 @@ Tests:
 
 (defun name-eq (s1 s2)
   (equal (symbol-name s1) (symbol-name s2)))
+
+;;; Slow, obviously
+(defun frames-with-value (v &optional slot)
+  (collecting
+    (for-all-frames (f)
+      (block frame
+	(if slot
+	    (when (member v (slotv f pred) :test #'equal)
+	      (utils::collect f)
+	      (return-from frame))
+	  (dolist (slot (%frame-slots f))
+	    (when (member v (slotv f slot) :test #'equal)
+	      (utils::collect f)
+	      (return-from frame))))))))
 
