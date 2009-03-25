@@ -4,10 +4,14 @@
 
 (defvar *sparql-namespace-uses*)
 
-(defun sparql-query (form &key (server *default-frame-source*) (timeout 1000))
-  (run-sparql server
-	      (generate-sparql form)
-	      :make-uri #'intern-uri))
+(defun sparql-query (form &key (server *default-frame-source*) (timeout 1000) one-var?)
+  (multiple-value-bind (res vars)
+      (run-sparql server
+		  (generate-sparql form)
+		  :make-uri #'intern-uri)
+    (if one-var?
+	(mapcar #'cadar res)
+      res)))
 
 (defun generate-sparql (form)
   (let ((*sparql-namespace-uses* nil)
@@ -41,7 +45,7 @@
 	     (format s "SELECT ~a~{~a~^ ~}~a~%WHERE { "
 		     (if distinct "DISTINCT " "")
 		     vars 
-		     (if from (format nil "~{ FROM <~a> ~^~%~}" (mapcar 'sparql-term (if (atom from) (list from) from))) "")
+		     (if from (format nil "~{ FROM <~a> ~^~%~}" (mapcar 'sparql-term (if (symbolp from) (list from) from))) "")
 		     )
 	     (loop for clause in clauses
 		do (emit-sparql-clause clause s))

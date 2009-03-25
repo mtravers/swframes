@@ -208,3 +208,8 @@
 
 ;;
 
+(defun frame-grid-value (grid row column)
+  (declare (ignore grid))
+  (if (swframes::frame-p column)
+      (swframes::slotv row column)
+    (funcall column row)))

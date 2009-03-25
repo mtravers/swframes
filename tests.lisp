@@ -193,3 +193,18 @@ WHERE {
     (print `(dereferencing ,f))
     (report-and-ignore-errors
       (dereference f))))
+
+;;; Get trials for a condition (dereferencing also works)
+(swframes::sparql-query '(:select (?s ?p) () (?s ?p #$db:condition/749)))
+
+;;; all experimental drugs (hm, exactly 600, that's suspicious)
+(swframes::sparql-query '(:select (?d ?name) () (?d ?p #$drugbank:resource/drugtype/experimental) (?d #$rdfs:label ?name)) :server  *drugbank-frame-source*)
+
+;;; test our local virtuoso
+;; fast!
+(sparql-query `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ) :server "http://virtuoso.collabrx.com/sparql/")
+;; not as fast!
+(sparql-query '(:select (?s ?p) () (?s ?p "Melanoma")) :server "http://virtuoso.collabrx.com/sparql")
+
+;;; new feature!
+(sparql-query '(:select (?s) () (?s ?p "Melanoma")) :server "http://virtuoso.collabrx.com/sparql" :one-var? t)

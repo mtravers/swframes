@@ -67,8 +67,8 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
 
 ;;; An incomplete parser of RDF/XML
 
-(defmethod dereference ((frame frame))
-  (unless (frame-dereferenced? frame)
+(defmethod dereference ((frame frame) &optional force?)
+  (when (or force? (not (frame-dereferenced? frame)))
     (when (string-prefix-equals (frame-uri frame) "http")
       (dereference-1 frame)
       (setf (frame-dereferenced? frame) t))))
@@ -77,6 +77,7 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
   (multiple-value-bind (body response-code response-headers uri)
       ;; turns out this processes the 303 redirect without any further intervention
       (utils:get-url (frame-uri frame) :accept "application/rdf+xml")
+    (print `(response-code ,response-code response-headers ,response-headers))
     (let* (; (s-xml::*ignore-namespaces* t)
 	   (xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
       (labels ((symbol->frame (symbol)
@@ -99,6 +100,12 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
 		   (unless (eq (lxml-tag desc) '|rdf|::|Description|)
 		     (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
 		   (dolist (elt (lxml-all-subelements desc))
+		     ;; stupid dbpedia defines namespaces in the element they it is used in!
+		     (do ((rest (mt::lxml-attributes elt) (cddr rest)))
+			 ((null rest))
+		       (when (string-prefix-equals (symbol-name (car rest)) "xmlns:")
+			 (sw-register-namespace (cadr (utils:string-split (symbol-name (car rest)) #\:  ))
+						(cadr rest))))
 		     (let ((property (symbol->frame (lxml-tag elt)))
 			   )
 		       (acond ((lxml-attribute elt '|rdf|::|resource|)
