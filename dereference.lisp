@@ -60,6 +60,14 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
 
 #$db:diseasome/diseases
 - Works 
+
+
+NOT WORKING
+#$http://www.bbc.co.uk/music/artists/5f6ab597-f57a-40da-be9e-adad48708203#artist
+
+returns some RDF but it gets applied to the wrong frame. Namespace problem?
+
+
 |#
 
 
@@ -78,6 +86,8 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
       ;; turns out this processes the 303 redirect without any further intervention
       (utils:get-url (frame-uri frame) :accept "application/rdf+xml")
     (print `(response-code ,response-code response-headers ,response-headers))
+    (unless (= response-code 200)
+      (error "Failed to dereference ~A, response code ~A" frame response-code))
     (let* (; (s-xml::*ignore-namespaces* t)
 	   (xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
       (labels ((symbol->frame (symbol)

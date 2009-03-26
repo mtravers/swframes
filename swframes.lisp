@@ -126,8 +126,7 @@ Idle thoughts:
   
 (defvar *fill-by-default?* nil)
 
-
-
+;;; optional argument doesn't play well with setf.
 (defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
   (frame-fresh? frame)
   (frame-fresh? slot)
