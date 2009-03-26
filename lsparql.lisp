@@ -62,6 +62,7 @@
 	  query))
     ))
 
+;;; +++ methodize
 (defun sparql-term (thing)
   (typecase thing
     (frame (format nil "<~A>" (frame-uri thing)))
