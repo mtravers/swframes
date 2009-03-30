@@ -12,6 +12,15 @@ Idle thoughts:
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *default-frame-source* nil))
 
+(export '(frame frame-name frame-named frame-label
+	  %frame-slots %frame-inverse-slots
+	  reset-frames for-all-frames all-frames
+	  fill-frame fill-frame-inverse
+	  slotv slotv-inverse
+	  svf svif
+	  add-triple
+	  describe-frame))
+
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
 
@@ -46,7 +55,6 @@ Idle thoughts:
 (defun all-frames ()
   (collecting (for-all-frames (f) (utils::collect f))))
 
-;;; +++
 (defmethod reset-frame ((frame frame))
   (clrhash (frame-slots frame))
   (setf (frame-loaded? frame) nil)
@@ -89,7 +97,7 @@ Idle thoughts:
 (defun sparql-binding-elt (binding v)
   (cadr (find v binding :key #'car :test #'equal)))
 
-(defmethod fill-frame-sparql ((frame frame) &key force?)
+(defmethod fill-frame-sparql ((frame frame))
     (let ((*default-frame-source* (or (frame-source frame)
 				      *default-frame-source*)))
       (dolist (binding (knewos::run-sparql 
@@ -118,8 +126,7 @@ Idle thoughts:
   
 (defvar *fill-by-default?* nil)
 
-
-
+;;; optional argument doesn't play well with setf.
 (defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
   (frame-fresh? frame)
   (frame-fresh? slot)
@@ -143,6 +150,13 @@ Idle thoughts:
     (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
   (setf (gethash slot (frame-inverse-slots frame)) value))
 
+;;; convenience, analagous to #^
+(defun svf (slot)
+  #'(lambda (x) (slotv x slot)))
+
+(defun svif (slot)
+  #'(lambda (x) (slotv-inverse x slot)))
+
 ;;; this is really what we should use, I suppose
 (defun add-triple (s p o)
   (pushnew o (slotv s p) :test #'equal)
@@ -157,11 +171,10 @@ Idle thoughts:
 ;;; bulk fill +++
 ;;; query (sexpy sparql syntax from lsw) ___
 
-(defun describe-sframe (frame &optional (fill? t))
+(defun describe-frame (frame &optional (fill? t))
   (when fill? (fill-frame frame))
   (princ "Forward:")
   (pprint (mt:ht-contents (frame-slots frame)))
-;  (fill-sframe-inverse frame)
   (when (frame-inverse-slots frame)
     (princ "Inverse:")
     (pprint (mt:ht-contents (frame-inverse-slots frame))))

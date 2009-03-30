@@ -193,3 +193,47 @@ WHERE {
     (print `(dereferencing ,f))
     (report-and-ignore-errors
       (dereference f))))
+
+;;; Get trials for a condition (dereferencing also works)
+(swframes::sparql-query '(:select (?s ?p) () (?s ?p #$db:condition/749)))
+
+;;; all experimental drugs (hm, exactly 600, that's suspicious)
+(swframes::sparql-query '(:select (?d ?name) () (?d ?p #$drugbank:resource/drugtype/experimental) (?d #$rdfs:label ?name)) :server  *drugbank-frame-source*)
+
+;;; test our local virtuoso
+;; fast!
+(sparql-query `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ) :server "http://virtuoso.collabrx.com/sparql/")
+;; not as fast!
+(sparql-query '(:select (?s ?p) () (?s ?p "Melanoma")) :server "http://virtuoso.collabrx.com/sparql")
+
+;;; new feature!
+(sparql-query '(:select (?s) () (?s ?p "Melanoma")) :server "http://virtuoso.collabrx.com/sparql" :one-var? t)
+
+;;; trials about Myopia
+(sparql-query '(:select (?s) () (?s #$db:linkedct/condition #$db:condition/8512)) :server "http://data.linkedct.org/sparql" :one-var? t)
+
+
+;;; 
+(defun bulk-load (sparql-clauses &key server)
+  (let* ((full-query `(:select (?s ?p ?o) () ,@sparql-clauses (?s ?p ?o)))
+	 (res (sparql-query full-query :server server)))
+    (dolist (bind res)
+      (let ((s (sparql-binding-elt bind "s"))
+	    (p (sparql-binding-elt bind "p"))
+	    (o (sparql-binding-elt bind "o")))
+	(add-triple s p o)
+	(setf (frame-dereferenced? s) t) ;not really, but the equivalent
+	))))
+
+
+(bulk-load '((?s #$db:linkedct/condition #$db:condition/8512)) :server "http://data.linkedct.org/sparql")
+
+I'm always doing this, so
+
+(lambda (trial)
+  (mapcar (svf #$db:linkedct/intervention_name)
+	  (slotv trial #$db:linkedct/intervention)))
+
+
+(funcall (svf* #$db:linkedct/intervention_name #$db:linkedct/intervention)
+	 #$db:trials/NCT00727558)

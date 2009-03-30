@@ -22,11 +22,13 @@
 
 (defun html-for-browse-frame (name)
   (let* ((frame (frame-named name))
-         (title (formatn "Frame #$~A" name)))
+         (title (formatn "Frame #$~A" (frame-name frame))))
     (fill-frame frame)
     (wb::with-standard-weblistener-page-header (title)
       (if frame
           (progn
+
+
 ;            (emit-min-less-more-max-control frame)
 ;            (emit-block-format-or-lisp-format-control frame)
             (html (:princ "    "))
@@ -44,9 +46,14 @@
                 (:princ-safe "Frame->Listener"))
                :newline))
             (html :br :br)
-	    (when (not (equal (frame-uri frame) (frame-label frame)))
-	      (html "Full name: "
+	    (when (not (equal (frame-uri frame) (frame-name frame)))
+	      (html :br 
+		    "Full URI: "
 		    (:princ (frame-uri frame))))
+	    (when (not (equal (frame-name frame) (frame-label frame)))
+	      (html :br 
+		    "Label: "
+		    (:princ (frame-label frame))))
             (frames::wob-html frame)
             )
         (html (:i "Frame not found.  (May have been uninterned)") :newline)

@@ -81,10 +81,11 @@
 	     (name-sym (intern name (find-package *username*)))
 	     (fun-text (net.aserve::request-query-value "sexp" req))
 	     (fun (compile name-sym (read-from-string fun-text))))
+	(setf (get name-sym :text) fun-text)
 	(setf (frame-grid-slots grid)
-	      (append (frame-grid-slots grid) (list fun)))
+;	      (append (frame-grid-slots grid) (list fun)))
+	      (append (frame-grid-slots grid) (list name-sym)))
 	(net.aserve::redirect-to req ent "/redisplay.html")))))
-	      
 
 
 (defmethod out-record-to-html ((grid frame-grid) (string string) &rest ignore)
@@ -105,7 +106,12 @@
 		   (html (:th (unless label?
 				(if header
 				    (html (:b (:princ header)) :br)
-				    (html (:b (frame::emit-value rslot)) :br)))
+				    (if (symbolp rslot)
+					(html (:b (frame::emit-value rslot) )
+					      :br
+					      (:div (:pre (:princ (get rslot :text)))))
+					;; frame slot
+					(html (:b (frame::emit-value rslot)) :br))))
 			      (if (and (frame-grid-sorting? grid) ;was commented out, not sure why
 				       (column-sortable? grid rslot))
 				  (html ((:a :href (eval-link `(frame-grid-sort ,(ref-to-current-output) ',rslot :up)) 
@@ -208,3 +214,8 @@
 
 ;;
 
+(defun frame-grid-value (grid row column)
+  (declare (ignore grid))
+  (if (swframes::frame-p column)
+      (swframes::slotv row column)
+    (funcall column row)))

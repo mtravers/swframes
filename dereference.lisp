@@ -60,6 +60,14 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
 
 #$db:diseasome/diseases
 - Works 
+
+
+NOT WORKING
+#$http://www.bbc.co.uk/music/artists/5f6ab597-f57a-40da-be9e-adad48708203#artist
+
+returns some RDF but it gets applied to the wrong frame. Namespace problem?
+
+
 |#
 
 
@@ -67,8 +75,8 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
 
 ;;; An incomplete parser of RDF/XML
 
-(defmethod dereference ((frame frame))
-  (unless (frame-dereferenced? frame)
+(defmethod dereference ((frame frame) &optional force?)
+  (when (or force? (not (frame-dereferenced? frame)))
     (when (string-prefix-equals (frame-uri frame) "http")
       (dereference-1 frame)
       (setf (frame-dereferenced? frame) t))))
@@ -77,6 +85,9 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
   (multiple-value-bind (body response-code response-headers uri)
       ;; turns out this processes the 303 redirect without any further intervention
       (utils:get-url (frame-uri frame) :accept "application/rdf+xml")
+    (print `(response-code ,response-code response-headers ,response-headers))
+    (unless (= response-code 200)
+      (error "Failed to dereference ~A, response code ~A" frame response-code))
     (let* (; (s-xml::*ignore-namespaces* t)
 	   (xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
       (labels ((symbol->frame (symbol)
@@ -99,6 +110,12 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
 		   (unless (eq (lxml-tag desc) '|rdf|::|Description|)
 		     (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
 		   (dolist (elt (lxml-all-subelements desc))
+		     ;; stupid dbpedia defines namespaces in the element they it is used in!
+		     (do ((rest (mt::lxml-attributes elt) (cddr rest)))
+			 ((null rest))
+		       (when (string-prefix-equals (symbol-name (car rest)) "xmlns:")
+			 (sw-register-namespace (cadr (utils:string-split (symbol-name (car rest)) #\:  ))
+						(cadr rest))))
 		     (let ((property (symbol->frame (lxml-tag elt)))
 			   )
 		       (acond ((lxml-attribute elt '|rdf|::|resource|)
