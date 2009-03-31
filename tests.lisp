@@ -4,35 +4,30 @@
 (sw-register-namespace "linkedct" "http://data.linkedct.org/resource/linkedct/")
 (sw-register-namespace "drugbank" "http://www4.wiwiss.fu-berlin.de/drugbank/")
 
-(setq *default-frame-source* (make-sparql-source "http://data.linkedct.org/sparql"))
+(defvar *linkedct-sparql* (make-sparql-source "http://data.linkedct.org/sparql"))
+
+(setq *default-frame-source* *linkedct-sparql*)
 
 (pprint
- (setq xx (sparql-query `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ))))
+f (setq xx (do-sparql *default-frame-source* `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ))))
 
 
 ;;; print trials for Myopia
 (pprint
- (swframes::sparql-query
+ (do-sparql *default-frame-source*
   '(:select (?trial ?title) ()
     (?trial #$http://data.linkedct.org/resource/linkedct/condition #$http://data.linkedct.org/resource/condition/8512)
     (?trial #$http://data.linkedct.org/resource/linkedct/brief_title ?title))))
 
 
-;;; all classes
-
-
 ;;; find some trials with interventions
-(run-sparql 
+(do-sparql 
  *default-frame-source*
- (generate-sparql
-  `(:select (?s ?o) (:limit 10) (?s ,(make-frame :uri (expand-uri "linkedct:intervention")) ?o ))))
-
-(generate-sparql
-  `(:select (?s ?p ?o) (:limit 30) (?s ?p ?o )))
+ `(:select (?s ?o) (:limit 10) (?s ,(make-frame :uri (expand-uri "linkedct:intervention")) ?o )))
 
 
 ;;; find some drug trials
- (sparql-query 
+ (do-sparql *default-frame-source* 
   `(:select (?trial ?intervention ?drug)
 	    (:limit 50)
 	    (?trial ,(intern-uri (expand-uri "linkedct:intervention")) ?intervention )
@@ -40,7 +35,7 @@
 	    (?intervention ,(intern-uri (expand-uri "linkedct:intervention_name")) ?drug )
 	    ))
 
- (sparql-query 
+(do-sparql *default-frame-source* 
   `(:select (?trial ?intervention ?drug)
 	    (:limit 50)
 	    (?trial #$linkedct:intervention ?intervention )
@@ -48,7 +43,7 @@
 	    (?intervention #$linkedct:intervention_name ?drug )
 	    ))
 
-(sparql-query 
+(do-sparql *default-frame-source*
   `(:select (?trial ?intervention ?drug)
 	    (:limit 50)
 	    (?trial #$linkedct:intervention ?intervention )
@@ -58,7 +53,7 @@
 
 ;;; find trials for a drug (not too smart)
 (defun trials-for-drug (drugname)
-  (sparql-query
+  (do-sparql *default-frame-source*
    `(:select (?trial ?title ?condname) ()
 	     (?trial #$linkedct:intervention ?intervention )
 	     (?trial #$linkedct:brief_title ?title)
@@ -68,11 +63,9 @@
 	     (?condition #$linkedct:condition_name ?condname)
 	     )))
 
-;;; looking for synonyms through drugbank link
-;;; Whoops, looks like drugbank refs are in here, but not data...perhaps a different sparql endpoint?
 
 ie:
-(describe-sframe (intern-uri "http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00243"))
+(describe-frame (intern-uri "http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00243"))
 
 ;;; Weirdly try to find drug synonyms through interventions...
 ;;; seems to take forever, damn it.  Doesn't seem like it would be that hard a query to run...
@@ -80,16 +73,14 @@ ie:
 ;;; seems to work somewhat ebetter if you leave off distinct
 ;;; Works OK on "Lepriuden", times out on "Gleevec".  Sigh.
 (defun synonyms-for-drug (drugname)
-  (run-sparql *default-frame-source*
-	      (generate-sparql 
+  (do-sparql *default-frame-source*
 	       `(:select (?nname) ()
 			 (?i1 ,(intern-uri (expand-uri "linkedct:intervention_name")) ,drugname)
 			 (?i1 ,(intern-uri "http://www.w3.org/2002/07/owl#sameAs") ?syn)
 			 (?i2 ,(intern-uri "http://www.w3.org/2002/07/owl#sameAs") ?syn)
-			 (?i2 ,(intern-uri (expand-uri "linkedct:intervention_name")) ?nname)))))
+			 (?i2 ,(intern-uri (expand-uri "linkedct:intervention_name")) ?nname))))
 
 
-;;; This works, b
 (defun synonyms-for-drug2 (drugname)
   (let ((synonyms
 	 (mt:collecting
@@ -106,8 +97,6 @@ ie:
 	    (dolist (elt (slotv i (intern-uri (expand-uri "linkedct:intervention_name"))))
 	      (if (not (find elt result :test #'string-equal))
 		  (push elt result)))))))))
-
-
 
 ;;; Diseasome
 (setq *default-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/diseasome/sparql"))
@@ -126,17 +115,15 @@ ie:
 
 ;;; Let's replicate some stuff
 (defun db-target (gene-name)
- (swframes::sparql-query
+ (do-sparql *drugbank-frame-source*
   `(:select (?target) ()
     (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
     )
   :server *drugbank-frame-source*))
 
-(defun test ()
-  `(frame-fresh? #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName))
 
 (defun db-drugs (gene-name)
- (swframes::sparql-query
+ (do-sparql *drugbank-frame-source*
   `(:select (?drug ?name ?target) ()
 	    (?drug #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/target ?target)
 	    (?drug #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName ?name)
@@ -155,6 +142,15 @@ WHERE {
 :make-uri #'intern-uri
 :eager-make-uri? t)
 
+;;; Works except results are tagged wrong, so URIs don't get built
+(run-sparql "http://quebec.bio2rdf.org/sparql"
+"SELECT ?type1, ?label1, count(*)
+WHERE {
+?s1 ?p1 ?o1 .
+?o1 bif:contains \"HK1\" .
+?s1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type1 .
+?s1 <http://www.w3.org/2000/01/rdf-schema#label> ?label1 .
+}" :make-uri #'intern-uri)
 
 
 
@@ -162,7 +158,6 @@ WHERE {
 (defmethod out-record-to-html :around ((form t) (string string) &rest ignore)
   (declare (ignore ignore))
   (call-next-method))
-
 
 
 ;;; test the grid
@@ -176,15 +171,7 @@ WHERE {
   (html-for-browse-frame "http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00002"))
 
 
-;;; Works except results are tagged wrong, so URIs don't get built
-(run-sparql "http://quebec.bio2rdf.org/sparql"
-"SELECT ?type1, ?label1, count(*)
-WHERE {
-?s1 ?p1 ?o1 .
-?o1 bif:contains \"HK1\" .
-?s1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type1 .
-?s1 <http://www.w3.org/2000/01/rdf-schema#label> ?label1 .
-}" :make-uri #'intern-uri)
+
 
 
 ;;;; Dereference worker.
@@ -202,31 +189,26 @@ WHERE {
 
 ;;; test our local virtuoso
 ;; fast!
-(sparql-query `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ) :server "http://virtuoso.collabrx.com/sparql/")
+(defvar *collabrx-sparql* (make-sparql-source "http://virtuoso.collabrx.com/sparql/"))
+
+(do-sparql *collabrx-sparql* `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ) )
 ;; not as fast!
-(sparql-query '(:select (?s ?p) () (?s ?p "Melanoma")) :server "http://virtuoso.collabrx.com/sparql")
+(do-sparql *collabrx-sparql* '(:select (?s ?p) () (?s ?p "Melanoma")))
 
 ;;; new feature!
-(sparql-query '(:select (?s) () (?s ?p "Melanoma")) :server "http://virtuoso.collabrx.com/sparql" :one-var? t)
+(do-sparql *collabrx-sparql* '(:select (?s) () (?s ?p "Melanoma")) :one-var? t)
 
 ;;; trials about Myopia
-(sparql-query '(:select (?s) () (?s #$db:linkedct/condition #$db:condition/8512)) :server "http://data.linkedct.org/sparql" :one-var? t)
+(do-sparql *collabrx-sparql* '(:select (?s) () (?s #$db:linkedct/condition #$db:condition/8512)) :one-var? t)
 
 
 ;;; 
-(defun bulk-load (sparql-clauses &key server)
-  (let* ((full-query `(:select (?s ?p ?o) () ,@sparql-clauses (?s ?p ?o)))
-	 (res (sparql-query full-query :server server)))
-    (dolist (bind res)
-      (let ((s (sparql-binding-elt bind "s"))
-	    (p (sparql-binding-elt bind "p"))
-	    (o (sparql-binding-elt bind "o")))
-	(add-triple s p o)
-	(setf (frame-dereferenced? s) t) ;not really, but the equivalent
-	))))
 
 
-(bulk-load '((?s #$db:linkedct/condition #$db:condition/8512)) :server "http://data.linkedct.org/sparql")
+
+
+
+(bulk-load *linkedct-sparql* '((?s #$db:linkedct/condition #$db:condition/8512)) )
 
 I'm always doing this, so
 
@@ -237,3 +219,10 @@ I'm always doing this, so
 
 (funcall (svf* #$db:linkedct/intervention_name #$db:linkedct/intervention)
 	 #$db:trials/NCT00727558)
+
+
+;;; This is cute...
+(wb::frame-grid
+ (swframes::bulk-load *collabrx-sparql* '((?s ?pp "Melanoma"))))
+
+

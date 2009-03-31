@@ -43,7 +43,12 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (assert (stringp uri))
   (or (gethash uri *uri->frame-ht*)
       (setf (gethash uri *uri->frame-ht*)
-	    (make-frame :uri uri :source *default-frame-source*))))
+	    (make-frame :uri uri 
+;			:source *default-frame-source*
+			))))
+
+(defun unintern-uri (uri)
+  (remhash uri *uri->frame-ht*))
 
 ;;; this isn't working for some reason...interned  objects are not frames?
 (defmethod make-load-form ((frame frame) &optional ignore)

@@ -7,21 +7,18 @@
 (sw-register-namespace "drugbank" "http://www4.wiwiss.fu-berlin.de/drugbank/")
 
 (defun db-target (gene-name)
- (swframes::sparql-query
+ (do-sparql *drugbank-frame-source*
   `(:select (?target) ()
     (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
-    )
-  :server *drugbank-frame-source*))
-
+    )))
 
 (defun db-drugs (gene-name)
- (swframes::sparql-query
+ (do-sparql *drugbank-frame-source*
   `(:select (?drug ?name ?target) ()
 	    (?drug #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/target ?target)
 	    (?drug #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName ?name)
 	    (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
-    )
-  :server *drugbank-frame-source*))
+    )))
 
 (defun drug-grid (target-gene)
   (wb::frame-grid (mapcar #'(lambda (bindings)

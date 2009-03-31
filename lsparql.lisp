@@ -1,17 +1,39 @@
 (in-package :swframes)
 
-;;; Mostly borrowed from LSW
-
 (defvar *sparql-namespace-uses*)
 
-(defun sparql-query (form &key (server *default-frame-source*) (timeout 1000) one-var?)
+;;; might want to register these somewhere
+(defun make-sparql-source (uri)
+  (make-instance 'sparql-endpoint
+		 :uri uri))
+
+;;; +++ promulgate
+(defclass* sparql-endpoint ()
+  (uri
+   (writeable? nil)
+   (write-graph nil))
+  :initable-instance-variables
+  )
+
+(defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (server *default-frame-source*) (timeout 1000) one-var?)
   (multiple-value-bind (res vars)
-      (run-sparql server
-		  (generate-sparql form)
-		  :make-uri #'intern-uri)
+      (knewos::run-sparql uri command :make-uri #'intern-uri)
     (if one-var?
 	(mapcar #'cadar res)
-      res)))
+	res)))
+
+(defmethod do-sparql ((sparql sparql-endpoint) (command list) &key (server *default-frame-source*) (timeout 1000) one-var?)
+  (do-sparql sparql (generate-sparql command)))
+
+;;; should generate a guaranteed unique new URI (+++ not yet)
+(defmethod genuri ((sparql sparql-endpoint) prefix)
+  (intern-uri (format nil "~A/~A" prefix (string (gensym)))))
+
+
+;;; being replaced with do-sparql
+(defun sparql-query (form)
+  (error "replace with do-sparql")
+  )
 
 (defun generate-sparql (form)
   (let ((*sparql-namespace-uses* nil)
@@ -19,6 +41,7 @@
 	query)
     (setq query
 	  ;; DELETE and INSERT can take WHERE clauses, not supported here yet
+	  ;; redone as separate methods on endpoints.
     (cond
 #|
       ((eq (car form) :insert)
@@ -62,6 +85,7 @@
 	  query))
     ))
 
+;;; +++ methodize
 (defun sparql-term (thing)
   (typecase thing
     (frame (format nil "<~A>" (frame-uri thing)))
@@ -181,3 +205,27 @@
 
 (defun sparql-binding-elt (bindings name)
   (cadar (member name bindings :key #'car :test #'string-equal)))
+
+(defun sparql-binding-elt (binding v)
+  (cadr (find v binding :key #'car :test #'equal)))
+
+;;; sparql clauses define a set using variable ?s, this loads all forward links fro those uris.
+;;; +++ should be method on server.
+(defmethod bulk-load ((server sparql-endpoint) sparql-clauses)
+  (let* ((full-query `(:select (?s ?p ?o) () ,@sparql-clauses (?s ?p ?o)))
+	 (res (do-sparql server full-query)))
+    (collecting
+      (dolist (bind res)
+	(let ((s (sparql-binding-elt bind "s"))
+	      (p (sparql-binding-elt bind "p"))
+	      (o (sparql-binding-elt bind "o")))
+	  (add-triple s p o)
+	  (collect-new s)
+	  (setf (frame-dereferenced? s) t) ;not really, but the equivalent
+	  (setf (frame-source s) server)
+	  (when (frame-p o)		;not sure about this, but for now
+	    (setf (frame-source o) server))
+	  )))))
+
+(defmethod sanity-check ((endpoint sparql-endpoint))
+  (do-sparql endpoint `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) )))

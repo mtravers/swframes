@@ -54,6 +54,11 @@
 	      (html :br 
 		    "Label: "
 		    (:princ (frame-label frame))))
+	    ;; for debugging purposes I suppose
+	    (when (frame-source frame)
+	      (html :br
+		    "Source: "
+		    (:princ (frame-source frame))))
             (frames::wob-html frame)
             )
         (html (:i "Frame not found.  (May have been uninterned)") :newline)

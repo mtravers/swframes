@@ -12,6 +12,7 @@
    (:file "dereference")
    (:file "namespace")
    (:file "lsparql")
+   (:file "sparul")
    (:file "browse")
    (:file "sw-frame-grid")
    (:file "xml")

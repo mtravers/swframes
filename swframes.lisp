@@ -33,7 +33,7 @@ Idle thoughts:
   (frame-named name))
 
 (defun frame-label (frame)
-  (or (car (slotv frame #$http://www.w3.org/2000/01/rdf-schema#label nil))
+  (or (car (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label")))
       (frame-name frame)))
 
 ;;; names should be reversed
@@ -60,19 +60,30 @@ Idle thoughts:
   (setf (frame-loaded? frame) nil)
   (setf (frame-inverse-slots frame) nil))
 
+(defmethod delete-frame ((frame frame))
+  (reset-frame frame)
+  (unintern-uri (frame-uri frame)))
+
 ;;; debugging
 (defun frame-fresh? (frame)
   (unless (eq frame (intern-uri (frame-uri frame)))
     (error "~A is stale" frame))
   t)
 
-;;; +++ namespace hackery (steal LSW)
-(defun frame-uri-namespaced (frame)
-  (frame-uri frame))			;not yet
-
 (defmethod fill-frame-inverse ((frame frame))
   (fill-frame frame))
 
+(defmethod fill-frame ((frame frame) &key force?)
+  (when (or force? (not (frame-loaded? frame)))
+    (if (frame-source frame)
+	(progn
+	  (fill-frame-sparql frame)
+	  (fill-frame-inverse-sparql frame))
+	(dereference frame))
+    (setf (frame-loaded? frame) t)))
+	
+
+#|
 ;;; via sparql
 (defmethod fill-frame ((frame frame) &key force?)
   (when (or force? (not (frame-loaded? frame)))
@@ -93,19 +104,21 @@ Idle thoughts:
 	(setf (frame-loaded? frame) t)
 	(warn "Attempt to dereference ~A failed" frame))
     ))
+|#
 
-(defun sparql-binding-elt (binding v)
-  (cadr (find v binding :key #'car :test #'equal)))
-
-(defmethod fill-frame-sparql ((frame frame))
-    (let ((*default-frame-source* (or (frame-source frame)
+(defmethod fill-frame-sparql ((frame frame) &optional source)
+    (let ((*default-frame-source* (or source
+				      (frame-source frame)
 				      *default-frame-source*)))
-      (dolist (binding (knewos::run-sparql 
+      (dolist (binding (do-sparql 
 			*default-frame-source*
-			(format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame))
-			:make-uri #'intern-uri))
-	(push (sparql-binding-elt binding "o")
-	      (gethash (sparql-binding-elt binding "p") (frame-slots frame)))
+			(format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame))))
+; replaced with add-triple
+;	(pushnew (sparql-binding-elt binding "o")
+;		 (gethash (sparql-binding-elt binding "p") (frame-slots frame)))
+	(add-triple frame
+		    (sparql-binding-elt binding "p")
+		    (sparql-binding-elt binding "o"))
 	)
       (setf (frame-loaded? frame) t)
       ))
@@ -116,12 +129,15 @@ Idle thoughts:
     (setf (frame-inverse-slots frame) (make-hash-table :test #'eq))
   (let ((*default-frame-source* (or (frame-source frame)
 				    *default-frame-source*)))
-    (dolist (binding (knewos::run-sparql 
+    (dolist (binding (do-sparql 
 		      *default-frame-source*
-		      (generate-sparql `(:select (?s ?p) () (?s ?p ,frame)))
-		      :make-uri #'intern-uri))
-      (push (sparql-binding-elt binding "s")
-	    (gethash (sparql-binding-elt binding "p") (frame-inverse-slots frame)))
+		       `(:select (?s ?p) () (?s ?p ,frame))))
+; replaced with add-triple
+;      (push (sparql-binding-elt binding "s")
+;	    (gethash (sparql-binding-elt binding "p") (frame-inverse-slots frame)))
+      (add-triple (sparql-binding-elt binding "s") 
+		  (sparql-binding-elt binding "p")
+		  frame)
       ))))
   
 (defvar *fill-by-default?* nil)
@@ -164,11 +180,6 @@ Idle thoughts:
       (pushnew s (slotv-inverse o p) :test #'equal))
   nil)					;makes tracing saner
 
-;;; temp -- these probably want to be objects
-(defun make-sparql-source (endpoint)
-  endpoint)
-
-;;; bulk fill +++
 ;;; query (sexpy sparql syntax from lsw) ___
 
 (defun describe-frame (frame &optional (fill? t))
@@ -197,11 +208,10 @@ Tests:
 
 |#
 
-
 (defun name-eq (s1 s2)
   (equal (symbol-name s1) (symbol-name s2)))
 
-;;; Slow, obviously
+;;; Slow, obviously.
 (defun frames-with-value (v &optional slot)
   (collecting
     (for-all-frames (f)
@@ -214,4 +224,5 @@ Tests:
 	    (when (member v (slotv f slot) :test #'equal)
 	      (utils::collect f)
 	      (return-from frame))))))))
+
 
