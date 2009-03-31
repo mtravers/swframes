@@ -19,12 +19,13 @@
   `(:|frame-xml|
      ,@(mt:collecting
 	(maphash #'(lambda (key val)
+		     (if (listp val) (setq val (car val))) ;+++ not dealing with multiple value properly yet
 		     (mt:collect
 			 `(:|property|
 			    (:|predicate| ,(frame-uri key))
 			    (:|predicateLabel| ,(frame-label key))
-			    (:|uri| ,(if (frame-p val) (frame-uri frame) ""))
-			    (:|value| ,(stringy (car val)))))) ;+++ multiple values...also uris!
+			    (:|uri| ,(if (frame-p val) (frame-uri val) ""))
+			    (:|value| ,(stringy val))))) 
 		 (frame-slots frame)))))
 
 (defun stringy (val)
