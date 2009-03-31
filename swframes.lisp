@@ -32,6 +32,15 @@ Idle thoughts:
   (declare (ignore force?))
   (frame-named name))
 
+(defun frames::slotv (frame slot)
+  (slotv frame slot))
+
+(defun frames::set-slotv (frame slot value)
+  (set-slotv frame slot value))
+
+(defun frames::frame-slots-of (frame)
+  (%frame-slots frame))
+
 (defun frame-label (frame)
   (or (car (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label")))
       (frame-name frame)))
@@ -152,6 +161,9 @@ Idle thoughts:
 (defsetf slotv set-slotv)
 
 (defmethod set-slotv ((frame frame) (slot frame) value)
+  ;; enforce rule that slot values are lists...
+  (unless (listp value)
+    (setf value (list value)))
   (setf (gethash slot (frame-slots frame)) value))
 
 (defmethod slotv-inverse ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
