@@ -1,0 +1,16 @@
+Ideas.
+
+Frame sources should be CLOS objects (DONE for SPARQL).  
+
+In-memory and SPARQL endpoints should have a common (or partially common) API.  
+
+In-memory frames can have slot indexes for quicker lookup. But we probably don't
+want to make a whole in-memory SPARQL implementation (or maybe we do, it's not
+that hard).
+
+Theory of dirtiness (Not yet implemented):
+- frames have a slot of dirty predicates.
+- there is a global (or per-sparql) list of dirty frames
+
+Theory of slot values
+ - always a list
