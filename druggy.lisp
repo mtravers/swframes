@@ -12,6 +12,7 @@
     (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
     )))
 
+;;; warnng: case-sensitive.
 (defun db-drugs (gene-name)
  (do-sparql *drugbank-frame-source*
   `(:select (?drug ?name ?target) ()

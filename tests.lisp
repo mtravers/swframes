@@ -26,8 +26,8 @@ f (setq xx (do-sparql *default-frame-source* `(:select (?s ?p ?o) (:limit 10) (?
  `(:select (?s ?o) (:limit 10) (?s ,(make-frame :uri (expand-uri "linkedct:intervention")) ?o )))
 
 
-;;; find some drug trials
- (do-sparql *default-frame-source* 
+;;; find some drug trials (returns
+(do-sparql *linkedct-sparql* 
   `(:select (?trial ?intervention ?drug)
 	    (:limit 50)
 	    (?trial ,(intern-uri (expand-uri "linkedct:intervention")) ?intervention )
@@ -35,7 +35,7 @@ f (setq xx (do-sparql *default-frame-source* `(:select (?s ?p ?o) (:limit 10) (?
 	    (?intervention ,(intern-uri (expand-uri "linkedct:intervention_name")) ?drug )
 	    ))
 
-(do-sparql *default-frame-source* 
+(do-sparql *linkedct-sparql*
   `(:select (?trial ?intervention ?drug)
 	    (:limit 50)
 	    (?trial #$linkedct:intervention ?intervention )
@@ -43,17 +43,9 @@ f (setq xx (do-sparql *default-frame-source* `(:select (?s ?p ?o) (:limit 10) (?
 	    (?intervention #$linkedct:intervention_name ?drug )
 	    ))
 
-(do-sparql *default-frame-source*
-  `(:select (?trial ?intervention ?drug)
-	    (:limit 50)
-	    (?trial #$linkedct:intervention ?intervention )
-	    (?intervention #$linkedct:intervention_type "Drug" )
-	    (?intervention #$linkedct:intervention_name ?drug )
-	    ))
-
-;;; find trials for a drug (not too smart)
+;;; find trials for a drug (not too smart) (seems to have stoped working?)
 (defun trials-for-drug (drugname)
-  (do-sparql *default-frame-source*
+  (do-sparql *collabrx-sparql* ; *linkedct-sparql*
    `(:select (?trial ?title ?condname) ()
 	     (?trial #$linkedct:intervention ?intervention )
 	     (?trial #$linkedct:brief_title ?title)
@@ -62,6 +54,15 @@ f (setq xx (do-sparql *default-frame-source* `(:select (?s ?p ?o) (:limit 10) (?
 	     (?trial #$linkedct:condition ?condition)
 	     (?condition #$linkedct:condition_name ?condname)
 	     )))
+
+
+(lambda (d)
+  (mapcar #'(lambda (b)
+	      (list (sw::sparql-binding-elt b "trial")
+		    (sw::sparql-binding-elt b "title")))
+	  (sw::trials-for-drug (car (slotv d #$drugbank:genericName)))))
+
+
 
 
 ie:
@@ -201,6 +202,8 @@ WHERE {
 ;;; trials about Myopia
 (do-sparql *collabrx-sparql* '(:select (?s) () (?s #$db:linkedct/condition #$db:condition/8512)) :one-var? t)
 
+
+(do-sparql *collabrx-sparql* '(:select (?s ?p) () (?s ?p "Ranolazine")))
 
 ;;; 
 
