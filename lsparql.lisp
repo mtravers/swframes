@@ -15,14 +15,20 @@
   :initable-instance-variables
   )
 
-(defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (server *default-frame-source*) (timeout 1000) one-var?)
+(defmethod* print-object ((sparql sparql-endpoint) stream)
+  (format stream "#<~A ~A>" (type-of sparql) uri))
+
+
+;;; Now will set the source of new frames...which is not always right, but better than nothing
+(defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key  (timeout 15) one-var?)
   (multiple-value-bind (res vars)
-      (knewos::run-sparql uri command :make-uri #'intern-uri)
+      (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" sparql))
+	(knewos::run-sparql uri command :make-uri #'(lambda (u) (intern-uri u sparql))))
     (if one-var?
 	(mapcar #'cadar res)
 	res)))
 
-(defmethod do-sparql ((sparql sparql-endpoint) (command list) &key (server *default-frame-source*) (timeout 1000) one-var?)
+(defmethod do-sparql ((sparql sparql-endpoint) (command list) &key (timeout 1000) one-var?)
   (do-sparql sparql (generate-sparql command)))
 
 ;;; should generate a guaranteed unique new URI (+++ not yet)

@@ -84,7 +84,8 @@ returns some RDF but it gets applied to the wrong frame. Namespace problem?
 (defmethod dereference-1 ((frame frame))
   (multiple-value-bind (body response-code response-headers uri)
       ;; turns out this processes the 303 redirect without any further intervention
-      (utils:get-url (frame-uri frame) :accept "application/rdf+xml")
+      (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
+	(utils:get-url (frame-uri frame) :accept "application/rdf+xml"))
     (print `(response-code ,response-code response-headers ,response-headers))
     (unless (= response-code 200)
       (error "Failed to dereference ~A, response code ~A" frame response-code))

@@ -39,12 +39,12 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defvar *uri->frame-ht* (make-hash-table :test 'equal))
 
-(defun intern-uri (uri)
+(defun intern-uri (uri &optional source)
   (assert (stringp uri))
   (or (gethash uri *uri->frame-ht*)
       (setf (gethash uri *uri->frame-ht*)
 	    (make-frame :uri uri 
-;			:source *default-frame-source*
+			:source source
 			))))
 
 (defun unintern-uri (uri)
