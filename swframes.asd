@@ -9,6 +9,7 @@
    (:file "package")
    (:file "swframes-0")
    (:file "swframes")
+   (:file "compat")
    (:file "dereference")
    (:file "namespace")
    (:file "lsparql")

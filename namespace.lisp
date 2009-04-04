@@ -51,6 +51,8 @@
     ("foaf" "http://xmlns.com/foaf/0.1/")
     ("skos" "http://www.w3.org/2004/02/skos/core#")
 
+    ("crx" "http://collabrx.com/rdf/")
+
     ("db" "http://data.linkedct.org/resource/")
     ("linkedct" "http://data.linkedct.org/resource/linkedct/")
     ("d2r" "http://sites.wiwiss.fu-berlin.de/suhl/bizer/d2r-server/config.rdf#")

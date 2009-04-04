@@ -12,7 +12,8 @@ Idle thoughts:
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *default-frame-source* nil))
 
-(export '(frame frame-name frame-named frame-label
+(export '(uri
+	  frame frame-name frame-named frame-label
 	  %frame-slots %frame-inverse-slots
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse
@@ -26,20 +27,6 @@ Idle thoughts:
 
 (defun frame-named (name)
   (intern-uri (expand-uri name)))
-
-;; hook into old code, including listener
-(defun frames::frame-fnamed (name &optional force?)
-  (declare (ignore force?))
-  (frame-named name))
-
-(defun frames::slotv (frame slot)
-  (slotv frame slot))
-
-(defun frames::set-slotv (frame slot value)
-  (set-slotv frame slot value))
-
-(defun frames::frame-slots-of (frame)
-  (%frame-slots frame))
 
 (defun frame-label (frame)
   (or (car (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label")))
@@ -88,7 +75,8 @@ Idle thoughts:
 	(progn
 	  (fill-frame-sparql frame)
 	  (fill-frame-inverse-sparql frame))
-	(dereference frame))
+	(mt:report-and-ignore-errors	;+++
+	 (dereference frame)))
     (setf (frame-loaded? frame) t)))
 	
 
