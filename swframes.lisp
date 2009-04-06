@@ -29,8 +29,15 @@ Idle thoughts:
   (intern-uri (expand-uri name)))
 
 (defun frame-label (frame)
-  (or (car (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label")))
+  (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label")))
       (frame-name frame)))
+
+;; try to find the english...this is simplistic and probably implementation dependent
+(defun best-string (list)
+  (or (dolist (elt list)
+	(if (typep elt '(SIMPLE-BASE-STRING 12))
+	    (return elt)))
+      (car list)))
 
 ;;; names should be reversed
 (defun %frame-slots (frame)

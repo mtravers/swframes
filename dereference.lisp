@@ -68,6 +68,16 @@ NOT WORKING
 returns some RDF but it gets applied to the wrong frame. Namespace problem?
 
 
+#$http://wiki.rkbexplorer.com/id/resist
+-- gets entity error because of that annoying syntax.
+
+ #$http://www.geonames.org/2950159/about.rdf
+-- NS-2 error
+
+http://data.linkedmdb.org/all/director
+-- gets data but ins't handled proplery, mot suure why...
+  ah, its data is not about itself!  Odd.
+
 |#
 
 
