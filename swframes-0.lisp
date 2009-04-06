@@ -20,11 +20,19 @@ This file has the minimum needed to get the frame system working (esp. the reade
     (format stream "#$~A" (frame-name frame))))
 
 (set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader)
+(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader)
 
 ;;; +++ would be good to allow #$"sdasdad" for hard to parse names
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
   (uri (frames::read-fname stream)))
+
+(defun pound-carat-frame-reader (stream char arg)
+  (declare (ignore char arg))
+  (let ((slot (uri (frames::read-fname stream))))
+    `(lambda (f) (msv f ,slot))))
+
+;;; I suppose we should have an #v (or something) for inverse-slots...
 
 ;;; reader 
 (defun uri (thing)

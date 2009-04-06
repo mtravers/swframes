@@ -1,33 +1,16 @@
 (in-package :swframes)
-
-
-(sw-register-namespace "linkedct" "http://data.linkedct.org/resource/linkedct/")
-(sw-register-namespace "drugbank" "http://www4.wiwiss.fu-berlin.de/drugbank/")
-
-(defvar *linkedct-sparql* (make-sparql-source "http://data.linkedct.org/sparql"))
-
-(setq *default-frame-source* *linkedct-sparql*)
-
-(pprint
-f (setq xx (do-sparql *default-frame-source* `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ))))
-
-
+    
 ;;; print trials for Myopia
-(pprint
- (do-sparql *default-frame-source*
-  '(:select (?trial ?title) ()
-    (?trial #$http://data.linkedct.org/resource/linkedct/condition #$http://data.linkedct.org/resource/condition/8512)
-    (?trial #$http://data.linkedct.org/resource/linkedct/brief_title ?title))))
-
+(pprint (trials-for-condition "Myopia"))
 
 ;;; find some trials with interventions
 (do-sparql 
- *default-frame-source*
- `(:select (?s ?o) (:limit 10) (?s ,(make-frame :uri (expand-uri "linkedct:intervention")) ?o )))
+    *linkedct-frame-source*
+  `(:select (?s ?o) (:limit 10) (?s ,(make-frame :uri (expand-uri "linkedct:intervention")) ?o )))
 
 
-;;; find some drug trials (returns
-(do-sparql *linkedct-sparql* 
+;;; find some drug trials 
+(do-sparql *linkedct-frame-source*
   `(:select (?trial ?intervention ?drug)
 	    (:limit 50)
 	    (?trial ,(intern-uri (expand-uri "linkedct:intervention")) ?intervention )
@@ -35,38 +18,15 @@ f (setq xx (do-sparql *default-frame-source* `(:select (?s ?p ?o) (:limit 10) (?
 	    (?intervention ,(intern-uri (expand-uri "linkedct:intervention_name")) ?drug )
 	    ))
 
-(do-sparql *linkedct-sparql*
-  `(:select (?trial ?intervention ?drug)
-	    (:limit 50)
-	    (?trial #$linkedct:intervention ?intervention )
-	    (?intervention #$linkedct:intervention_type "Drug" )
-	    (?intervention #$linkedct:intervention_name ?drug )
-	    ))
+(trials-for-drug "Ezetimibe")
 
-;;; find trials for a drug (not too smart) (seems to have stoped working?)
-(defun trials-for-drug (drugname)
-  (do-sparql *collabrx-sparql* ; *linkedct-sparql*
-   `(:select (?trial ?title ?condname) ()
-	     (?trial #$linkedct:intervention ?intervention )
-	     (?trial #$linkedct:brief_title ?title)
-	     (?intervention #$linkedct:intervention_type "Drug" )
-	     (?intervention #$linkedct:intervention_name ,drugname )
-	     (?trial #$linkedct:condition ?condition)
-	     (?condition #$linkedct:condition_name ?condname)
-	     )))
-
-
+;;; for pasting into drug grid
 (lambda (d)
   (mapcar #'(lambda (b)
 	      (list (sw::sparql-binding-elt b "trial")
 		    (sw::sparql-binding-elt b "title")))
 	  (sw::trials-for-drug (car (slotv d #$drugbank:genericName)))))
 
-
-
-
-ie:
-(describe-frame (intern-uri "http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00243"))
 
 ;;; Weirdly try to find drug synonyms through interventions...
 ;;; seems to take forever, damn it.  Doesn't seem like it would be that hard a query to run...
@@ -99,38 +59,6 @@ ie:
 	      (if (not (find elt result :test #'string-equal))
 		  (push elt result)))))))))
 
-;;; Diseasome
-(setq *default-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/diseasome/sparql"))
-
-;;; Fails due to SQL errror!  
-(pprint
- (setq xx (sparql-query `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ))))
-
-;;; Drugbank
-(setq *default-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
-(setq *drugbank-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
-
-
-;;; ah, this works
-
-
-;;; Let's replicate some stuff
-(defun db-target (gene-name)
- (do-sparql *drugbank-frame-source*
-  `(:select (?target) ()
-    (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
-    )
-  :server *drugbank-frame-source*))
-
-
-(defun db-drugs (gene-name)
- (do-sparql *drugbank-frame-source*
-  `(:select (?drug ?name ?target) ()
-	    (?drug #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/target ?target)
-	    (?drug #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName ?name)
-	    (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
-    )
-  :server *drugbank-frame-source*))
 
 (run-sparql "http://quebec.bio2rdf.org/sparql"
 "SELECT ?s1, ?type1, ?label1, count(*)
@@ -172,9 +100,6 @@ WHERE {
   (html-for-browse-frame "http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00002"))
 
 
-
-
-
 ;;;; Dereference worker.
 (defun wail-on-dereferencer ()
   (for-all-frames (f)
@@ -205,13 +130,10 @@ WHERE {
 
 (do-sparql *collabrx-sparql* '(:select (?s ?p) () (?s ?p "Ranolazine")))
 
-;;; 
+;;; bulk loading
 
 
-
-
-
-(bulk-load *linkedct-sparql* '((?s #$db:linkedct/condition #$db:condition/8512)) )
+(bulk-load *linkedct-frame-source* '((?s #$db:linkedct/condition #$db:condition/8512)) )
 
 I'm always doing this, so
 

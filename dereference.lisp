@@ -17,7 +17,7 @@ Here we'll keep track of some of the available data sources:
 ; #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00022
 ; this stuff is weird, it contains mostly back links rather than forward links.  Sigh.
 
-;#$http://dbpedia.org/page/Aminophylline
+;#$http://dbpedia.org/page/Aminophyllinen
 ;  returns HTML with embedded RDFa(?) but it can't be XML parsed.
 ; But you can substitute in 
 ; (dereference #$http://dbpedia.org/resource/Panitumumab)
@@ -56,7 +56,7 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
 
 #$http://rdf.freebase.com/ns/en.blade_runner
 - Works!
-
+- unfortunately freebase doesn't seem to provide a SPARQL endpoint, sigh.
 
 #$db:diseasome/diseases
 - Works 
@@ -86,7 +86,7 @@ returns some RDF but it gets applied to the wrong frame. Namespace problem?
       ;; turns out this processes the 303 redirect without any further intervention
       (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
 	(utils:get-url (frame-uri frame) :accept "application/rdf+xml"))
-    (print `(response-code ,response-code response-headers ,response-headers))
+;    (print `(response-code ,response-code response-headers ,response-headers))
     (unless (= response-code 200)
       (error "Failed to dereference ~A, response code ~A" frame response-code))
     (let* (; (s-xml::*ignore-namespaces* t)
@@ -149,7 +149,6 @@ returns some RDF but it gets applied to the wrong frame. Namespace problem?
 	     (com (car splits))
 	     (ns (cadr splits))
 	     (full (cadr namespaces)))
-	(print `(ns ,com ,ns ,full))
 	(cond ((equal com "xmlns")
 	       (if (null ns)
 		   nil			;+++ do something with this

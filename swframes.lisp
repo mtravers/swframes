@@ -166,12 +166,23 @@ Idle thoughts:
     (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
   (setf (gethash slot (frame-inverse-slots frame)) value))
 
-;;; convenience, analagous to #^
+;;; convenience, analagous to #^ (which is now implemented)
 (defun svf (slot)
   #'(lambda (x) (slotv x slot)))
 
 (defun svif (slot)
   #'(lambda (x) (slotv-inverse x slot)))
+
+
+;;; Experimenting with an extention of slot semantics (in use by #^ now)
+(defmethod msv ((frame frame) slot)
+  (slotv frame slot))
+
+(defmethod msv ((frames list) slot)
+  (let ((result nil))
+    (dolist (f frames result)
+      ;; warning: depends on nunion only being destructive to its FIRST argument
+      (setf result (nunion result (slotv f slot))))))
 
 ;;; this is really what we should use, I suppose
 (defun add-triple (s p o)

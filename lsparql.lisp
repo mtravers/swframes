@@ -215,6 +215,9 @@
 (defun sparql-binding-elt (binding v)
   (cadr (find v binding :key #'car :test #'equal)))
 
+(defun extract-sparql-binding (binding-list v)
+  (mapcar #'(lambda (binding) (sparql-binding-elt binding v)) binding-list))
+
 ;;; sparql clauses define a set using variable ?s, this loads all forward links fro those uris.
 ;;; +++ should be method on server.
 (defmethod bulk-load ((server sparql-endpoint) sparql-clauses)

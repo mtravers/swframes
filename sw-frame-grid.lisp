@@ -38,7 +38,14 @@
   (let* ((potential-slots (potential-slots grid))
 	 (id (session-persist-object grid)))
     (html
-      ((:form
+     ((:form
+	:action "add-function"
+	:method "POST")
+       ((:input :type "hidden" :name "grid-id" :value id))
+       "Def:" ((:textarea :name "sexp" :cols 80 :rows 5)) :br
+       "Name:" ((:input :name "name"))
+       ((:input :type "submit" :value "Add function")))
+     ((:form
 	:action "add-column"
 	:method "POST")
        ((:input :type "hidden" :name "grid-id" :value id))
@@ -48,13 +55,7 @@
 	    ((:option :value (swframes::frame-uri pslot))
 	     (:princ (swframes::frame-label pslot))))))
        ((:input :type "submit" :value "Add slot")))
-      ((:form
-	:action "add-function"
-	:method "POST")
-       ((:input :type "hidden" :name "grid-id" :value id))
-       "Name:" ((:input :name "name")) :br
-       "Def:" ((:textarea :name "sexp" :cols 80 :rows 5)) :br
-       ((:input :type "submit" :value "Add function")))
+
       )))
     
 
@@ -164,7 +165,7 @@
 			     (if (slot-property slotdef :async?)
 				 (let ((realframe frame))
 				   (out-record-to-html
-				    (async
+				    (async ()
 				      (with-frame-printing-context
 					(let ((frames::*current-object* frame)
 					      ;; this is not working, not sure why
@@ -182,8 +183,10 @@
 					 (frames::emit-slot-value slot (swframes::slotv frame slot))
 					 (frame::emit-value (funcall slot frame)))
 				   (error (e)
-				     (format *html-stream* "<i>Error: ~A</i>" e)))
+				     (html (:i (:princ-safe e)))))
 				 )))))))))))))))
+
+
 
 (defun frames::emit-slot-value (slot-frame slot-value)
 ;;   (vif (html-generator
@@ -193,14 +196,20 @@
        (frames::emit-value slot-value)
        )
 
+;;; +++ exp, not working...
 (defmethod frames::emit-value 
-           ((object swframes::frame) &optional (print-limit nil))
+    ((object swframes::frame) &optional (print-limit nil))
   (declare (ignore print-limit))
   (html
    ((:a :href (frames::wob-url object))
-    (:princ-safe (swframes::frame-label object)))
-   :newline
-   ))
+    (if (sw::frame-loaded? object)
+	(html (:princ-safe (sw::frame-label object))
+	      :newline)
+	(async-html (:pre-text (sw::frame-label object))
+		    (sw:fill-frame object)
+		    (html (:princ-safe (sw::frame-label object))
+			  :newline))
+	))))
 
 
 (defmethod frames::wob-url ((object swframes::frame))
