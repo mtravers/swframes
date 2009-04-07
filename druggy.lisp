@@ -6,6 +6,7 @@
 (defvar *drugbank-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
 (defvar *linkedct-frame-source* (make-sparql-source "http://data.linkedct.org/sparql"))
 (defvar *diseasome-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/diseasome/sparql"))
+(defvar *collabrx-sparql* (make-sparql-source "http://virtuoso.collabrx.com/sparql/"))
 
 (defun trials-for-condition (condition)
   (do-sparql *linkedct-frame-source*
@@ -30,6 +31,15 @@
 	     (?trial #$linkedct:brief_title ?title)
 	     (?trial #$linkedct:condition ?condition)
 	     (?condition #$linkedct:condition_name ?condname)
+	     )))
+
+;;; stripped down (doesn't help, still times out)
+(defun trials-for-drug (drugname)
+  (do-sparql *collabrx-sparql* ; *linkedct-frame-source* 
+   `(:select (?trial) ()
+	     (?intervention #$linkedct:intervention_type "Drug" )
+	     (?intervention #$linkedct:intervention_name ,drugname )
+	     (?trial #$linkedct:intervention ?intervention )
 	     )))
 
 (defun db-target (gene-name)
@@ -59,3 +69,4 @@
 ;; 		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/target
 ;; 		    #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugType
 		    ))
+ 
