@@ -5,6 +5,9 @@
   (declare (ignore force?))
   (frame-named name))
 
+(defun frames:fname (f)
+  (frame-label f))
+
 (defun frames::slotv (frame slot)
   (slotv frame slot))
 
@@ -21,3 +24,9 @@
 
 (defmacro frames::for-all-frames ((var) &body body)
   `(for-all-frames (,var) ,@body))
+
+(defun frames::framep (x)
+  (frame-p x))
+
+(defun frames::isframe? (x)
+  (frame-p x))
