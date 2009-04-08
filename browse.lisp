@@ -27,8 +27,6 @@
     (wb::with-standard-weblistener-page-header (title)
       (if frame
           (progn
-
-
 ;            (emit-min-less-more-max-control frame)
 ;            (emit-block-format-or-lisp-format-control frame)
             (html (:princ "    "))

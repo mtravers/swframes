@@ -30,3 +30,27 @@
 
 (defun frames::isframe? (x)
   (frame-p x))
+
+;;; +++ no-op for now
+(defun frames::create-inverse-slot (inverse-slot slot pf af)
+  )
+
+;;; +++ no-op for now
+(defun frames::defslot 
+       (frame 
+        &key
+        (base #$slot)
+        (applicable-to nil) ;default is applies to everything
+        (value-type nil) ;default is anything
+        (set-valued? nil)
+        )
+  )
+
+(defun frames::def-indexed-slot (&rest intore)
+  )
+
+(defun frames::describe-frame (f)
+  (describe-frame f))
+
+
+

@@ -57,6 +57,13 @@
 	    (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
     )))
 
+;;; use the drugbank frames in memory
+;;; not working, but it may be the data
+(defun db-drugs-local (gene-name)
+  (let* ((targets (frames::slot-lookup gene-name #$DB.Gene_Name.s))
+	 (drugs (mapunion #'(lambda (target) (frames::slot-lookup target #$DB.targets.s)) targets)))
+    drugs))
+
 (defun drug-grid (target-gene)
   (wb::frame-grid (mapcar #'(lambda (bindings)
 			      (sparql-binding-elt bindings "drug"))

@@ -27,10 +27,21 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (declare (ignore char arg))
   (uri (frames::read-fname stream)))
 
+;;; old school
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let ((slot (uri (frames::read-fname stream))))
     `(lambda (f) (msv f ,slot))))
+
+;;; new, works with #^.  Slightly ugly
+(defun pound-carat-frame-reader (stream char arg)
+  (declare (ignore char arg))
+  (let* ((slot (uri (frames::read-fname stream)))
+	 ;; +++ probably these should be in their own package
+	 (symbol (intern (frame-uri slot) :keyword)))
+    (compile symbol #'(lambda (f) (msv f slot)))
+    (eval (print `(defsetf ,symbol (f) (v) `(set-slotv ,f ,,slot ,v))))
+    symbol))
 
 ;;; I suppose we should have an #v (or something) for inverse-slots...
 
