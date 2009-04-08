@@ -61,13 +61,22 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defun intern-uri (uri &optional source)
   (assert (stringp uri))
   (or (gethash uri *uri->frame-ht*)
-      (setf (gethash uri *uri->frame-ht*)
-	    (make-frame :uri uri 
-			:source source
-			))))
+      (intern-uri-0 uri 
+		    (make-frame :uri uri 
+				:source source
+				))))
+
+(defun intern-uri-0 (uri frame)
+  (setf (gethash uri *uri->frame-ht*) frame)  )
 
 (defun unintern-uri (uri)
   (remhash uri *uri->frame-ht*))
+
+;;; Dangerous
+(defun rename-frame (f new-name)
+  (unintern-uri (frame-uri f))
+  (setf (frame-uri f) new-name)
+  (intern-uri-0 new-name f))
 
 ;;; this isn't working for some reason...interned  objects are not frames?
 (defmethod make-load-form ((frame frame) &optional ignore)

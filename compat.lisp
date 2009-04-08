@@ -3,7 +3,9 @@
 ;; hook into old code, including listener
 (defun frames::frame-fnamed (name &optional force?)
   (declare (ignore force?))
-  (frame-named name))
+  (if (typep name 'frame) 
+      name
+      (frame-named name)))
 
 (defun frames:fname (f)
   (frame-label f))
@@ -52,5 +54,5 @@
 (defun frames::describe-frame (f)
   (describe-frame f))
 
-
-
+(defun frames::rename-frame (f new-name)
+  (rename-frame f new-name))
