@@ -86,3 +86,12 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defmethod make-load-form ((frame frame) &optional ignore)
   (declare (ignore ignore))
   `(intern-uri ,(frame-uri frame)))
+
+
+;;; when test framework is in place
+'(define-test rename (x)
+  (let ((x (uri "test27")))
+    (assert (frame-fresh? x nil))
+    (rename-frame x "test27renamed")
+    (assert (frame-fresh? x nil))
+    (assert (equal (frame-uri x) "test27renamed"))))

@@ -67,7 +67,7 @@ Todo:
 		     ((equal (aref line 1) #\B)
 		      ;; finalize old frame?
 		      (let ((name (car (last (string-split line)))))
-			(setq frame (frame-fnamed (create-db-frame-name name) t)
+			(setq frame (db-uri name)
 			      good-name nil)
 ;;; causing problems?
 					;                     (delete-frame-contents frame) ;clear out any old stuff
@@ -87,7 +87,7 @@ Todo:
 	       )
 
 	      ((equal slot (db-slot-uri "Drug_Category"))
-	       (let ((cat (frame-fnamed (create-db-frame-name line) t)))
+	       (let ((cat (db-uri line)))
 		 (sw:add-triple frame #$rdfs:subtypeOf cat)
 		 ;; make the hierarchy neater (I think this leaves the inverse relationship in place, or something like that)
 		 (delete-element frame #$rdfs:subtypeOf (db-uri "Drug"))
@@ -113,22 +113,20 @@ Todo:
 		 (unless idling
 		   (if (eq sub-slot (db-slot-uri "Name"))
 		       (let ((name (create-db-frame-name line)))
-			 (rename-frame target-frame name)))
-			 #| skip for now, it's screwing things up.
-			 (if (frame-fnamed name)
+			 (if (sw::frame-named name)
 			     (progn (delete-element frame (db-slot-uri "targets") target-frame)
-				    (unintern-frame target-frame)
+				    (sw::delete-frame target-frame)
+				    (deletef target-frame *drugbank-frames*)
 				    (setf (gethash index target-frames)
-					  (setf target-frame (frame-fnamed name)))
+					  (setf target-frame (sw::frame-named name)))
 				    (sw:add-triple frame (db-slot-uri "targets") target-frame)
 				    (setf idling t))
-			     (rename-frame target-frame name))
-			 |#
+			     (rename-frame target-frame name))))
 		   (sw:add-triple target-frame sub-slot line :test #'equal))))
 
 	      ;; thread KEGG
 	      ((eq slot (db-slot-uri "KEGG_Drug_ID"))
-	       (setf (frame-slot-value frame (db-slot-uri "KEGG_Drug.s"))
+	       (setf (frame-slot-value frame (db-slot-uri "KEGG_Drug"))
 		     (frame-fnamed (create-valid-frame-name line :prefix "KEGG."))))
 	      ((eq slot (db-slot-uri "KEGG_Compound_ID.s"))
 	       (setf (frame-slot-value frame (db-slot-uri "KEGG_Compound"))
@@ -145,7 +143,7 @@ Todo:
 
 (defun thread-go ()
   (for-all-frames (f)
-    (let* ((v (frame-slot-value f (db-slot-uri "GO_Classification.s")))
+    (let* ((v (frame-slot-value f (db-slot-uri "GO_Classification")))
            (nv (mapcar #'(lambda (s)
                            (let* ((colon (and (stringp s) (position #\: s)))
                                   (name (and colon (wb::space-trim (subseq s (1+ colon)))))
@@ -153,7 +151,7 @@ Todo:
                              (or frame s)))
                        v)))
       (when nv
-	(setf (frame-slot-value f (db-slot-uri "GO_Classification.s"))
+	(setf (frame-slot-value f (db-slot-uri "GO_Classification"))
 	      nv))
       )))
 
@@ -181,15 +179,19 @@ Todo:
         (all-drugbank-frames)))
 
 
+(defun all-drugbank-frames ()
+  *drugbank-frames*)
+
 ;;; KKK use KB object
 (defvar *db-drugs* nil)
+
 
 (defun db-drugs ()
   (or *db-drugs*
       (setf *db-drugs*
-            (filter #'(lambda (f)
-                           (#^DB.Generic_Name.s f))
-                       (all-drugbank-frames)))))
+            (mt:filter #'(lambda (f)
+			   (slotv f (db-slot-uri "Generic_Name")))
+		    (all-drugbank-frames)))))
 
 (defun experimental-db-drugs ()
   (filter #'(lambda (f)
@@ -199,32 +201,32 @@ Todo:
                         (not (member "Approved" types :test #'string-equal)))))
              *db-drugs*))
 
-(def-indexed-slot (db-slot-uri "Gene_Name.s"))
-(def-indexed-slot (db-slot-uri "Synonyms.s"))
-(def-indexed-slot (db-slot-uri "Generic_Name.s"))
-(def-indexed-slot (db-slot-uri "Brand_Names.s"))
+(def-indexed-slot (db-slot-uri "Gene_Name"))
+(def-indexed-slot (db-slot-uri "Synonyms"))
+(def-indexed-slot (db-slot-uri "Generic_Name"))
+(def-indexed-slot (db-slot-uri "Brand_Names"))
 
 (defun db-lookup-target (target-name)
-  (union (slot-lookup target-name (db-slot-uri "Synonyms.s"))
-         (slot-lookup target-name (db-slot-uri "Gene_Name.s"))))
+  (union (slot-lookup target-name (db-slot-uri "Synonyms"))
+         (slot-lookup target-name (db-slot-uri "Gene_Name"))))
 
 (defun db-lookup-drug (drug-name)
-  (union (slot-lookup drug-name (db-slot-uri "Synonyms.s"))
-         (union (slot-lookup drug-name (db-slot-uri "Generic_Name.s"))
-                (slot-lookup drug-name (db-slot-uri "Brand_Names.s")))))
+  (union (slot-lookup drug-name (db-slot-uri "Synonyms"))
+         (union (slot-lookup drug-name (db-slot-uri "Generic_Name"))
+                (slot-lookup drug-name (db-slot-uri "Brand_Names")))))
 
 ;;; inverse of the above
 (defun db-drug-names (frame)
   (remove-duplicates
-   (append (frame-slot-value frame (db-slot-uri "Synonyms.s"))
-           (frame-slot-value frame (db-slot-uri "Generic_Name.s"))
-           (frame-slot-value frame (db-slot-uri "Brand_Names.s")))
+   (append (frame-slot-value frame (db-slot-uri "Synonyms"))
+           (frame-slot-value frame (db-slot-uri "Generic_Name"))
+           (frame-slot-value frame (db-slot-uri "Brand_Names")))
    :test #'string-equal))
 
 
 #|
 Apparently target descriptions are identical across drugs EXCEPT for the
- #$DB.Drug_References.s
+ #$DB.Drug_References
 Which makes sense...those are effectively aassociation properties, which for the moment we are ignoring,
 Although maybe it would make sense to include them...so the value of targets would be a list of (target pubmed-1 pubmed-2...) lists
 
@@ -253,7 +255,7 @@ does not appear in DB or KEGG (our version, but
 
 (dolist (e (experimental-db-drugs))
     (when (and (member #$DB.AntineoplasticAgents (#^isA e)))
-      (print (list e (mapcar #'(lambda (target) (#^DB.Gene_Name.s target)) (#^DB.targets.s e))))))
+      (print (list e (mapcar #'(lambda (target) (#^DB.Gene_Name target)) (#^DB.targets e))))))
 
 
 |#
