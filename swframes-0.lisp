@@ -58,12 +58,16 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defvar *uri->frame-ht* (make-hash-table :test 'equal))
 
-(defun intern-uri (uri &optional source)
+(defvar *default-frame-source* nil)	;Bind this for frame creation 
+(defvar *mark-new-frames-loaded?* nil)	;Bind this for frame creation 
+
+(defun intern-uri (uri &optional (source *default-frame-source*) (mark-loaded? *mark-new-frames-loaded?*))
   (assert (stringp uri))
   (or (gethash uri *uri->frame-ht*)
       (intern-uri-0 uri 
 		    (make-frame :uri uri 
 				:source source
+				:loaded? mark-loaded?
 				))))
 
 (defun intern-uri-0 (uri frame)

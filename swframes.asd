@@ -10,6 +10,7 @@
    (:file "swframes-0")
    (:file "swframes")
    (:file "compat")
+   (:file "source")
    (:file "dereference")
    (:file "namespace")
    (:file "lsparql")

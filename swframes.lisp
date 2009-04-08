@@ -12,15 +12,19 @@ Idle thoughts:
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *default-frame-source* nil))
 
+;;; Growing an API here...
 (export '(uri
+	  *default-frame-source* *mark-new-frames-loaded?*
 	  frame frame-name frame-named frame-label
-	  %frame-slots %frame-inverse-slots
+	  %frame-slots %frame-inverse-slots frame-empty?
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse
 	  slotv slotv-inverse
 	  svf svif
 	  add-triple
-	  describe-frame))
+	  rename-frame delete-frame
+	  describe-frame
+	  sw-register-namespace))
 
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
@@ -63,6 +67,7 @@ Idle thoughts:
   (setf (frame-loaded? frame) nil)
   (setf (frame-inverse-slots frame) nil))
 
+;;; Does not remove all references to frame (it could, I suppose, if we were rigorous about inverses III)
 (defmethod delete-frame ((frame frame))
   (reset-frame frame)
   (unintern-uri (frame-uri frame)))
@@ -110,6 +115,10 @@ Idle thoughts:
     ))
 |#
 
+(defun frame-empty? (frame)
+  (and (null (%frame-slots frame))
+       (null (%frame-inverse-slots frame))))
+
 (defmethod fill-frame-sparql ((frame frame) &optional source)
     (let ((*default-frame-source* (or source
 				      (frame-source frame)
@@ -117,9 +126,6 @@ Idle thoughts:
       (dolist (binding (do-sparql 
 			*default-frame-source*
 			(format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame))))
-; replaced with add-triple
-;	(pushnew (sparql-binding-elt binding "o")
-;		 (gethash (sparql-binding-elt binding "p") (frame-slots frame)))
 	(add-triple frame
 		    (sparql-binding-elt binding "p")
 		    (sparql-binding-elt binding "o"))
@@ -192,10 +198,10 @@ Idle thoughts:
       (setf result (nunion result (slotv f slot))))))
 
 ;;; this is really what we should use, I suppose
-(defun add-triple (s p o)
-  (pushnew o (slotv s p) :test #'equal)
+(defun add-triple (s p o &key (test #'eql))
+  (pushnew o (slotv s p) :test test)
   (if (frame-p o)
-      (pushnew s (slotv-inverse o p) :test #'equal))
+      (pushnew s (slotv-inverse o p) :test test))
   nil)					;makes tracing saner
 
 ;;; query (sexpy sparql syntax from lsw) ___

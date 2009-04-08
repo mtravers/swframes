@@ -1,6 +1,8 @@
 Ideas.
 
-Frame sources should be CLOS objects (DONE for SPARQL).  
+Frame sources should be CLOS objects 
+       (DONE for SPARQL).  
+     (DONE in anstract)
 
 In-memory and SPARQL endpoints should have a common (or partially common) API.  
 
@@ -13,4 +15,8 @@ Theory of dirtiness (Not yet implemented):
 - there is a global (or per-sparql) list of dirty frames
 
 Theory of slot values
- - always a list
+- always a list
+- should deprecate set-slotv, add-triple is the appropriate API
+- should keep inverses
+
+- should use rdfs typing

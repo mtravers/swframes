@@ -8,7 +8,7 @@
 		 :uri uri))
 
 ;;; +++ promulgate
-(defclass* sparql-endpoint ()
+(defclass* sparql-endpoint (frame-source)
   (uri
    (writeable? nil)
    (write-graph nil))

@@ -56,3 +56,7 @@
 
 (defun frames::rename-frame (f new-name)
   (rename-frame f new-name))
+
+'(defun frames::add-element (frame slot elt &key test)
+  (declare (ignore test))
+  (add-triple frame slot elt))
