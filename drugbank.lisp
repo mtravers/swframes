@@ -110,6 +110,8 @@ Todo:
 		   (sw:add-triple target-frame #$rdfs:subtypeOf (db-uri "Target"))
 		   (push target-frame *drugbank-frames*)
 		   (sw:add-triple frame (db-slot-uri "targets") target-frame))
+		 ;; this logic assumes that when a target is mentioned in multiple places the description is really the same (that is, that 
+		 ;; drugcards.txt is a denormalized view of a normalized database).
 		 (unless idling
 		   (if (eq sub-slot (db-slot-uri "Name"))
 		       (let ((name (create-db-frame-name line)))
@@ -209,6 +211,13 @@ Todo:
 (defun db-lookup-target (target-name)
   (union (slot-lookup target-name (db-slot-uri "Synonyms"))
          (slot-lookup target-name (db-slot-uri "Gene_Name"))))
+
+(defun db-drugs-for-target (target)
+  (sw::slotv-inverse target (db-slot-uri "targets")))
+
+(defun drugs-for-target (target-name)
+  (mapunion #'db-drugs-for-target (db-lookup-target target-name)))
+
 
 (defun db-lookup-drug (drug-name)
   (union (slot-lookup drug-name (db-slot-uri "Synonyms"))

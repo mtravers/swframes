@@ -18,6 +18,7 @@
    (:file "browse")
    (:file "sw-frame-grid")
    (:file "xml")
+   (:file "drugbank")
    (:file "druggy")
    )
   :depends-on

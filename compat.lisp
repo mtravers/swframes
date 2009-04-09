@@ -24,6 +24,7 @@
 (defun frames::slot-index (slot)
   nil)
 
+;;; +++ this redefinition doesn't work unless you recompile uses, because it's a macro 
 (defmacro frames::for-all-frames ((var) &body body)
   `(for-all-frames (,var) ,@body))
 

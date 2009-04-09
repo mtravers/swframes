@@ -29,9 +29,6 @@ Idle thoughts:
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
 
-(defun frame-named (name)
-  (intern-uri (expand-uri name)))
-
 (defun frame-label (frame)
   (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label")))
       (frame-name frame)))
@@ -73,9 +70,11 @@ Idle thoughts:
   (unintern-uri (frame-uri frame)))
 
 ;;; debugging
-(defun frame-fresh? (frame)
+(defun frame-fresh? (frame &optional (error? t))
   (unless (eq frame (intern-uri (frame-uri frame)))
-    (error "~A is stale" frame))
+    (if error?
+	(error "~A is stale" frame)
+	(return-from frame-fresh? nil)))
   t)
 
 (defmethod fill-frame-inverse ((frame frame))
@@ -162,6 +161,8 @@ Idle thoughts:
 (defsetf slotv set-slotv)
 
 (defmethod set-slotv ((frame frame) (slot frame) value)
+  (frame-fresh? frame)
+  (frame-fresh? slot)
   ;; enforce rule that slot values are lists...
   (unless (listp value)
     (setf value (list value)))
@@ -199,6 +200,9 @@ Idle thoughts:
 
 ;;; this is really what we should use, I suppose
 (defun add-triple (s p o &key (test #'eql))
+  (frame-fresh? s)			;+++ do this under a safety switch, here and elsewhere
+  (frame-fresh? p)
+  (if (frame-p 0) (frame-fresh? o))
   (pushnew o (slotv s p) :test test)
   (if (frame-p o)
       (pushnew s (slotv-inverse o p) :test test))
