@@ -189,12 +189,18 @@ Idle thoughts:
 
 
 ;;; Experimenting with an extention of slot semantics (in use by #^ now)
+(defun delistify (thing)
+  (if (and (listp thing)
+	   (= 1 (length thing)))
+      (car thing)
+      thing))
+
 (defmethod msv ((frame frame) slot)
-  (slotv frame slot))
+  (delistify (slotv frame slot)))
 
 (defmethod msv ((frames list) slot)
   (let ((result nil))
-    (dolist (f frames result)
+    (dolist (f frames (delistify result))
       ;; warning: depends on nunion only being destructive to its FIRST argument
       (setf result (nunion result (slotv f slot))))))
 

@@ -176,18 +176,84 @@ New version of cl-json has different, smaller set of bugs.
 
 |#
 
-;;; MQL has no OR operator, so this takes 2 separate queries
 (defun mql-drug-mfr (drugname)
-  (flet ((do-query (property)
+  (mql-name-property-lookup 
+   drugname
+   "/base/bioventurist/product/developed_by"
+   "/medicine/drug"))
+
+;;; Generalized
+;;; this doesn't work, because you need to provide a type or you get errors
+;;; Solution: do one query to get all the types, then do the query for each type, with an error handler.  Yuck!
+;;; MQL has no OR operator, so this takes 2 separate queries
+(defun mql-name-property-lookup (name property &optional type)
+  (flet ((do-query (nproperty)
 	   (let* ((mql (mql-read
-			`((,property . ,drugname)
+			`((,nproperty . ,name)
+			  ,@(if type `((:type . ,type)))
 ;			  ("*" . (:empty-dict))
-			  (:type . "/medicine/drug")
-			  ("/base/bioventurist/product/developed_by"  . :empty-list))))
-		  (dev (utils::assocdr :/BASE/BIOVENTURIST/PRODUCT/DEVELOPED_BY (car mql)))
+			  ;; this info isn't used here, but it's interesting.
+			  ("a:name" . nil)
+			  ("a:type" . :empty-list)
+			  (,property  . :empty-list))))
+;; gets the full object, might be useful
+;			  ("/base/bioventurist/product/developed_by"  . (:empty-dict)))))
+		  ;; Aigh, bad car
+		  (dev (mapunion #'(lambda (result)
+				     (utils::assocdr (keywordize property) result))
+				 mql
+				 :test #'equal))
 		  )
-	     (print `(,drugname ,property ,dev))
 	     dev)))
     (or (do-query "name")
 	(do-query "/common/topic/alias"))))
-    
+
+(defun mql-name-lookup (name &optional type)
+  (flet ((do-query (nproperty)
+	   (let* ((mql (mql-read
+			`((,nproperty . ,name)
+			  ,@(if type `((:type . ,type)))
+			  (:id . nil)
+			  ("a:name" . nil)
+			  ("a:type" . :empty-list)
+			  ))))
+	     mql)))
+    (append (do-query "name")
+	    (do-query "/common/topic/alias"))))
+
+;;; examples
+#|
+(name-property-lookup "2001" "directed_by" "/film/film")
+(name-property-lookup "Lisp" "type" nil) ;type can be nil because "type" is a common property?
+
+;;; get ids for everything called 2001 (77!)
+(name-property-lookup "2001" "id")
+(name-property-lookup "Stanley Kubrick" "id") ;more reasonable
+
+ |#
+(defun name-types (name)
+  (name-property-lookup name "type" nil))
+
+;;; this should be memoized.
+(defun type-properties (type)
+  (mql-read `((:id . ,type)
+	      ("properties" . :empty-list)
+	      (:type . "/type/type"))))  
+
+;;; Given a GUID, return everything we can find
+;;; 
+(defun id->everything (id)
+  (let ((types
+	 (utils:assocdr 
+	  :type 
+	  (car (mql-read `((:id . ,id)
+			   (:type . :empty-list))))))
+	(result nil))
+    (dolist (type types)
+      (setf result 
+	    (append result
+		    (mql-read `((:id . ,id)
+				(:type . ,type)
+				("*" . nil))))))
+    result))
+      

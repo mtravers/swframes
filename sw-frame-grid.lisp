@@ -26,6 +26,7 @@
   slots 
   (row-limit nil)
   (sorting? nil)
+  (value-cache (make-hash-table))
   )
 
 (defmethod potential-slots ((grid frame-grid))
@@ -40,7 +41,9 @@
     (html
      ((:form
        :action "add-function"
-       :method "POST")
+       :method "POST"
+       :onsubmit (if *ajax-listener?* (remote-function "/add-function" :form t))
+       :action (if *ajax-listener?* "/add-function"))
       ((:input :type "hidden" :name "grid_id" :value id))
       "Def:" ((:textarea :name "sexp" :cols 80 :rows 5)) :br
       "Name:" ((:input :name "name"))
@@ -61,10 +64,16 @@
      )))
     
 
+;;; +++ Needs to be re-evaluated if *ajax-listener?* changes
 (publish :path "/add-column"
 	 :function 'do-add-column
 	 :content-type (if *ajax-listener?* "text/javascript" "application/html")
 	 )
+
+(publish :path "/add-function"
+	 :function 'do-add-function
+	 :content-type (if *ajax-listener?* "text/javascript" "application/html"))
+
 
 ;;; rename to add-slot +++
 (defun do-add-column (req ent)
@@ -79,8 +88,7 @@
 	    (grid-redisplay-ajax grid req ent)
 	    (net.aserve::redirect-to req ent "/redisplay.html"))))))
 
-(publish :path "/add-function"
-	 :function 'do-add-function)
+(export 'it)
 
 (defun do-add-function (req ent)
   (with-http-response (req ent)
@@ -89,13 +97,14 @@
 	     (name (net.aserve::request-query-value "name" req))
 	     (name-sym (intern name (find-package *username*)))
 	     (fun-text (net.aserve::request-query-value "sexp" req))
-	     (fun (compile name-sym (read-from-string fun-text)))
+	     (fun-def `(lambda (it) ,(read-from-string fun-text)))
+	     (fun (compile name-sym fun-def))
 	     )
 	fun
 	(setf (get name-sym :text) fun-text)
 	(setf (frame-grid-slots grid)
-;	      (append (frame-grid-slots grid) (list fun)))
-	      (append (frame-grid-slots grid) (list name-sym)))
+	      ;; assume async
+	      (append (frame-grid-slots grid) (list `(,name-sym :async? t))))
 	(if *ajax-listener?*
 	    (grid-redisplay-ajax grid req ent)
 	    (net.aserve::redirect-to req ent "/redisplay.html"))))))
@@ -107,6 +116,15 @@
 	      (out-record-to-html grid "redisplay")
 	      ))))
 
+;;; temp quick caching 
+(mt:def-cached-function cell-fun-value (slot frame)
+  (funcall slot frame))
+
+(defmethod cell-value ((grid frame-grid) frame slotdef)
+  (let ((slot (if (listp slotdef) (car slotdef) slotdef)))
+    (if (swframes::frame-p slot)
+	(swframes::slotv frame slot)
+	(funcall slot frame))))
 
 (defmethod out-record-to-html ((grid frame-grid) (string string) &rest ignore)
   (declare (ignore ignore))
@@ -119,6 +137,16 @@
 		      (cadr (member key (cdr slotd)))))
 	       (real-slot (slotdef)
 		 (if (listp slotdef) (car slotdef) slotdef))
+	       (emit-cell-value (frame slot)
+		 (handler-case 
+		     (if (swframes::frame-p slot)
+			 (frames::emit-slot-value slot (swframes::slotv frame slot))
+;			 (frame::emit-value (funcall slot frame))
+			 (frame::emit-value (cell-fun-value slot frame))
+			 )
+		   (error (e)
+		     (html (:i (:princ-safe e))))))
+
 	       (column-header (slot &optional label?)
 		 (let ((rslot (real-slot slot))
 		       (header (slot-property slot :header))
@@ -129,7 +157,8 @@
 				    (if (symbolp rslot)
 					(html (:b (frame::emit-value rslot) )
 					      :br
-					      (:div (:pre (:princ (get rslot :text)))))
+; 					      (:div (:pre (:princ (get rslot :text))))
+					      )
 					;; frame slot
 					(html (:b (frame::emit-value rslot)) :br))))
 			      (if (and (frame-grid-sorting? grid) ;was commented out, not sure why
@@ -191,20 +220,13 @@
 					      (frame::*elements-per-row* (or (slot-property slotdef :elements-per-row) frame::*elements-per-row*)))
 					  (with-output-to-string (out)
 					    (let ((*html-stream* out))
-					      (if (swframes::frame-p slot)
-						  (frames::emit-slot-value slot (swframes::slotv realframe slot))
-						  (frame::emit-value (funcall slot realframe)))
+					      (emit-cell-value realframe slot)
 					      )))))
 				    "foo"))
 				 ;; synchronous
-				 (handler-case 
-				     (if (swframes::frame-p slot)
-					 (frames::emit-slot-value slot (swframes::slotv frame slot))
-					 (frame::emit-value (funcall slot frame)))
-				   (error (e)
-				     (html (:i (:princ-safe e)))))
+				 (emit-cell-value frame slot)
 				 )))))))))))))))
-
+					      
 
 
 (defun frames::emit-slot-value (slot-frame slot-value)

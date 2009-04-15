@@ -11,7 +11,7 @@ To do:
 - deal with inverses (needs thinking)
 - write out (waiting on virtuoso)
 - use in grid (working)
-- get rid of temp frames!
+- get rid of temp frames! (done?)
 |#
 
 (in-package :bio)
