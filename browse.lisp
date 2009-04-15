@@ -27,6 +27,7 @@
     (wb::with-standard-weblistener-page-header (title)
       (if frame
           (progn
+	    (wb::load-javascripts)
 ;            (emit-min-less-more-max-control frame)
 ;            (emit-block-format-or-lisp-format-control frame)
             (html (:princ "    "))
@@ -56,7 +57,7 @@
 	    (when (frame-source frame)
 	      (html :br
 		    "Source: "
-		    (:princ (frame-source frame))))
+		    (:princ-safe (frame-source frame))))
             (frames::wob-html frame)
             )
         (html (:i "Frame not found.  (May have been uninterned)") :newline)

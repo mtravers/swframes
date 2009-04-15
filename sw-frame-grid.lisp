@@ -39,37 +39,45 @@
 	 (id (session-persist-object grid)))
     (html
      ((:form
-	:action "add-function"
-	:method "POST")
-       ((:input :type "hidden" :name "grid-id" :value id))
-       "Def:" ((:textarea :name "sexp" :cols 80 :rows 5)) :br
-       "Name:" ((:input :name "name"))
-       ((:input :type "submit" :value "Add function")))
+       :action "add-function"
+       :method "POST")
+      ((:input :type "hidden" :name "grid_id" :value id))
+      "Def:" ((:textarea :name "sexp" :cols 80 :rows 5)) :br
+      "Name:" ((:input :name "name"))
+      ((:input :type "submit" :value "Add function")))
      ((:form
-	:action "add-column"
-	:method "POST")
-       ((:input :type "hidden" :name "grid-id" :value id))
-       ((:select :name "slot")
-	(dolist (pslot potential-slots)
-	  (html
-	    ((:option :value (swframes::frame-uri pslot))
-	     (:princ (swframes::frame-label pslot))))))
-       ((:input :type "submit" :value "Add slot")))
+       :action "add-column"
+       :method "POST"
+       :onsubmit (if *ajax-listener?* (remote-function "/add-column" :form t))
+       :action (if *ajax-listener?* "/add-column"))
+      ((:input :type "hidden" :name "grid_id" :value id))
+      ((:select :name "slot")
+       (dolist (pslot potential-slots)
+	 (html
+	  ((:option :value (swframes::frame-uri pslot))
+	   (:princ (swframes::frame-label pslot))))))
+      ((:input :type "submit" :value "Add slot")))
 
-      )))
+     )))
     
 
 (publish :path "/add-column"
-	 :function 'do-add-column)
+	 :function 'do-add-column
+	 :content-type (if *ajax-listener?* "text/javascript" "application/html")
+	 )
 
+;;; rename to add-slot +++
 (defun do-add-column (req ent)
   (with-http-response (req ent)
     (with-session (req ent)
-      (let* ((grid (session-persisted-object (net.aserve::request-query-value "grid-id" req)))
+      (let* ((grid (session-persisted-object (net.aserve::request-query-value "grid_id" req)))
 	     (slot (swframes::frame-named  (net.aserve::request-query-value "slot" req))))
 	(setf (frame-grid-slots grid)
 	      (append (frame-grid-slots grid) (list slot)))
-	(net.aserve::redirect-to req ent "/redisplay.html")))))
+	
+	(if *ajax-listener?*
+	    (grid-redisplay-ajax grid req ent)
+	    (net.aserve::redirect-to req ent "/redisplay.html"))))))
 
 (publish :path "/add-function"
 	 :function 'do-add-function)
@@ -77,16 +85,27 @@
 (defun do-add-function (req ent)
   (with-http-response (req ent)
     (with-session (req ent)
-      (let* ((grid (session-persisted-object (net.aserve::request-query-value "grid-id" req)))
+      (let* ((grid (session-persisted-object (net.aserve::request-query-value "grid_id" req)))
 	     (name (net.aserve::request-query-value "name" req))
 	     (name-sym (intern name (find-package *username*)))
 	     (fun-text (net.aserve::request-query-value "sexp" req))
-	     (fun (compile name-sym (read-from-string fun-text))))
+	     (fun (compile name-sym (read-from-string fun-text)))
+	     )
+	fun
 	(setf (get name-sym :text) fun-text)
 	(setf (frame-grid-slots grid)
 ;	      (append (frame-grid-slots grid) (list fun)))
 	      (append (frame-grid-slots grid) (list name-sym)))
-	(net.aserve::redirect-to req ent "/redisplay.html")))))
+	(if *ajax-listener?*
+	    (grid-redisplay-ajax grid req ent)
+	    (net.aserve::redirect-to req ent "/redisplay.html"))))))
+
+(defun grid-redisplay-ajax (grid req ent)
+  (with-http-body (req ent)
+    (render-update
+     (:update (session-persist-object grid) 
+	      (out-record-to-html grid "redisplay")
+	      ))))
 
 
 (defmethod out-record-to-html ((grid frame-grid) (string string) &rest ignore)
@@ -142,7 +161,7 @@
 				    ))))))
 
 	(html
-	  ((:table :border 1 :cellpadding 3 :cellspacing 0  :rules :all)
+	  ((:table :border 1 :cellpadding 3 :cellspacing 0  :rules :all :id id)
 	   (:tr
 	    (column-header 'identity t)	
 	    (dolist (slot slots)
@@ -196,7 +215,6 @@
        (frames::emit-value slot-value)
        )
 
-;;; +++ exp, not working...
 (defmethod frames::emit-value 
     ((object swframes::frame) &optional (print-limit nil))
   (declare (ignore print-limit))
@@ -210,7 +228,6 @@
 		    (html (:princ-safe (sw::frame-label object))
 			  :newline))
 	))))
-
 
 (defmethod frames::wob-url ((object swframes::frame))
   (formatn

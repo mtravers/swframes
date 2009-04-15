@@ -3,6 +3,8 @@
 ;;;; MODIFIED (lightly) FOR SW
 
 #|
+Import works up until GO threading, where it craps out.
+
 To do:
 - more URI-like names (done)
 - set loaded flag  (done)

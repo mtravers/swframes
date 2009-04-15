@@ -19,21 +19,18 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (mt:report-and-ignore-errors
     (format stream "#$~A" (frame-name frame))))
 
-(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader)
-(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader)
+(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader (frames::frames-readtable))
+(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader (frames::frames-readtable))
+
+(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader )
+(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader )
 
 ;;; +++ would be good to allow #$"sdasdad" for hard to parse names
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
   (uri (frames::read-fname stream)))
 
-;;; old school
-(defun pound-carat-frame-reader (stream char arg)
-  (declare (ignore char arg))
-  (let ((slot (uri (frames::read-fname stream))))
-    `(lambda (f) (msv f ,slot))))
-
-;;; new, works with #^.  Slightly ugly
+;;; New, works with setf without a lot of hair.  Slightly ugly
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let* ((slot (uri (frames::read-fname stream)))
