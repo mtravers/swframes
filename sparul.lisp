@@ -29,34 +29,25 @@
 
 
 ;;; A stupid method that deletes all existing triples and writes them all anew.
-(defmethod write-frame ((sparql sparql-endpoint) (frame frame))
+(defmethod write-frame ((frame frame) &optional (sparql (frame-source frame)))
   (with-sparul-transaction (sparql)
     (delete-triple sparql frame '?p '?o)
     (dolist (slot (%frame-slots frame))
       (dolist (val (slotv frame slot))
-	(write-triple sparql frame slot val))))) 
+	(write-triple sparql frame slot val))))
+  frame) 
 
 ;;; Tests
 #|
 
-(setq e (make-instance 'sparql-endpoint
-		       :uri "http://virtuoso.collabrx.com/sparql"))
-(sanity-check e)
-
-(defmethod test2 ((sparql sparql-endpoint))
-  (write-triple sparql #$foo #$bar 23))
-
-(setq ew (make-instance 'sparql-endpoint
-			:uri "http://virtuoso.collabrx.com/sparql"
-			:writeable? t
-			:write-graph "http://collabrx.com/my_graph"))
-(test2 ew)
 
 (defvar *collabrx-sparql-writeable*
   (make-instance 'sparql-endpoint
-		 :uri "http://virtuoso.collabrx.com/sparql/"
-		 :writeable? t))
+		 :uri "http://sparql.collabrx.com/sparql/"
+		 :writeable? t
+		 :write-graph "http://collabrx.com/my_graph"))
 
+(test2 *collabrx-sparql-writeable*)
 
 (defmethod test3 ((sparql sparql-endpoint))
   (let* ((frame (genuri sparql "http://collabrx.com/testing/"))
@@ -69,6 +60,9 @@
     (setf frame (intern-uri uri))
     (assert (null (slotv frame #$foo)))
     (fill-frame-sparql frame sparql)	;+++ this API should change
-    (print (slotv frame #$foo))))
+    (print (slotv frame #$foo))
+    (assert (member "23" (slotv frame #$foo) :test #'equal))
+    (print `(frame ,frame read back))
+    ))
 
 |#

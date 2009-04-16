@@ -153,16 +153,12 @@ Idle thoughts:
 
 ;;; optional argument doesn't play well with setf.
 (defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
-  (frame-fresh? frame)
-  (frame-fresh? slot)
   (if fill? (fill-frame frame))
   (gethash slot (frame-slots frame)))
 
 (defsetf slotv set-slotv)
 
 (defmethod set-slotv ((frame frame) (slot frame) value)
-  (frame-fresh? frame)
-  (frame-fresh? slot)
   ;; enforce rule that slot values are lists...
   (unless (listp value)
     (setf value (list value)))
@@ -189,14 +185,29 @@ Idle thoughts:
 
 
 ;;; Experimenting with an extention of slot semantics (in use by #^ now)
+(defun delistify (thing)
+  (if (and (listp thing)
+	   (= 1 (length thing)))
+      (car thing)
+      thing))
+
 (defmethod msv ((frame frame) slot)
-  (slotv frame slot))
+  (delistify (slotv frame slot)))
 
 (defmethod msv ((frames list) slot)
   (let ((result nil))
-    (dolist (f frames result)
+    (dolist (f frames (delistify result))
       ;; warning: depends on nunion only being destructive to its FIRST argument
       (setf result (nunion result (slotv f slot))))))
+
+(defmethod msv-inverse ((frame frame) slot)
+  (delistify (slotv-inverse frame slot)))
+
+(defmethod msv-inverse ((frames list) slot)
+  (let ((result nil))
+    (dolist (f frames (delistify result))
+      ;; warning: depends on nunion only being destructive to its FIRST argument
+      (setf result (nunion result (slotv-inverse f slot))))))
 
 ;;; this is really what we should use, I suppose
 (defun add-triple (s p o &key (test #'eql))
@@ -245,7 +256,7 @@ Tests:
     (for-all-frames (f)
       (block frame
 	(if slot
-	    (when (member v (slotv f pred) :test #'equal)
+	    (when (member v (slotv f slot) :test #'equal)
 	      (utils::collect f)
 	      (return-from frame))
 	  (dolist (slot (%frame-slots f))

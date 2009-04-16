@@ -3,13 +3,15 @@
 ;;;; MODIFIED (lightly) FOR SW
 
 #|
+Import works up until GO threading, where it craps out.
+
 To do:
 - more URI-like names (done)
 - set loaded flag  (done)
 - deal with inverses (needs thinking)
 - write out (waiting on virtuoso)
 - use in grid (working)
-- get rid of temp frames!
+- get rid of temp frames! (done?)
 |#
 
 (in-package :bio)
