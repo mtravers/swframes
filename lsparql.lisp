@@ -34,10 +34,11 @@
       (do-sparql sparql query)
     (extract-sparql-binding res (or var (car vars)))))
 
-;;; should generate a guaranteed unique new URI (+++ not yet)
+;;; should generate a guaranteed unique new URI (+++ not really doing it yet)
 (defmethod genuri ((sparql sparql-endpoint) prefix)
-  (intern-uri (format nil "~A/~A" prefix (string (gensym)))))
-
+  (let ((frame (intern-uri (format nil "~A/~A" prefix (string (gensym))))))
+    (setf (frame-source frame) sparql)
+    frame))
 
 ;;; being replaced with do-sparql
 (defun sparql-query (form)

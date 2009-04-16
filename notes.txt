@@ -1,9 +1,5 @@
 Ideas.
 
-Frame sources should be CLOS objects 
-       (DONE for SPARQL).  
-     (DONE in anstract)
-
 In-memory and SPARQL endpoints should have a common (or partially common) API.  
 
 In-memory frames can have slot indexes for quicker lookup. But we probably don't
@@ -18,5 +14,11 @@ Theory of slot values
 - always a list
 - should deprecate set-slotv, add-triple is the appropriate API
 - should keep inverses
+- msv is a more abstracted form of slotv that works on lists
 
 - should use rdfs typing
+- should make clos classes to rdfs
+- should have option for domain/range checking based on rdf
+
+- need theory of serialized lisp objects.  SPARQL basically always returns strings or URIs; some strings should
+  be READ.
