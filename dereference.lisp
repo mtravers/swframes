@@ -96,7 +96,8 @@ http://data.linkedmdb.org/all/director
       ;; turns out this processes the 303 redirect without any further intervention
       (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
 	(utils:get-url (frame-uri frame) :accept "application/rdf+xml"))
-;    (print `(response-code ,response-code response-headers ,response-headers))
+    #+:CCL (declare (ccl::ignore-if-unused response-headers uri))
+;;;    (print `(response-code ,response-code response-headers ,response-headers ,uri))
     (unless (= response-code 200)
       (error "Failed to dereference ~A, response code ~A" frame response-code))
     (let* (; (s-xml::*ignore-namespaces* t)

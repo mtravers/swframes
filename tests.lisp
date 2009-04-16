@@ -115,23 +115,22 @@ WHERE {
 
 ;;; test our local virtuoso
 ;; fast!
-(defvar *collabrx-sparql* (make-sparql-source "http://virtuoso.collabrx.com/sparql/"))
+(defvar *collabrx-sparql* (make-sparql-source "http://sparql.collabrx.com/sparql/"))
 
 (do-sparql *collabrx-sparql* `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ) )
 ;; not as fast!
 (do-sparql *collabrx-sparql* '(:select (?s ?p) () (?s ?p "Melanoma")))
 
 ;;; new feature!
-(do-sparql *collabrx-sparql* '(:select (?s) () (?s ?p "Melanoma")) :one-var? t)
+(do-sparql-one-var *collabrx-sparql* '(:select (?s) () (?s ?p "Melanoma")))
 
 ;;; trials about Myopia
-(do-sparql *collabrx-sparql* '(:select (?s) () (?s #$db:linkedct/condition #$db:condition/8512)) :one-var? t)
+(do-sparql-one-var *collabrx-sparql* '(:select (?s) () (?s #$db:linkedct/condition #$db:condition/8512)))
 
 
 (do-sparql *collabrx-sparql* '(:select (?s ?p) () (?s ?p "Ranolazine")))
 
 ;;; bulk loading
-
 
 (bulk-load *linkedct-frame-source* '((?s #$db:linkedct/condition #$db:condition/8512)) )
 

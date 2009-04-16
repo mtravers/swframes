@@ -21,23 +21,35 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader (frames::frames-readtable))
 (set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader (frames::frames-readtable))
+(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader (frames::frames-readtable))
 
 (set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader )
 (set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader )
+(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
 
 ;;; +++ would be good to allow #$"sdasdad" for hard to parse names
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
   (uri (frames::read-fname stream)))
 
-;;; New, works with setf without a lot of hair.  Slightly ugly
+(defpackage :swfuncs)
+
+;;; New, works with setf without a lot of hair.  
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let* ((slot (uri (frames::read-fname stream)))
-	 ;; +++ probably these should be in their own package
-	 (symbol (intern (frame-uri slot) :keyword)))
+	 (symbol (intern (frame-uri slot) :swfuncs)))
     (compile symbol #'(lambda (f) (msv f slot)))
-    (eval (print `(defsetf ,symbol (f) (v) `(set-slotv ,f ,,slot ,v))))
+    (eval `(defsetf ,symbol (f) (v) `(set-slotv ,f ,,slot ,v)))
+    symbol))
+
+(defun pound-inverse-frame-reader (stream char arg)
+  (declare (ignore char arg))
+  (let* ((slot (uri (frames::read-fname stream)))
+	 (symbol (intern (frame-uri slot) :swfuncs)))
+    (compile symbol #'(lambda (f) (msv-inverse f slot)))
+; No setf for now
+;    (eval `(defsetf ,symbol (f) (v) `(set-slotv-inverse ,f ,,slot ,v)))
     symbol))
 
 ;;; I suppose we should have an #v (or something) for inverse-slots...

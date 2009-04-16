@@ -18,18 +18,21 @@
 (defmethod* print-object ((sparql sparql-endpoint) stream)
   (format stream "#<~A ~A>" (type-of sparql) uri))
 
+(defvar *sparql-default-timeout* 30)
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
-(defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key  (timeout 15) one-var?)
-  (multiple-value-bind (res vars)
-      (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" sparql))
-	(knewos::run-sparql uri command :make-uri #'(lambda (u) (intern-uri u sparql))))
-    (if one-var?
-	(mapcar #'cadar res)
-	res)))
+(defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *sparql-default-timeout*))
+  (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" sparql))
+    (knewos::run-sparql uri command :make-uri #'(lambda (u) (intern-uri u sparql)))))
 
-(defmethod do-sparql ((sparql sparql-endpoint) (command list) &key (timeout 1000) one-var?)
-  (do-sparql sparql (generate-sparql command)))
+(defmethod do-sparql ((sparql sparql-endpoint) (command list) &key (timeout *sparql-default-timeout*))
+  (do-sparql sparql (generate-sparql command) :timeout timeout))
+
+;;; Return a simple list of results.  Query should either have one open variable or you can specify one with the optional argument
+(defmethod* do-sparql-one-var ((sparql sparql-endpoint) query &optional var)
+  (multiple-value-bind (res vars)
+      (do-sparql sparql query)
+    (extract-sparql-binding res (or var (car vars)))))
 
 ;;; should generate a guaranteed unique new URI (+++ not yet)
 (defmethod genuri ((sparql sparql-endpoint) prefix)
@@ -212,6 +215,7 @@
 (defun sparql-binding-elt (bindings name)
   (cadar (member name bindings :key #'car :test #'string-equal)))
 
+;;; ???
 (defun sparql-binding-elt (binding v)
   (cadr (find v binding :key #'car :test #'equal)))
 
