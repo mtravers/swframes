@@ -135,19 +135,16 @@ Idle thoughts:
 		   
 (defmethod fill-frame-inverse-sparql ((frame frame))
   (unless (frame-inverse-slots frame)
-    (setf (frame-inverse-slots frame) (make-hash-table :test #'eq))
+    (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
   (let ((*default-frame-source* (or (frame-source frame)
 				    *default-frame-source*)))
     (dolist (binding (do-sparql 
 		      *default-frame-source*
 		       `(:select (?s ?p) () (?s ?p ,frame))))
-; replaced with add-triple
-;      (push (sparql-binding-elt binding "s")
-;	    (gethash (sparql-binding-elt binding "p") (frame-inverse-slots frame)))
       (add-triple (sparql-binding-elt binding "s") 
 		  (sparql-binding-elt binding "p")
 		  frame)
-      ))))
+      )))
   
 (defvar *fill-by-default?* nil)
 
@@ -228,7 +225,7 @@ Idle thoughts:
   (when (frame-inverse-slots frame)
     (princ "Inverse:")
     (pprint (mt:ht-contents (frame-inverse-slots frame))))
-  )
+  frame )
 
 #|
 Tests:
