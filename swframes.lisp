@@ -69,6 +69,11 @@ Idle thoughts:
   (reset-frame frame)
   (unintern-uri (frame-uri frame)))
 
+(defun delete-frames-matching (uri-frag)
+  (for-all-frames (f)
+		  (if (search uri-frag (frame-uri f))
+		      (delete-frame f))))
+
 ;;; debugging
 (defun frame-fresh? (frame &optional (error? t))
   (unless (eq frame (intern-uri (frame-uri frame)))
@@ -83,68 +88,17 @@ Idle thoughts:
 (defmethod fill-frame ((frame frame) &key force?)
   (when (or force? (not (frame-loaded? frame)))
     (if (frame-source frame)
-	(progn
-	  (fill-frame-sparql frame)
-	  (fill-frame-inverse-sparql frame))
+	(fill-frame-from frame (frame-source frame)) ;defaulting??
 	(mt:report-and-ignore-errors	;+++
 	 (dereference frame)))
     (setf (frame-loaded? frame) t)))
-	
 
-#|
-;;; via sparql
-(defmethod fill-frame ((frame frame) &key force?)
-  (when (or force? (not (frame-loaded? frame)))
-    (if (ignore-errors
-	  (fill-frame-sparql frame)
-	  (fill-frame-inverse-sparql frame)
-	  t)
-	(setf (frame-loaded? frame) t)
-	(warn "Attempt to dereference ~A failed" frame))
-    ))
-
-;;;  via dereferencing
-(defmethod fill-frame ((frame frame) &key force?)
-  (when (or force? (not (frame-loaded? frame)))
-    (if (ignore-errors
-	  (dereference frame)
-	  t)
-	(setf (frame-loaded? frame) t)
-	(warn "Attempt to dereference ~A failed" frame))
-    ))
-|#
 
 (defun frame-empty? (frame)
   (and (null (%frame-slots frame))
        (null (%frame-inverse-slots frame))))
 
-(defmethod fill-frame-sparql ((frame frame) &optional source)
-    (let ((*default-frame-source* (or source
-				      (frame-source frame)
-				      *default-frame-source*)))
-      (dolist (binding (do-sparql 
-			*default-frame-source*
-			(format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame))))
-	(add-triple frame
-		    (sparql-binding-elt binding "p")
-		    (sparql-binding-elt binding "o"))
-	)
-      (setf (frame-loaded? frame) t)
-      ))
 
-		   
-(defmethod fill-frame-inverse-sparql ((frame frame))
-  (unless (frame-inverse-slots frame)
-    (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
-  (let ((*default-frame-source* (or (frame-source frame)
-				    *default-frame-source*)))
-    (dolist (binding (do-sparql 
-		      *default-frame-source*
-		       `(:select (?s ?p) () (?s ?p ,frame))))
-      (add-triple (sparql-binding-elt binding "s") 
-		  (sparql-binding-elt binding "p")
-		  frame)
-      )))
   
 (defvar *fill-by-default?* nil)
 
@@ -195,7 +149,7 @@ Idle thoughts:
   (let ((result nil))
     (dolist (f frames (delistify result))
       ;; warning: depends on nunion only being destructive to its FIRST argument
-      (setf result (nunion result (slotv f slot))))))
+      (setf result (nunion result (slotv f slot) :test #'equal)))))
 
 (defmethod msv-inverse ((frame frame) slot)
   (delistify (slotv-inverse frame slot)))
@@ -204,10 +158,11 @@ Idle thoughts:
   (let ((result nil))
     (dolist (f frames (delistify result))
       ;; warning: depends on nunion only being destructive to its FIRST argument
-      (setf result (nunion result (slotv-inverse f slot))))))
+      (setf result (nunion result (slotv-inverse f slot) :test #'equal)))))
 
-;;; this is really what we should use, I suppose
-(defun add-triple (s p o &key (test #'eql))
+;;; This is the real underlying primitive.  
+;;; Note the default test is equal.  This could be slow.
+(defun add-triple (s p o &key (test #'equal))
   (frame-fresh? s)			;+++ do this under a safety switch, here and elsewhere
   (frame-fresh? p)
   (if (frame-p 0) (frame-fresh? o))
@@ -216,14 +171,13 @@ Idle thoughts:
       (pushnew s (slotv-inverse o p) :test test))
   nil)					;makes tracing saner
 
-;;; query (sexpy sparql syntax from lsw) ___
-
+;;; query (sexp sparql syntax from lsw) 
 (defun describe-frame (frame &optional (fill? t))
   (when fill? (fill-frame frame))
-  (princ "Forward:")
+  (format t "~&Forward:")
   (pprint (mt:ht-contents (frame-slots frame)))
   (when (frame-inverse-slots frame)
-    (princ "Inverse:")
+    (format t "~&Inverse:")
     (pprint (mt:ht-contents (frame-inverse-slots frame))))
   frame )
 

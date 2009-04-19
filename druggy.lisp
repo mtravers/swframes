@@ -6,7 +6,8 @@
 (defvar *drugbank-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
 (defvar *linkedct-frame-source* (make-sparql-source "http://data.linkedct.org/sparql"))
 (defvar *diseasome-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/diseasome/sparql"))
-(defvar *collabrx-sparql* (make-sparql-source "http://virtuoso.collabrx.com/sparql/"))
+(defvar *collabrx-sparql* (make-sparql-source "http://sparql.collabrx.com/sparql/"))
+(defvar *neurocommons-sparql* (make-sparql-source "http://sparql.neurocommons.org/sparql/"))
 
 (defun trials-for-condition (condition)
   (do-sparql *linkedct-frame-source*

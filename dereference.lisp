@@ -100,15 +100,12 @@ http://data.linkedmdb.org/all/director
 ;;;    (print `(response-code ,response-code response-headers ,response-headers ,uri))
     (unless (= response-code 200)
       (error "Failed to dereference ~A, response code ~A" frame response-code))
-    (let* (; (s-xml::*ignore-namespaces* t)
-	   (xml (s-xml:parse-xml-string (knewos::adjust-sparql-string body))))
+    (let ((xml (parse-xml body)))
       (process-rdf-xml xml))))
-
-(defun string+ (&rest args)
-  (apply #'concatenate 'string args))
 
 (defun process-rdf-xml (xml &key base)
   ;; base can be set as an argument or from the header attributes
+  (let ((top-frames nil))
   (labels ((symbol->frame (symbol)
 	     (let ((ns (package-name (symbol-package symbol)))
 		   (text (symbol-name symbol)))
@@ -119,7 +116,7 @@ http://data.linkedmdb.org/all/director
 	   ;; +++ probably wants to be pulled out, this is a fundamental piece of RDF unfortunately
 	   (make-blank-node (type)
 	     (intern-uri (format nil "bnode:~A" (gensym (symbol-name type)))))
-	   (process-description (desc)
+	   (process-description (desc &optional top)
 					;		 (print `(process-description ,desc))
 	     (let* ((about0 (or (lxml-attribute desc '|rdf|::|about|)
 				(and (lxml-attribute desc '|rdf|::|ID|)
@@ -129,6 +126,7 @@ http://data.linkedmdb.org/all/director
 			       (intern-uri about0)
 			       (make-blank-node (lxml-tag desc))
 			       )))
+	       (when top (push about top-frames))
 	       (unless (eq (lxml-tag desc) '|rdf|::|Description|)
 		 (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
 	       (dolist (elt (lxml-all-subelements desc))
@@ -169,7 +167,7 @@ http://data.linkedmdb.org/all/director
 	      (t (error "Don't know what to do with ~A" (car namespaces))))))
 
     (dolist (desc (lxml-all-subelements xml))
-      (process-description desc))
-    xml))
+      (process-description desc t))
+    top-frames)))
   
 

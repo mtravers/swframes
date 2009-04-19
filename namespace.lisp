@@ -62,3 +62,5 @@
 (dolist (n *standard-namespaces*)
   (sw-register-namespace (car n) (cadr n)))
  
+(defun uri-tag (uri)
+  (subseq uri (1+ (position #\# uri))))

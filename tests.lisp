@@ -115,7 +115,7 @@ WHERE {
 
 ;;; test our local virtuoso
 ;; fast!
-(defvar *collabrx-sparql* (make-sparql-source "http://sparql.collabrx.com/sparql/"))
+
 
 (do-sparql *collabrx-sparql* `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) ) )
 ;; not as fast!
@@ -150,3 +150,41 @@ I'm always doing this, so
  (swframes::bulk-load *collabrx-sparql* '((?s ?pp "Melanoma"))))
 
 
+;;; a list of all frames that have term as a property
+(defun local-term-query (term)
+  (do-sparql-one-var *collabrx-sparql* `(:select (?s) () (?s ?p ,term))))
+
+;;; +++ to be replaced with something better
+(defun bnode? (Frame)
+  (string-prefix-equals (frame-uri frame) "nodeID://"))
+
+(defun local-term-query (term)
+  (utils:filter-out #'bnode?
+		    (do-sparql-one-var *collabrx-sparql* `(:select (?s) (:distinct t) (?s ?p ,term)))))
+
+(defun local-gene (gene-name)
+  (do-sparql-one-var
+      *collabrx-sparql*
+    `(:select (?s) ()
+	      (?s #$http://purl.org/science/ontology/reactome/geneName ,gene-name)
+	      (?s #$http://purl.org/science/ontology/reactome/species ?species)
+	      (?species #$rdfs:label "Homo sapiens")
+	      )))
+
+;;; using NCBI records instead, there are more of them
+;;; the species names aren't in the DB, but the URIs are 9606 is human
+(defun local-gene (gene-name)
+  (do-sparql-one-var
+      *collabrx-sparql*
+    `(:select (?s) ()
+	      (?s #$http://purl.org/science/owl/sciencecommons/ggp_has_symbol ,gene-name)
+	      (?s #$http://purl.org/science/owl/sciencecommons/ggp_from_species_described_by #$http://purl.org/commons/record/ncbi_taxonomy/9606)
+	      )))
+
+(defun local-gene-test (n)
+  (let ((genes (bio::ensembl-all-genes)))
+    (dotimes (nn n)
+      (print `(,(nth nn genes) 
+		,(local-gene (nth nn genes))
+;		,(local-term-query (nth nn genes))
+		)))))

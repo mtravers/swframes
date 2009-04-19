@@ -243,3 +243,31 @@
 
 (defmethod sanity-check ((endpoint sparql-endpoint))
   (do-sparql endpoint `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) )))
+
+(defmethod fill-frame-from ((frame frame) (source sparql-endpoint))
+  (fill-frame-sparql frame source)
+  (fill-frame-inverse-sparql frame source))
+
+(defmethod fill-frame-sparql ((frame frame) (source sparql-endpoint))
+    (let ((*default-frame-source* source)) ;not sure
+      (dolist (binding (do-sparql 
+			   source
+			 (format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame))))
+	(add-triple frame
+		    (sparql-binding-elt binding "p")
+		    (sparql-binding-elt binding "o"))
+	)
+      (setf (frame-loaded? frame) t)
+      ))
+
+(defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
+  (unless (frame-inverse-slots frame)
+    (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
+  (let ((*default-frame-source* source))
+    (dolist (binding (do-sparql 
+			 source
+		       `(:select (?s ?p) () (?s ?p ,frame))))
+      (add-triple (sparql-binding-elt binding "s") 
+		  (sparql-binding-elt binding "p")
+		  frame)
+      )))

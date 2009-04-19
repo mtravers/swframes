@@ -7,6 +7,7 @@
   :components
   (;; setup and utilities
    (:file "package")
+   (:file "utils")
    (:file "swframes-0")
    (:file "swframes")
    (:file "compat")
@@ -20,6 +21,8 @@
    (:file "xml")
    (:file "drugbank")
    (:file "druggy")
+   (:file "sw-pathwaycommons")
+   (:file "history")
    )
   :depends-on
   ())
