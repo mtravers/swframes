@@ -55,6 +55,7 @@
     ))
 
 
+;;; Find everything in NCI, along with category
 (defun local-nci-2 (name)
   (do-sparql
       *collabrx-sparql*

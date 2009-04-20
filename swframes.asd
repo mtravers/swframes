@@ -21,6 +21,7 @@
    (:file "xml")
    (:file "drugbank")
    (:file "druggy")
+   (:file "genes")
    (:file "sw-pathwaycommons")
    (:file "history")
    )
