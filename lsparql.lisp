@@ -40,10 +40,9 @@
     (setf (frame-source frame) sparql)
     frame))
 
-;;; being replaced with do-sparql
-(defun sparql-query (form)
-  (error "replace with do-sparql")
-  )
+;;; +++ to be replaced with something better.  Virtuoso indicates bnodes in the XML returned now.
+(defun bnode? (frame)
+  (string-prefix-equals (frame-uri frame) "nodeID://"))
 
 (defun generate-sparql (form)
   (let ((*sparql-namespace-uses* nil)
@@ -271,3 +270,4 @@
 		  (sparql-binding-elt binding "p")
 		  frame)
       )))
+

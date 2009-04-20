@@ -2,10 +2,11 @@
 
 ;; hook into old code, including listener
 (defun frames::frame-fnamed (name &optional force?)
-  (declare (ignore force?))
   (if (typep name 'frame) 
       name
-      (frame-named name)))
+      (if force?
+	  (uri name)
+	  (frame-named name))))
 
 (defun frames:fname (f)
   (frame-label f))
@@ -61,3 +62,4 @@
 '(defun frames::add-element (frame slot elt &key test)
   (declare (ignore test))
   (add-triple frame slot elt))
+
