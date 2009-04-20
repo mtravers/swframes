@@ -31,7 +31,13 @@ Idle thoughts:
 
 (defun frame-label (frame)
   (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label")))
-      (frame-name frame)))
+;      (frame-name frame)
+      (most-significant-name (frame-name frame))
+      ))
+
+;;; +++ sometimes you want the part folliwing #
+(defun most-significant-name (string)
+  (car (last (utils:string-split string #\/))))
 
 ;; try to find the english...this is simplistic and probably implementation dependent
 (defun best-string (list)

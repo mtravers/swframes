@@ -12,7 +12,7 @@
     frame))
 
 
-#|
+
 (rdfs-def-class #$crx:bioblog/Entry ()
 		(#$crx:bioblog/in)
 		(#$crx:bioblog/out)
@@ -25,4 +25,4 @@
 		     #$crx:bioblog/user user)
 		    
 
-|#
+

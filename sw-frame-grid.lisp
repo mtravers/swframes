@@ -190,7 +190,7 @@
 				    ))))))
 
 	(html
-	  ((:table :border 1 :cellpadding 3 :cellspacing 0  :rules :all :id id)
+	  ((:table :class "data" :border 1 :cellpadding 3 :cellspacing 0  :rules :all :id id)
 	   (:tr
 	    (column-header 'identity t)	
 	    (dolist (slot slots)

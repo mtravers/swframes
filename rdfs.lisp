@@ -26,7 +26,7 @@ rdfs-types
 (defmacro rdfs-def-class (name superclasses &body slots)
   (let ((clauses nil))
     (flet ((a! (s p o)
-	     (push `(assert-triple s p o) clauses)))
+	     (push `(add-triple ,s ,p ,o) clauses)))
       (a! name  #$rdfs:type #$rdfs:Class)
       (mapc #'(lambda (superclass)
 		(a! name #$rdfs:subClassOf superclass))
@@ -34,7 +34,8 @@ rdfs-types
       (mapc #'(lambda (slotdef)
 		(let ((slot (car slotdef)))
 		  (a! slot #$rdfs:type #$rdfs:Property)
-		  (a! slot #$rdfs:domain name))))
+		  (a! slot #$rdfs:domain name)))
+	    slots)
       `(progn ,@clauses))))
 
 

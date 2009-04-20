@@ -68,12 +68,9 @@
    )
 
 
+;;; Generate HTML output for a frame
 (defmethod frames::wob-html ((frame frame))
-
-					;  (frame-display-hook frame)		;experimental +++
-
-  ;; Generate HTML output for a frame
-
+  ;; (frame-display-hook frame)		;experimental +++
   (labels ((emit-section-title (title)
              (html :p (:b (:i (:princ-safe title))) "   " :newline))
            (emit-section-show-hide-control (hide-varname)
