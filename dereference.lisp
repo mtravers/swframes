@@ -126,7 +126,10 @@ http://data.linkedmdb.org/all/director
 			       (intern-uri about0)
 			       (make-blank-node (lxml-tag desc))
 			       )))
-	       (when top (push about top-frames))
+	       (when top
+		 (push about top-frames)
+;		 (print about)
+		 )
 	       (unless (eq (lxml-tag desc) '|rdf|::|Description|)
 		 (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
 	       (dolist (elt (lxml-all-subelements desc))

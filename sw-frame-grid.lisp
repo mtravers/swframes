@@ -237,19 +237,23 @@
        (frames::emit-value slot-value)
        )
 
+(defvar *frame-ref-generator* nil)
+
 (defmethod frames::emit-value 
     ((object swframes::frame) &optional (print-limit nil))
   (declare (ignore print-limit))
-  (html
-   ((:a :href (frames::wob-url object))
-    (if (sw::frame-loaded? object)
-	(html (:princ-safe (sw::frame-label object))
-	      :newline)
-	(async-html (:pre-text (sw::frame-label object))
-		    (sw:fill-frame object)
-		    (html (:princ-safe (sw::frame-label object))
-			  :newline))
-	))))
+  (if *frame-ref-generator*
+      (funcall *frame-ref-generator* object)
+      (html
+       ((:a :href (frames::wob-url object))
+	(if (sw::frame-loaded? object)
+	    (html (:princ-safe (sw::frame-label object))
+		  :newline)
+	    (async-html (:pre-text (sw::frame-label object))
+			(sw:fill-frame object)
+			(html (:princ-safe (sw::frame-label object))
+			      :newline))
+	    )))))
 
 (defmethod frames::wob-url ((object swframes::frame))
   (formatn

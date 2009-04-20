@@ -51,7 +51,8 @@ Idle thoughts:
   (wlisp::hash-keys (frame-slots frame)))
 
 (defun %frame-inverse-slots (frame)
-  (wlisp::hash-keys (frame-inverse-slots frame)))
+  (when (frame-inverse-slots frame)
+    (wlisp::hash-keys (frame-inverse-slots frame))))
 
 (defun reset-frames ()
   (clrhash *uri->frame-ht*))

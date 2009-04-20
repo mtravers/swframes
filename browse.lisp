@@ -68,6 +68,9 @@
    )
 
 
+
+
+
 ;;; Generate HTML output for a frame
 (defmethod frames::wob-html ((frame frame))
   ;; (frame-display-hook frame)		;experimental +++
@@ -116,7 +119,6 @@
 			     :evalstring
 			     (url-safe-string 
 			      (prin1-to-string `(slotv ,frame ,slot-frame)))
-			     :pkg (forward-funcall 'wb::user-session-id)
 			     ))
 			:newline
 			((:font :color :green) (:princ-safe "#^")))
