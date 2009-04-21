@@ -116,8 +116,7 @@
     (setf (request-reply-content-type req) "text/javascript")
     (render-update
      (:update (session-persist-object grid) 
-					;	      (out-record-to-html grid "redisplay")
-	      (html (:princ "what the fuck"))
+	      (out-record-to-html grid "redisplay")
 	      ))))
 
 ;;; temp quick caching 
@@ -247,7 +246,7 @@
   (declare (ignore print-limit))
       (html
        ((:a :href (frames::wob-url object))
-	(if t;+++ temp! (sw::frame-loaded? object)
+	(if (sw::frame-loaded? object)
 	    (html (:princ-safe (sw::frame-label object))
 		  :newline)
 	    (async-html (:pre-text (sw::frame-label object))

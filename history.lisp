@@ -4,22 +4,22 @@
 
 
 (rdfs-def-class #$crx:bioblog/Entry ()
-		(#$crx:bioblog/in)
-		(#$crx:bioblog/out)
+                (#$crx:bioblog/in)
+                (#$crx:bioblog/out)
 		(#$crx:bioblog/user :range #$crx:bioblog/Entry)
 		(#$crx:bioblog/time)
 		)
-	
-    
+
+
 (rdfs-def-class #$crs:bioblog/User ()
 		(#$crx:bioblog/uname)
 		(#$crx:bioblog/fullname)
 		(#$crx:bioblog/password))
 
 (defun make-history-entry (user in out)
-  (rdfs-make-instance #$crx:bioblog/Entry
+(rdfs-make-instance #$crx:bioblog/Entry
 		      #$crx:bioblog/user user
-		      #$crx:bioblog/in in
+                    #$crx:bioblog/in in
 		      #$crx:bioblog/out out))
 		    
 

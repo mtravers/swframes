@@ -13,6 +13,7 @@
    (:file "swframes")
    (:file "namespace")
    (:file "compat")
+   (:file "rdfs")
    ;; sources
    (:file "source")
    (:file "dereference")
