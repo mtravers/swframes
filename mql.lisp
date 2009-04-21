@@ -223,6 +223,7 @@ New version of cl-json has different, smaller set of bugs.
 
 ;;; examples
 #|
+
 (name-property-lookup "2001" "directed_by" "/film/film")
 (name-property-lookup "Lisp" "type" nil) ;type can be nil because "type" is a common property?
 
@@ -230,7 +231,8 @@ New version of cl-json has different, smaller set of bugs.
 (name-property-lookup "2001" "id")
 (name-property-lookup "Stanley Kubrick" "id") ;more reasonable
 
- |#
+|#
+
 (defun name-types (name)
   (name-property-lookup name "type" nil))
 
@@ -241,7 +243,7 @@ New version of cl-json has different, smaller set of bugs.
 	      (:type . "/type/type"))))  
 
 ;;; Given a GUID, return everything we can find
-;;; 
+;;; I think this is isomorphic to what you get from dereferencing the RDF?
 (defun id->everything (id)
   (let ((types
 	 (utils:assocdr 
@@ -254,6 +256,10 @@ New version of cl-json has different, smaller set of bugs.
 	    (append result
 		    (mql-read `((:id . ,id)
 				(:type . ,type)
-				("*" . nil))))))
+				("*" . (:empty-dict))))))) ; or ("*" . nil) to get values only
     result))
       
+
+;;; Turns a Freebase ID into a frame name (ie, duplicating what they do to go to RDF)
+(defun mql-result->frame (id)
+  (uri (string+ "fb:" (substitute #\. #\/ (subseq id 1)))))
