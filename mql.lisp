@@ -234,7 +234,7 @@ New version of cl-json has different, smaller set of bugs.
 |#
 
 (defun name-types (name)
-  (name-property-lookup name "type" nil))
+  (mql-name-property-lookup name "type" nil))
 
 ;;; this should be memoized.
 (defun type-properties (type)
@@ -263,3 +263,11 @@ New version of cl-json has different, smaller set of bugs.
 ;;; Turns a Freebase ID into a frame name (ie, duplicating what they do to go to RDF)
 (defun mql-result->frame (id)
   (uri (string+ "fb:" (substitute #\. #\/ (subseq id 1)))))
+
+(defun mql-gene (gene-id)
+  (let* ((raw (mql-read `(("/biology/gene/symbol" . ,gene-id) (:id  . nil))))
+	 (id (assocdr :id (car raw)))
+	 (frame (and id (mql-result->frame id))))
+    (when frame
+      (fill-frame frame)			;optional
+      frame)))

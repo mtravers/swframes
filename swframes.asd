@@ -20,6 +20,7 @@
    (:file "lsparql")
    (:file "sparul")
    (:file "files")
+   (:file "mql")
    ;; web ui stuff
    (:file "browse")
    (:file "sw-frame-grid")
