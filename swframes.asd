@@ -13,9 +13,9 @@
    (:file "swframes")
    (:file "namespace")
    (:file "compat")
+   (:file "source")
    (:file "rdfs")
    ;; sources
-   (:file "source")
    (:file "dereference")
    (:file "lsparql")
    (:file "sparul")

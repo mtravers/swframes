@@ -77,8 +77,7 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 	(gensym-instance-frame class)
 	(uri uri))))
 
-(defmethod uri-used? ((source sparql-endpoint) uri)
-  (do-sparql 
-      source
-    (format nil "select ?p ?o where { <~A> ?p ?o . }" uri)))
+(defgeneric uri-used? (source uri))
+
+
 
