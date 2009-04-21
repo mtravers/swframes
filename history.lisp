@@ -13,16 +13,15 @@
 
 
 
+#|
 (rdfs-def-class #$crx:bioblog/Entry ()
-		(#$crx:bioblog/in)
-		(#$crx:bioblog/out)
-		(#$crx:bioblog/user :range #$crx:bioblog/Entry))
-	
-    
+                (#$crx:bioblog/in)
+                (#$crx:bioblog/out)
+                (#$crx:bioblog/user :range #$crx:bioblog/Entry))
+
+
 (rdfs-make-instance #$crx:bioblog/Entry
-		    #$crx:bioblog/in in
-		     #$crx:bioblog/out out
-		     #$crx:bioblog/user user)
-		    
-
-
+                    #$crx:bioblog/in in
+                     #$crx:bioblog/out out
+                     #$crx:bioblog/user user)
+|#
