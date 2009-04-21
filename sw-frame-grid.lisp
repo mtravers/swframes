@@ -104,16 +104,20 @@
 	(setf (get name-sym :text) fun-text)
 	(setf (frame-grid-slots grid)
 	      ;; assume async
-	      (append (frame-grid-slots grid) (list `(,name-sym :async? t))))
+	      (append (frame-grid-slots grid) (list `(,name-sym :async? t)))
+	      )
 	(if *ajax-listener?*
 	    (grid-redisplay-ajax grid req ent)
 	    (net.aserve::redirect-to req ent "/redisplay.html"))))))
 
 (defun grid-redisplay-ajax (grid req ent)
   (with-http-body (req ent)
+    ;; this doesn't work, sadly
+    (setf (request-reply-content-type req) "text/javascript")
     (render-update
      (:update (session-persist-object grid) 
-	      (out-record-to-html grid "redisplay")
+					;	      (out-record-to-html grid "redisplay")
+	      (html (:princ "what the fuck"))
 	      ))))
 
 ;;; temp quick caching 
@@ -237,23 +241,20 @@
        (frames::emit-value slot-value)
        )
 
-(defvar *frame-ref-generator* nil)
 
 (defmethod frames::emit-value 
     ((object swframes::frame) &optional (print-limit nil))
   (declare (ignore print-limit))
-  (if *frame-ref-generator*
-      (funcall *frame-ref-generator* object)
       (html
        ((:a :href (frames::wob-url object))
-	(if (sw::frame-loaded? object)
+	(if t;+++ temp! (sw::frame-loaded? object)
 	    (html (:princ-safe (sw::frame-label object))
 		  :newline)
 	    (async-html (:pre-text (sw::frame-label object))
 			(sw:fill-frame object)
 			(html (:princ-safe (sw::frame-label object))
 			      :newline))
-	    )))))
+	    ))))
 
 (defmethod frames::wob-url ((object swframes::frame))
   (formatn

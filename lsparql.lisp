@@ -13,6 +13,7 @@
    (writeable? nil)
    (write-graph nil))
   :initable-instance-variables
+  (:readable-instance-variables uri write-graph)
   )
 
 (defmethod* print-object ((sparql sparql-endpoint) stream)

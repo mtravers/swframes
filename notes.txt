@@ -10,6 +10,10 @@ Theory of dirtiness (Not yet implemented):
 - frames have a slot of dirty predicates.
 - there is a global (or per-sparql) list of dirty frames
 
+Theory of blank nodes (and also, perhaps, fresh frames)
+- they don't need a unique URI
+- fresh frames don't need to have a unique URI until they are written out somewhere
+
 Theory of slot values
 - always a list
 - should deprecate set-slotv, add-triple is the appropriate API
@@ -22,3 +26,17 @@ Theory of slot values
 
 - need theory of serialized lisp objects.  SPARQL basically always returns strings or URIs; some strings should
   be READ.
+
+----------------------------------------------------------------------------------
+
+History Structure:
+
+- Linear list of chunks
+- chunks can have subchunks
+  - so a function and its response are separate related chunks
+- chunks can be typed
+   - use rdfs types?  probably, maybe chunk -> content -> typed thing
+- SEXP chunks - get evaluated
+- ASK chunks - get sent to the collective Oracle
+- FORM chunks - also get evaluated
+others?
