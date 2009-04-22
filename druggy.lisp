@@ -2,7 +2,6 @@
 
 ;;; Enough to get drug grid going, and other domain-specific code
 
-(setq *default-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
 (defvar *drugbank-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
 (defvar *linkedct-frame-source* (make-sparql-source "http://data.linkedct.org/sparql"))
 (defvar *diseasome-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/diseasome/sparql"))

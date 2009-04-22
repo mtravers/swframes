@@ -29,6 +29,7 @@
    ;; particular knowledge sources
    (:file "drugbank")
    (:file "druggy")
+   (:file "genes")
    (:file "sw-pathwaycommons")
    )
   :depends-on

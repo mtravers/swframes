@@ -233,12 +233,11 @@
 
 
 (defun frames::emit-slot-value (slot-frame slot-value)
-;;   (vif (html-generator
-;; 	(and (not *print-lispy*) 
-;; 	     (slotv slot-frame #$HTMLGenerator)))
-;;        (funcall html-generator slot-value)
+  (aif (and ;(not *print-lispy*) 
+	(sw::msv slot-frame #$HTMLGenerator))
+       (funcall it slot-value)
        (frames::emit-value slot-value)
-       )
+       ))
 
 
 (defmethod frames::emit-value 
