@@ -9,8 +9,12 @@
 		(#$crx:bioblog/user :range #$crx:bioblog/User)
 		(#$crx:bioblog/time)
 
+		;; Actually...what about the fact that there are multiple views (group/individual)
+		;; perhaps just a filter and time order is the right thing...
 		(#$crx:bioblog/next)
+
 		;; an ordered list, we need some way to deal with that
+		;; 
 		(#$crx:bioblog/children) 
 		;; ptr to the actual content
 		(#$crx:bioblog/content) 
