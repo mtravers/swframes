@@ -6,8 +6,14 @@
 (rdfs-def-class #$crx:bioblog/Entry ()
                 (#$crx:bioblog/in)
                 (#$crx:bioblog/out)
-		(#$crx:bioblog/user :range #$crx:bioblog/Entry)
+		(#$crx:bioblog/user :range #$crx:bioblog/User)
 		(#$crx:bioblog/time)
+
+		(#$crx:bioblog/next)
+		;; an ordered list, we need some way to deal with that
+		(#$crx:bioblog/children) 
+		;; ptr to the actual content
+		(#$crx:bioblog/content) 
 		)
 
 
@@ -17,9 +23,9 @@
 		(#$crx:bioblog/password))
 
 (defun make-history-entry (user in out)
-(rdfs-make-instance #$crx:bioblog/Entry
+  (rdfs-make-instance #$crx:bioblog/Entry
 		      #$crx:bioblog/user user
-                    #$crx:bioblog/in in
+		      #$crx:bioblog/in in
 		      #$crx:bioblog/out out))
 		    
 

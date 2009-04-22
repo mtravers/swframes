@@ -8,6 +8,8 @@ Notes:
 
 Defclass
 - Might want to use a short name for slots and have uri generated with a template.
+- yes, have a standard abbrev so make-instance can use keywords
+
 
 Make-instance
 -  has to make a unique name, which requires a sparql source? Not sure what to do about that
