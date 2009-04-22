@@ -13,3 +13,6 @@
   `(with-output-to-string (s)
      (let ((*html-stream* s))
        (html ,@stuff))))
+
+(defun uri-tag (uri)
+  (subseq uri (1+ (position #\# uri))))
