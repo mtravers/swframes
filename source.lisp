@@ -38,3 +38,7 @@ Dereferencing is a "frame source" of sorts...
 |#
 
 
+(defmacro with-frame-source ((source) &body body)
+  `(let ((*default-frame-source* ,source))
+     ,@body))
+	 

@@ -57,7 +57,7 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 ;;; does no checking, we should have a flag. Also option for specifying a name or partial name.
 (defun rdfs-make-instance (class &rest slots)
   (let ((frame (gensym-instance-frame class)))
-    (setf (frame-source frame) *programmatic-frame-source*)
+;no, wrong +++    (setf (frame-source frame) *programmatic-frame-source*)
     (setf (slotv frame #$rdf:type) class)
     (do ((rest slots (cddr rest)))
 	((null rest) frame)
@@ -77,7 +77,9 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
   (let ((uri (string+ (frame-uri class) "/" (string (gensym (frame-label class))))))
     (if (uri-used? *collabrx-sparql* uri)
 	(gensym-instance-frame class)
-	(uri uri))))
+	(let ((f (intern-uri uri)))
+	  
+	  )))
 
 (defgeneric uri-used? (source uri))
 

@@ -101,7 +101,9 @@
     (frame (format nil "<~A>" (frame-uri thing)))
     (symbol
      (string-downcase (string thing)))
-    (string (format nil "\"~A\"" thing))	;needs better quoting probably
+    (string (if (position #\" thing)
+		(format nil "'''~A'''" thing)
+		(format nil "\"~A\"" thing)))	
     (t (mt:fast-string thing))))
 
 
