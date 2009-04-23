@@ -25,7 +25,6 @@
    (:file "browse")
    (:file "sw-frame-grid")
    (:file "xml")
-   (:file "history")
    ;; particular knowledge sources
    (:file "drugbank")
    (:file "druggy")

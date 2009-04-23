@@ -77,9 +77,7 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
   (let ((uri (string+ (frame-uri class) "/" (string (gensym (frame-label class))))))
     (if (uri-used? *collabrx-sparql* uri)
 	(gensym-instance-frame class)
-	(let ((f (intern-uri uri)))
-	  
-	  )))
+	(intern-uri uri))))
 
 (defgeneric uri-used? (source uri))
 
