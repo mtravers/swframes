@@ -27,6 +27,11 @@ Theory of slot values
 - need theory of serialized lisp objects.  SPARQL basically always returns strings or URIs; some strings should
   be READ.
 
+Slot properties:
+- display
+- special save/restore behavior (ie, we might want some slots that can't be serialized or need special handling to do so)
+
+
 ----------------------------------------------------------------------------------
 
 History Structure:
