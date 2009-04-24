@@ -11,9 +11,10 @@
 (defclass* sparql-endpoint (frame-source)
   (uri
    (writeable? nil)
+   (read-graph nil)			;if set, SEXP queries are limited to that graph
    (write-graph nil))
   :initable-instance-variables
-  (:readable-instance-variables uri write-graph)
+  (:readable-instance-variables uri read-graph write-graph)
   )
 
 (defmethod* print-object ((sparql sparql-endpoint) stream)
@@ -26,7 +27,7 @@
   (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" sparql))
     (knewos::run-sparql uri command :make-uri #'(lambda (u) (intern-uri u sparql)))))
 
-(defmethod do-sparql ((sparql sparql-endpoint) (command list) &key (timeout *sparql-default-timeout*))
+(defmethod* do-sparql ((sparql sparql-endpoint) (command list) &key (timeout *sparql-default-timeout*))
   (do-sparql sparql (generate-sparql command) :timeout timeout))
 
 ;;; Return a simple list of results.  Query should either have one open variable or you can specify one with the optional argument
@@ -52,37 +53,40 @@
     (setq query
 	  ;; DELETE and INSERT can take WHERE clauses, not supported here yet
 	  ;; redone as separate methods on endpoints.
-    (cond
-#|
-      ((eq (car form) :insert)
-	   (destructuring-bind ((&key from) &rest clauses) (cdr form)
-	     (with-output-to-string (s)
-	       (format s "INSERT ~A { "
-		     (if from (format nil "INTO GRAPH <~A>" (uri-full from)) ""))
-	       (loop for clause in (cddr form)
-		     do (emit-sparql-clause clause s))
-	       (format s " }"))))
-	  ((eq (car form) :delete)
-	   (destructuring-bind ((&key from) &rest clauses) (cdr form)
-	     (with-output-to-string (s)
-	       (format s "DELETE ~A { "
-		     (if from (format nil "FROM GRAPH <~A>" (uri-full from)) ""))
-	       (loop for clause in (cddr form)
-		     do (emit-sparql-clause clause s))
-	       (format s " }"))))
-|#
+	  (cond
+	    #|
+	    ((eq (car form) :insert)
+	    (destructuring-bind ((&key from) &rest clauses) (cdr form)
+	    (with-output-to-string (s)
+	    (format s "INSERT ~A { "
+	    (if from (format nil "INTO GRAPH <~A>" (uri-full from)) ""))
+	    (loop for clause in (cddr form)
+	    do (emit-sparql-clause clause s))
+	    (format s " }"))))
+	    ((eq (car form) :delete)
+	    (destructuring-bind ((&key from) &rest clauses) (cdr form)
+	    (with-output-to-string (s)
+	    (format s "DELETE ~A { "
+	    (if from (format nil "FROM GRAPH <~A>" (uri-full from)) ""))
+	    (loop for clause in (cddr form)
+	    do (emit-sparql-clause clause s))
+	    (format s " }"))))
+	    |#
       ((eq (car form) :select)
        ;; +++ don't like
-       (destructuring-bind (vars (&key limit distinct from) &rest clauses) (cdr form)
+       (destructuring-bind (vars (&key limit distinct from order) &rest clauses) (cdr form)
 	 (with-output-to-string (s) 
 	     (format s "SELECT ~a~{~a~^ ~}~a~%WHERE { "
 		     (if distinct "DISTINCT " "")
 		     vars 
-		     (if from (format nil "~{ FROM <~a> ~^~%~}" (mapcar 'sparql-term (if (symbolp from) (list from) from))) "")
+		     (if from (format nil "~{ FROM ~a ~^~%~}" (mapcar 'sparql-term (if (listp from) from (list from)))) "")
 		     )
 	     (loop for clause in clauses
 		do (emit-sparql-clause clause s))
-			 (format s "} ~a" (if limit (format nil "LIMIT ~a " limit) "")))))
+	     (format s "} ~a" (if limit (format nil "LIMIT ~a " limit) ""))
+	     (when order
+	       (format s " ORDER BY ~A" order)) ;+++ needs at least ASC/DESC
+	     )))
 	  (t (error "Can't handle ~A command yet" (car form)))))
     ;; add prefixes
     (let* ((prefix (with-output-to-string (p)

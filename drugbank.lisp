@@ -138,7 +138,8 @@ Todo:
 
 	      (t
 	       (push line (frame-slot-value frame slot))))))
-    (thread-go)
+; temporarily not working +++
+;;;    (thread-go)
     ))
 
 
