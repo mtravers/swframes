@@ -46,6 +46,7 @@
 (defun bnode? (frame)
   (string-prefix-equals (frame-uri frame) "nodeID://"))
 
+;;; :order value can be a single element, a 2-list (:desc/:asc ?elt), or a list of such elements
 (defun generate-sparql (form)
   (let ((*sparql-namespace-uses* nil)
 	(*print-case*  :downcase)
@@ -85,7 +86,17 @@
 		do (emit-sparql-clause clause s))
 	     (format s "} ~a" (if limit (format nil "LIMIT ~a " limit) ""))
 	     (when order
-	       (format s " ORDER BY ~A" order)) ;+++ needs at least ASC/DESC
+	       (unless (listp order) (setf order (list order)))
+	       (format s " ORDER BY ~{~A ~}"
+		       (mapcar #'(lambda (clause)
+				   (cond ((symbolp clause)
+					  clause)
+					 ((eq :asc (car clause))
+					  (cadr clause))
+					 ((eq :desc (car clause))
+					  (format nil "DESC(~A)" (cadr clause)))))
+			       order)))
+
 	     )))
 	  (t (error "Can't handle ~A command yet" (car form)))))
     ;; add prefixes
@@ -98,6 +109,10 @@
 	  (format nil "PREFIX reasoning: <http://www.mindswap.org/2005/sparql/reasoning#>~%~a" query)
 	  query))
     ))
+
+(defun format-order-clause (order-clause)
+)
+					
 
 ;;; +++ methodize
 (defun sparql-term (thing)

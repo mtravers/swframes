@@ -94,12 +94,12 @@ Idle thoughts:
 
 (defmethod fill-frame ((frame frame) &key force?)
   (when (or force? (not (frame-loaded? frame)))
-    (if (frame-source frame)
-	(fill-frame-from frame (frame-source frame)) ;defaulting??
-	(mt:report-and-ignore-errors	;+++
-	 (dereference frame)))
-    (setf (frame-loaded? frame) t)))
-
+    (let ((*fill-by-default?* nil))	;prevent recursion
+      (if (frame-source frame)
+	  (fill-frame-from frame (frame-source frame)) ;defaulting??
+	  (mt:report-and-ignore-errors	;+++
+	   (dereference frame)))
+      (setf (frame-loaded? frame) t))))
 
 (defun frame-empty? (frame)
   (and (null (%frame-slots frame))
@@ -116,6 +116,7 @@ Idle thoughts:
 
 (defsetf slotv set-slotv)
 
+;;; note that this and set-slotv-inverse never do fills
 (defmethod set-slotv ((frame frame) (slot frame) value)
   ;; enforce rule that slot values are lists...
   (unless (listp value)
