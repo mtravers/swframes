@@ -189,16 +189,18 @@
   '((is-canonical "reasoning:isCanonical")
     ))
 
+(defvar sparql-binary-ops '((and "&&")(or "||") (equal "=") (< "<") (> ">") (>= ">=") (<= "<=")))
+
 ;;; should use sparql-term
 (defun emit-sparql-filter (expression s)
   (let ((*print-case* :downcase))
     (cond ((and (listp expression)
-		(assoc (car expression) '((and "&&")(or "||") (equal "=") (< "<") (> ">"))))
+		(assoc (car expression) sparql-binary-ops))
 	   (write-char #\( s)
 	   (loop for rest on (cdr expression) do 
 		(emit-sparql-filter (car rest) s)
 		(when (cdr rest) 
-		  (format s " ~a " (second (assoc (car expression) '((and "&&")(or "||") (equal "=") (< "<") (> ">")))))))
+		  (format s " ~a " (second (assoc (car expression) sparql-binary-ops)))))
 	   (write-char #\) s))
 	  ((and (listp expression) (eq (car expression) 'not))
 	   (write-string "(!(" s)
