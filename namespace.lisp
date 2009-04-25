@@ -9,6 +9,9 @@
 	 (warn "Attempt to redefine namespace ~A from ~A to ~A" abbrev (cadr (car it)) full))
        (push (list abbrev full) *sw-namespaces*)))
 
+(defun unregister-namespace (abbrev)
+  (deletef abbrev *sw-namespaces* :test #'equal :key #'car))
+
 (defun abbreviate-uri (uri)
   (dolist (namespace *sw-namespaces*)
     (let ((full (cadr namespace)))

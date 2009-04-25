@@ -103,6 +103,21 @@ http://data.linkedmdb.org/all/director
     (let ((xml (parse-xml body)))
       (process-rdf-xml xml))))
 
+;;; can get RSS feeds, ie
+(defun process-rdf-url (url)
+  (multiple-value-bind (body response-code response-headers uri)
+      ;; turns out this processes the 303 redirect without any further intervention
+      (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" url))
+	(utils:get-url url))
+    #+:CCL (declare (ccl::ignore-if-unused response-headers uri))
+;;;    (print `(response-code ,response-code response-headers ,response-headers ,uri))
+    (unless (= response-code 200)
+      (error "Failed to dereference ~A, response code ~A" url response-code))
+    (let ((xml (parse-xml body)))
+      (process-rdf-xml xml))))
+
+  
+
 (defun process-rdf-xml (xml &key base)
   ;; base can be set as an argument or from the header attributes
   (let ((top-frames nil))
@@ -157,13 +172,14 @@ http://data.linkedmdb.org/all/director
     (assert (name-eq '|rdf|::RDF (car (car xml))))
     (do ((namespaces (cdr (car xml)) (cddr namespaces)))
 	((null namespaces))
+      (print `(ns ,(car namespaces) ,(cadr namespaces)))
       (let* ((splits (utils:string-split (string (car namespaces)) #\:  ))
 	     (com (car splits))
 	     (ns (cadr splits))
 	     (full (cadr namespaces)))
 	(cond ((equal com "xmlns")
 	       (if (null ns)
-		   nil			;+++ do something with this
+		   (sw-register-namespace "NS-0" full)
 		   (sw-register-namespace ns full)))
 	      ((equal com "base")
 	       (setq base full))
@@ -171,6 +187,7 @@ http://data.linkedmdb.org/all/director
 
     (dolist (desc (lxml-all-subelements xml))
       (process-description desc t))
+    (unregister-namespace "NS-0")
     top-frames)))
   
 

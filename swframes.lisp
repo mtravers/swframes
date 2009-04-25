@@ -168,6 +168,9 @@ Idle thoughts:
       ;; warning: depends on nunion only being destructive to its FIRST argument
       (setf result (nunion result (slotv-inverse f slot) :test #'equal)))))
 
+(defun slot-has? (frame slot value)
+  (member value (slotv frame slot)))
+
 ;;; This is the real underlying primitive.  
 ;;; Note the default test is equal.  This could be slow.
 (defun add-triple (s p o &key (test #'equal))
