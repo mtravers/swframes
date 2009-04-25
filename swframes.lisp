@@ -176,11 +176,18 @@ Idle thoughts:
 (defun add-triple (s p o &key (test #'equal))
   (frame-fresh? s)			;+++ do this under a safety switch, here and elsewhere
   (frame-fresh? p)
-  (if (frame-p 0) (frame-fresh? o))
+  (if (frame-p o) (frame-fresh? o))
   (pushnew o (slotv s p) :test test)
   (if (frame-p o)
       (pushnew s (slotv-inverse o p) :test test))
   nil)					;makes tracing saner
+
+;;; see comment on delete-triple
+(defun remove-triple (s p o  &key (test #'equal))
+  (deletef p (slotv s p) :test test)
+  (if (frame-p o)
+      (deletef s (slotv-inverse o p) :test test)))
+  
 
 ;;; query (sexp sparql syntax from lsw) 
 (defun describe-frame (frame &optional (fill? t))

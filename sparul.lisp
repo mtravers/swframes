@@ -12,6 +12,7 @@
   (do-sparql sparql
     (build-insert sparql s p o)))
 
+;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod* delete-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)
   (do-sparql sparql
