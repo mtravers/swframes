@@ -11,8 +11,8 @@
 
 (defmacro html-string (&body stuff)
   `(with-output-to-string (s)
-     (let ((*html-stream* s))
-       (html ,@stuff))))
+     (let ((net.aserve::*html-stream* s))
+       (net.aserve::html ,@stuff))))
 
 (defun uri-tag (uri)
   (subseq uri (1+ (position #\# uri))))
