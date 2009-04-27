@@ -11,7 +11,7 @@
 (defclass* sparql-endpoint (frame-source)
   (uri
    (writeable? nil)
-   (read-graph nil)			;if set, SEXP queries are limited to that graph
+   (read-graph nil)			;if set, SEXP queries are limited to that graph 
    (write-graph nil))
   :initable-instance-variables
   (:readable-instance-variables uri read-graph write-graph)
@@ -28,7 +28,7 @@
     (knewos::run-sparql uri command :make-uri #'(lambda (u) (intern-uri u sparql)))))
 
 (defmethod* do-sparql ((sparql sparql-endpoint) (command list) &key (timeout *sparql-default-timeout*))
-  (do-sparql sparql (generate-sparql command) :timeout timeout))
+  (do-sparql sparql (generate-sparql sparql command) :timeout timeout))
 
 ;;; Return a simple list of results.  Query should either have one open variable or you can specify one with the optional argument
 (defmethod* do-sparql-one-var ((sparql sparql-endpoint) query &optional var)
@@ -47,7 +47,7 @@
   (string-prefix-equals (frame-uri frame) "nodeID://"))
 
 ;;; :order value can be a single element, a 2-list (:desc/:asc ?elt), or a list of such elements
-(defun generate-sparql (form)
+(defmethod* generate-sparql ((sparql sparql-endpoint) form)
   (let ((*sparql-namespace-uses* nil)
 	(*print-case*  :downcase)
 	query)
@@ -75,12 +75,12 @@
 	    |#
       ((eq (car form) :select)
        ;; +++ don't like
-       (destructuring-bind (vars (&key limit distinct from order) &rest clauses) (cdr form)
+       (destructuring-bind (vars (&key limit distinct (from read-graph) order) &rest clauses) (cdr form)
 	 (with-output-to-string (s) 
 	     (format s "SELECT ~a~{~a~^ ~}~a~%WHERE { "
 		     (if distinct "DISTINCT " "")
 		     vars 
-		     (if from (format nil "~{ FROM ~a ~^~%~}" (mapcar 'sparql-term (if (listp from) from (list from)))) "")
+		     (if from (format nil "~{ FROM ~a ~^~%~}" (mapcar #'sparql-term (mapcar #'intern-uri (if (listp from) from (list from)))) ""))
 		     )
 	     (loop for clause in clauses
 		do (emit-sparql-clause clause s))

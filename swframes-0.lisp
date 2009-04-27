@@ -35,6 +35,9 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defpackage :swfuncs)
 
 ;;; New, works with setf without a lot of hair.   But it means we have to type #'#^ to use it as a functional argument...ugh.
+;;; Whups -- fun defined at read time, won't necessarily be available later. Damn! 
+;;; Poss solution -- put all def'd symbols in a special variable somewhere, which gets written to a fasl as the last step of compilation
+;;; of a system, and read back in early.  Ugly..
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let* ((slot (uri (frames::read-fname stream)))
@@ -47,7 +50,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defun pound-inverse-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let* ((slot (uri (frames::read-fname stream)))
-	 (symbol (intern (frame-uri slot) :swfuncs)))
+	 (symbol (intern (string+ "inverse_" (frame-uri slot)) :swfuncs)))
     (compile symbol #'(lambda (f) (msv-inverse f slot)))
 ; No setf for now
 ;    (eval `(defsetf ,symbol (f) (v) `(set-slotv-inverse ,f ,,slot ,v)))

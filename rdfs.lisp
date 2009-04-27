@@ -79,7 +79,7 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 (defun rdfs-typep (frame class)
   (or (slot-has? frame #$rdf:type class)
       (some #'(lambda (subclass)
-		(rdfs-typepe frame subclass))
+		(rdfs-typep frame subclass))
 	    (rdfs-subclasses class))))
 
 (defun rdfs-subclasses (class)

@@ -173,21 +173,24 @@ Idle thoughts:
 
 ;;; This is the real underlying primitive.  
 ;;; Note the default test is equal.  This could be slow.
-(defun add-triple (s p o &key (test #'equal))
+(defun add-triple (s p o &key (test #'equal) to-db)
   (frame-fresh? s)			;+++ do this under a safety switch, here and elsewhere
   (frame-fresh? p)
   (if (frame-p o) (frame-fresh? o))
   (pushnew o (slotv s p) :test test)
-  (if (frame-p o)
-      (pushnew s (slotv-inverse o p) :test test))
+  (when (frame-p o)
+    (pushnew s (slotv-inverse o p) :test test))
+  (when to-db
+    (write-triple (frame-source s) s p o))
   nil)					;makes tracing saner
 
 ;;; see comment on delete-triple
-(defun remove-triple (s p o  &key (test #'equal))
+(defun remove-triple (s p o  &key (test #'equal) to-db)
   (deletef p (slotv s p) :test test)
-  (if (frame-p o)
-      (deletef s (slotv-inverse o p) :test test)))
-  
+  (when (frame-p o)
+    (deletef s (slotv-inverse o p) :test test))
+  (when to-db
+    (delete-triple (frame-source s) s p o)))
 
 ;;; query (sexp sparql syntax from lsw) 
 (defun describe-frame (frame &optional (fill? t))
