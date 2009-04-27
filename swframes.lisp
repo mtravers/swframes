@@ -150,7 +150,6 @@ Idle thoughts:
 (defun svif (slot)
   #'(lambda (x) (slotv-inverse x slot)))
 
-
 ;;; Experimenting with an extention of slot semantics (in use by #^ now)
 (defun delistify (thing)
   (if (and (listp thing)
@@ -222,6 +221,10 @@ Tests:
 (defvar *bio2df-server* (make-sparql-source "http://lod.openlinksw.com/sparql"))
 
 (describe-sframe (intern-uri "http://data.linkedct.org/resource/trials/NCT00123435"))
+
+;;; Test inverse
+(add-triple #$a #$has #$b)
+(assert (member #$b (slotv-inverse #$b #$has)))
 
 |#
 
