@@ -1,4 +1,3 @@
-(load
 ;;; Code to parse drugbank files into frames
 
 ;;;; MODIFIED (lightly) FOR SW
