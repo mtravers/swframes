@@ -6,6 +6,11 @@
 (defvar *linkedct-frame-source* (make-sparql-source "http://data.linkedct.org/sparql"))
 (defvar *diseasome-frame-source* (make-sparql-source "http://www4.wiwiss.fu-berlin.de/diseasome/sparql"))
 (defvar *collabrx-sparql* (make-sparql-source "http://sparql.collabrx.com/sparql/"))
+(defvar *collabrx-bioblog* 
+  (make-instance 'sparql-endpoint
+		 :uri "http://sparql.collabrx.com/sparql/"
+		 :writeable? t
+		 :write-graph "http://collabrx.com/bioblog/"))
 (defvar *neurocommons-sparql* (make-sparql-source "http://sparql.neurocommons.org/sparql/"))
 
 (defun trials-for-condition (condition)

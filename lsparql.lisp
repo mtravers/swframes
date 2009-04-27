@@ -11,9 +11,10 @@
 (defclass* sparql-endpoint (frame-source)
   (uri
    (writeable? nil)
+   (read-graph nil)			;if set, SEXP queries are limited to that graph 
    (write-graph nil))
   :initable-instance-variables
-  (:readable-instance-variables uri write-graph)
+  (:readable-instance-variables uri read-graph write-graph)
   )
 
 (defmethod* print-object ((sparql sparql-endpoint) stream)
@@ -26,8 +27,8 @@
   (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" sparql))
     (knewos::run-sparql uri command :make-uri #'(lambda (u) (intern-uri u sparql)))))
 
-(defmethod do-sparql ((sparql sparql-endpoint) (command list) &key (timeout *sparql-default-timeout*))
-  (do-sparql sparql (generate-sparql command) :timeout timeout))
+(defmethod* do-sparql ((sparql sparql-endpoint) (command list) &key (timeout *sparql-default-timeout*))
+  (do-sparql sparql (generate-sparql sparql command) :timeout timeout))
 
 ;;; Return a simple list of results.  Query should either have one open variable or you can specify one with the optional argument
 (defmethod* do-sparql-one-var ((sparql sparql-endpoint) query &optional var)
@@ -45,44 +46,58 @@
 (defun bnode? (frame)
   (string-prefix-equals (frame-uri frame) "nodeID://"))
 
-(defun generate-sparql (form)
+;;; :order value can be a single element, a 2-list (:desc/:asc ?elt), or a list of such elements
+(defmethod* generate-sparql ((sparql sparql-endpoint) form)
   (let ((*sparql-namespace-uses* nil)
 	(*print-case*  :downcase)
 	query)
     (setq query
 	  ;; DELETE and INSERT can take WHERE clauses, not supported here yet
 	  ;; redone as separate methods on endpoints.
-    (cond
-#|
-      ((eq (car form) :insert)
-	   (destructuring-bind ((&key from) &rest clauses) (cdr form)
-	     (with-output-to-string (s)
-	       (format s "INSERT ~A { "
-		     (if from (format nil "INTO GRAPH <~A>" (uri-full from)) ""))
-	       (loop for clause in (cddr form)
-		     do (emit-sparql-clause clause s))
-	       (format s " }"))))
-	  ((eq (car form) :delete)
-	   (destructuring-bind ((&key from) &rest clauses) (cdr form)
-	     (with-output-to-string (s)
-	       (format s "DELETE ~A { "
-		     (if from (format nil "FROM GRAPH <~A>" (uri-full from)) ""))
-	       (loop for clause in (cddr form)
-		     do (emit-sparql-clause clause s))
-	       (format s " }"))))
-|#
+	  (cond
+	    #|
+	    ((eq (car form) :insert)
+	    (destructuring-bind ((&key from) &rest clauses) (cdr form)
+	    (with-output-to-string (s)
+	    (format s "INSERT ~A { "
+	    (if from (format nil "INTO GRAPH <~A>" (uri-full from)) ""))
+	    (loop for clause in (cddr form)
+	    do (emit-sparql-clause clause s))
+	    (format s " }"))))
+	    ((eq (car form) :delete)
+	    (destructuring-bind ((&key from) &rest clauses) (cdr form)
+	    (with-output-to-string (s)
+	    (format s "DELETE ~A { "
+	    (if from (format nil "FROM GRAPH <~A>" (uri-full from)) ""))
+	    (loop for clause in (cddr form)
+	    do (emit-sparql-clause clause s))
+	    (format s " }"))))
+	    |#
       ((eq (car form) :select)
        ;; +++ don't like
-       (destructuring-bind (vars (&key limit distinct from) &rest clauses) (cdr form)
+       (destructuring-bind (vars (&key limit distinct (from read-graph) order) &rest clauses) (cdr form)
 	 (with-output-to-string (s) 
 	     (format s "SELECT ~a~{~a~^ ~}~a~%WHERE { "
 		     (if distinct "DISTINCT " "")
 		     vars 
-		     (if from (format nil "~{ FROM <~a> ~^~%~}" (mapcar 'sparql-term (if (symbolp from) (list from) from))) "")
+		     (if from (format nil "~{ FROM ~a ~^~%~}" (mapcar #'sparql-term (mapcar #'intern-uri (if (listp from) from (list from))))) " ")
 		     )
 	     (loop for clause in clauses
 		do (emit-sparql-clause clause s))
-			 (format s "} ~a" (if limit (format nil "LIMIT ~a " limit) "")))))
+	     (format s "} ~a" (if limit (format nil "LIMIT ~a " limit) ""))
+	     (when order
+	       (unless (listp order) (setf order (list order)))
+	       (format s " ORDER BY ~{~A ~}"
+		       (mapcar #'(lambda (clause)
+				   (cond ((symbolp clause)
+					  clause)
+					 ((eq :asc (car clause))
+					  (cadr clause))
+					 ((eq :desc (car clause))
+					  (format nil "DESC(~A)" (cadr clause)))))
+			       order)))
+
+	     )))
 	  (t (error "Can't handle ~A command yet" (car form)))))
     ;; add prefixes
     (let* ((prefix (with-output-to-string (p)
@@ -95,13 +110,19 @@
 	  query))
     ))
 
+(defun format-order-clause (order-clause)
+)
+					
+
 ;;; +++ methodize
 (defun sparql-term (thing)
   (typecase thing
     (frame (format nil "<~A>" (frame-uri thing)))
     (symbol
      (string-downcase (string thing)))
-    (string (format nil "\"~A\"" thing))	;needs better quoting probably
+    (string (if (position #\" thing)
+		(format nil "'''~A'''" thing)
+		(format nil "\"~A\"" thing)))	
     (t (mt:fast-string thing))))
 
 
@@ -168,16 +189,18 @@
   '((is-canonical "reasoning:isCanonical")
     ))
 
+(defvar sparql-binary-ops '((and "&&")(or "||") (equal "=") (< "<") (> ">") (>= ">=") (<= "<=")))
+
 ;;; should use sparql-term
 (defun emit-sparql-filter (expression s)
   (let ((*print-case* :downcase))
     (cond ((and (listp expression)
-		(assoc (car expression) '((and "&&")(or "||") (equal "=") (< "<") (> ">"))))
+		(assoc (car expression) sparql-binary-ops))
 	   (write-char #\( s)
 	   (loop for rest on (cdr expression) do 
 		(emit-sparql-filter (car rest) s)
 		(when (cdr rest) 
-		  (format s " ~a " (second (assoc (car expression) '((and "&&")(or "||") (equal "=") (< "<") (> ">")))))))
+		  (format s " ~a " (second (assoc (car expression) sparql-binary-ops)))))
 	   (write-char #\) s))
 	  ((and (listp expression) (eq (car expression) 'not))
 	   (write-string "(!(" s)

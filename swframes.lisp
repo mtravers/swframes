@@ -94,12 +94,12 @@ Idle thoughts:
 
 (defmethod fill-frame ((frame frame) &key force?)
   (when (or force? (not (frame-loaded? frame)))
-    (if (frame-source frame)
-	(fill-frame-from frame (frame-source frame)) ;defaulting??
-	(mt:report-and-ignore-errors	;+++
-	 (dereference frame)))
-    (setf (frame-loaded? frame) t)))
-
+    (let ((*fill-by-default?* nil))	;prevent recursion
+      (if (frame-source frame)
+	  (fill-frame-from frame (frame-source frame)) ;defaulting??
+	  (mt:report-and-ignore-errors	;+++
+	   (dereference frame)))
+      (setf (frame-loaded? frame) t))))
 
 (defun frame-empty? (frame)
   (and (null (%frame-slots frame))
@@ -109,25 +109,34 @@ Idle thoughts:
   
 (defvar *fill-by-default?* nil)
 
+(defmethod %slotv ((frame frame) (slot frame))
+  (gethash slot (frame-slots frame)))  
+
 ;;; optional argument doesn't play well with setf.
 (defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
   (if fill? (fill-frame frame))
-  (gethash slot (frame-slots frame)))
+  (%slotv frame slot))
 
 (defsetf slotv set-slotv)
+(defsetf %slotv set-slotv)
 
+;;; note that this and set-slotv-inverse never do fills
 (defmethod set-slotv ((frame frame) (slot frame) value)
   ;; enforce rule that slot values are lists...
   (unless (listp value)
     (setf value (list value)))
   (setf (gethash slot (frame-slots frame)) value))
 
-(defmethod slotv-inverse ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
-  (if fill? (fill-frame frame))
+(defmethod %slotv-inverse ((frame frame) (slot frame))
   (and (frame-inverse-slots frame)
        (gethash slot (frame-inverse-slots frame))))
 
+(defmethod slotv-inverse ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
+  (if fill? (fill-frame frame))
+  (%slotv-inverse frame slot))
+
 (defsetf slotv-inverse set-slotv-inverse)
+(defsetf %slotv-inverse set-slotv-inverse)
 
 (defmethod set-slotv-inverse ((frame frame) (slot frame) value)
   (unless (frame-inverse-slots frame)
@@ -167,16 +176,27 @@ Idle thoughts:
       ;; warning: depends on nunion only being destructive to its FIRST argument
       (setf result (nunion result (slotv-inverse f slot) :test #'equal)))))
 
-;;; This is the real underlying primitive.  
+(defun slot-has? (frame slot value)
+  (member value (slotv frame slot)))
+
+;;; This is the real underlying primitive.  Never fills
 ;;; Note the default test is equal.  This could be slow.
-(defun add-triple (s p o &key (test #'equal))
-  (frame-fresh? s)			;+++ do this under a safety switch, here and elsewhere
-  (frame-fresh? p)
-  (if (frame-p 0) (frame-fresh? o))
-  (pushnew o (slotv s p) :test test)
-  (if (frame-p o)
-      (pushnew s (slotv-inverse o p) :test test))
+(defun add-triple (s p o &key (test #'equal) to-db)
+  (if (frame-p o) (frame-fresh? o))
+  (pushnew o (%slotv s p) :test test)
+  (when (frame-p o)
+    (pushnew s (%slotv-inverse o p) :test test))
+  (when to-db
+    (write-triple (frame-source s) s p o))
   nil)					;makes tracing saner
+
+;;; see comment on delete-triple
+(defun remove-triple (s p o  &key (test #'equal) to-db)
+  (deletef p (%slotv s p) :test test)
+  (when (frame-p o)
+    (deletef s (%slotv-inverse o p) :test test))
+  (when to-db
+    (delete-triple (frame-source s) s p o)))
 
 ;;; query (sexp sparql syntax from lsw) 
 (defun describe-frame (frame &optional (fill? t))

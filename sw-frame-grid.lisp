@@ -42,8 +42,8 @@
      ((:form
        :action "add-function"
        :method "POST"
-       :onsubmit (if *ajax-listener?* (remote-function "/add-function" :form t))
-       :action (if *ajax-listener?* "/add-function"))
+       :onsubmit (remote-function "/add-function" :form t)
+       :action "/add-function")
       ((:input :type "hidden" :name "grid_id" :value id))
       "Def:" ((:textarea :name "sexp" :cols 80 :rows 5)) :br
       "Name:" ((:input :name "name"))
@@ -51,8 +51,8 @@
      ((:form
        :action "add-column"
        :method "POST"
-       :onsubmit (if *ajax-listener?* (remote-function "/add-column" :form t))
-       :action (if *ajax-listener?* "/add-column"))
+       :onsubmit (remote-function "/add-column" :form t)
+       :action  "/add-column")
       ((:input :type "hidden" :name "grid_id" :value id))
       ((:select :name "slot")
        (dolist (pslot potential-slots)
@@ -64,15 +64,14 @@
      )))
     
 
-;;; +++ Needs to be re-evaluated if *ajax-listener?* changes
 (publish :path "/add-column"
 	 :function 'do-add-column
-	 :content-type (if *ajax-listener?* "text/javascript" "application/html")
+	 :content-type "text/javascript"
 	 )
 
 (publish :path "/add-function"
 	 :function 'do-add-function
-	 :content-type (if *ajax-listener?* "text/javascript" "application/html"))
+	 :content-type "text/javascript")
 
 
 ;;; rename to add-slot +++
@@ -83,10 +82,7 @@
 	     (slot (swframes::frame-named  (net.aserve::request-query-value "slot" req))))
 	(setf (frame-grid-slots grid)
 	      (append (frame-grid-slots grid) (list slot)))
-	
-	(if *ajax-listener?*
-	    (grid-redisplay-ajax grid req ent)
-	    (net.aserve::redirect-to req ent "/redisplay.html"))))))
+	    (grid-redisplay-ajax grid req ent)))))
 
 (export 'it)
 
@@ -106,9 +102,8 @@
 	      ;; assume async
 	      (append (frame-grid-slots grid) (list `(,name-sym :async? t)))
 	      )
-	(if *ajax-listener?*
-	    (grid-redisplay-ajax grid req ent)
-	    (net.aserve::redirect-to req ent "/redisplay.html"))))))
+	(grid-redisplay-ajax grid req ent)
+	))))
 
 (defun grid-redisplay-ajax (grid req ent)
   (with-http-body (req ent)

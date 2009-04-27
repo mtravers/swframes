@@ -150,18 +150,6 @@ I'm always doing this, so
  (swframes::bulk-load *collabrx-sparql* '((?s ?pp "Melanoma"))))
 
 
-;;; a list of all frames that have term as a property
-(defun local-term-query (term)
-  (do-sparql-one-var *collabrx-sparql* `(:select (?s) () (?s ?p ,term))))
-
-
-
-(defun local-term-query (term)
-  (utils:filter-out #'bnode?
-		    (do-sparql-one-var *collabrx-sparql* `(:select (?s) (:distinct t) (?s ?p ,term)))))
-
-
-
 (defun local-gene-test (n)
   (let ((genes (bio::ensembl-all-genes)))
     (dotimes (nn n)

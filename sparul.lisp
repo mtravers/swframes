@@ -12,10 +12,11 @@
   (do-sparql sparql
     (build-insert sparql s p o)))
 
+;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod* delete-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)
   (do-sparql sparql
-	   (build-delete sparql s p o)))
+    (build-delete sparql s p o)))
 
 (defmethod* build-insert ((sparql sparql-endpoint) s p o)
   (format nil
@@ -25,8 +26,8 @@
 (defmethod* build-delete ((sparql sparql-endpoint) s p o)
   (let ((base (format nil "DELETE FROM GRAPH ~A { ~A ~A ~A }" (sparql-term (uri write-graph)) (sparql-term s) (sparql-term p) (sparql-term O))))
     (when (or (symbolp s) (symbolp p) (symbolp o) )
-      (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))))
-
+      (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
+    base))
 
 ;;; A stupid method that deletes all existing triples and writes them all anew.
 (defmethod write-frame ((frame frame) &optional (sparql (frame-source frame)))
@@ -36,6 +37,20 @@
       (dolist (val (slotv frame slot))
 	(write-triple sparql frame slot val))))
   frame) 
+
+;;; Delete EVERYTHING in this graph.
+;;; Times out on our Virtuoso instance, no idea why.
+(defmethod* nuke-everything ((sparql sparql-endpoint))
+  (assert writeable?)			;+++ OK, this should be done in a class
+  (do-sparql sparql
+    (build-delete sparql '?s '?p '?o)))
+
+
+(defmethod* nuke-everything ((sparql sparql-endpoint))
+  (assert writeable?)			;+++ OK, this should be done in a class
+  (let ((all (do-sparql *collabrx-bioblog* `(:Select (?s ?p ?o) ( :from ,(intern-uri write-graph)) (?s ?p ?o)))))
+    (dolist (binding all)
+      (delete-triple sparql (sparql-binding-elt binding "s") (sparql-binding-elt binding "p") (sparql-binding-elt binding "o")))))
 
 ;;; Tests
 #|
