@@ -16,3 +16,15 @@
 
 (defun uri-tag (uri)
   (subseq uri (1+ (position #\# uri))))
+
+(defun coerce-number (slotv)
+  (typecase slotv
+    (list
+     (warn "Multiple values ~A" slotv)
+     (coerce-number (car slotv)))
+    (number slotv)
+    (string 
+     (let ((n (read-from-string slotv)))
+       (assert (numberp n))
+       n))
+    (t (error "can't coerce ~A to a number" slotv))))

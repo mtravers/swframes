@@ -1,3 +1,4 @@
+(load
 ;;; Code to parse drugbank files into frames
 
 ;;;; MODIFIED (lightly) FOR SW
@@ -74,7 +75,7 @@ Todo:
 ;;; causing problems?
 					;                     (delete-frame-contents frame) ;clear out any old stuff
 					;                      (setf (#^isA frame) (list (db-uri "Drug"))
-			(setf (#^rdfs:subtypeOf frame) (list (db-uri "Drug")))
+			(setf (sw::msv-hack #$rdfs:subtypeOf frame) (list (db-uri "Drug")))
 			(setf target-frames (make-hash-table))
 			(pushnew frame *drugbank-frames*)
 			))))

@@ -52,7 +52,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let* ((slot (uri (frames::read-fname stream))))
-    `#'(lambda (f) (msv f ,slot))))
+    `(lambda (f) (msv f ,slot))))
     
 
 (defun pound-inverse-frame-reader (stream char arg)
@@ -69,6 +69,12 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (declare (ignore char arg))
   (let* ((slot (uri (frames::read-fname stream))))
     `#'(lambda (f) (msv-inverse f ,slot))))
+
+;;; use this to temporarily patch all (setf (#^slot ... and similar forms to (setf (msv-hack #$slot ...))
+(defmacro msv-hack (slot frame)
+  `(msv ,frame ,slot))
+
+(defsetf msv-hack (s f) (v) `(set-slotv ,f ,s ,v))
 
 ;;; I suppose we should have an #v (or something) for inverse-slots...
 

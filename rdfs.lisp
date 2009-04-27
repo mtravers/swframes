@@ -59,7 +59,7 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 	(setf (slotv frame (car rest)) 
 	      (cadr rest))))))
 
-(defun rdfs-find (value &key slot class (source *collabrx-main*))
+(defun rdfs-find (value &key slot class (source *collabrx-sparql*))
   (do-sparql-one-var source
     `(:select (?s) ()
 	      (?s ,(if slot slot '?p) ,value)
@@ -101,8 +101,9 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 	   #'(lambda ,realargs ,@body))))
 
 
-(defun rdfs-classes (thing)
-  (utils::transitive-closure (#^rdf:type thing) #'#^rdfs:subClassOf))
+;;; temp broken by #^ stuff
+;(defun rdfs-classes (thing)
+;  (utils::transitive-closure (#^rdf:type thing) #'#^rdfs:subClassOf))
 
 ;;; this is way wrong, but will do for now
 (defun rdfs-method (name thing)
