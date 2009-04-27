@@ -80,7 +80,7 @@
 	     (format s "SELECT ~a~{~a~^ ~}~a~%WHERE { "
 		     (if distinct "DISTINCT " "")
 		     vars 
-		     (if from (format nil "~{ FROM ~a ~^~%~}" (mapcar #'sparql-term (mapcar #'intern-uri (if (listp from) from (list from)))) ""))
+		     (if from (format nil "~{ FROM ~a ~^~%~}" (mapcar #'sparql-term (mapcar #'intern-uri (if (listp from) from (list from))))) " ")
 		     )
 	     (loop for clause in clauses
 		do (emit-sparql-clause clause s))

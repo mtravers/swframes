@@ -47,6 +47,14 @@ This file has the minimum needed to get the frame system working (esp. the reade
     symbol
     ))
 
+
+;;; go back to this, which won't work with setf
+(defun pound-carat-frame-reader (stream char arg)
+  (declare (ignore char arg))
+  (let* ((slot (uri (frames::read-fname stream))))
+    `#'(lambda (f) (msv f ,slot))))
+    
+
 (defun pound-inverse-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let* ((slot (uri (frames::read-fname stream)))
@@ -55,6 +63,12 @@ This file has the minimum needed to get the frame system working (esp. the reade
 ; No setf for now
 ;    (eval `(defsetf ,symbol (f) (v) `(set-slotv-inverse ,f ,,slot ,v)))
     symbol))
+
+;;; See above
+(defun pound-inverse-frame-reader (stream char arg)
+  (declare (ignore char arg))
+  (let* ((slot (uri (frames::read-fname stream))))
+    `#'(lambda (f) (msv-inverse f ,slot))))
 
 ;;; I suppose we should have an #v (or something) for inverse-slots...
 
