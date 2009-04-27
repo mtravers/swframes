@@ -1,4 +1,3 @@
-(load
 ;;; Code to parse drugbank files into frames
 
 ;;;; MODIFIED (lightly) FOR SW
@@ -53,92 +52,92 @@ Todo:
 
 (defun parse-drugcards (file &optional (limit nil))
   (let ((sw:*default-frame-source* :drugbank-file-import) ;+++ object for this, like kdb objects
-	(sw:*mark-new-frames-loaded?* t))
+        (sw:*mark-new-frames-loaded?* t))
     (dolist (f *drugbank-frames*)
       (sw:delete-frame f))
     (setq *drugbank-frames* nil)
     (with-open-file (in file :external-format :latin1)
       (do ((line (read-line in nil :eof) (read-line in nil :eof))
-	   (frame nil) slot-name slot (good-name nil) target-frames)
-	  ((or (eq line :eof)
-	       (and limit (> (length *drugbank-frames*) limit))))
-	(cond ((= 0 (length line)))
-	      ((eql (aref line 0) #\#)
-	       (cond ((eql (aref line 1) #\Space)
-		      (setq slot-name (subseq line 2 (1- (length line))))
-		      (setq slot (db-slot-uri slot-name)))
-		     ((equal (aref line 1) #\B)
-		      ;; finalize old frame?
-		      (let ((name (car (last (string-split line)))))
-			(setq frame (db-uri name)
-			      good-name nil)
+           (frame nil) slot-name slot (good-name nil) target-frames)
+          ((or (eq line :eof)
+               (and limit (> (length *drugbank-frames*) limit))))
+        (cond ((= 0 (length line)))
+              ((eql (aref line 0) #\#)
+               (cond ((eql (aref line 1) #\Space)
+                      (setq slot-name (subseq line 2 (1- (length line))))
+                      (setq slot (db-slot-uri slot-name)))
+                     ((equal (aref line 1) #\B)
+                      ;; finalize old frame?
+                      (let ((name (car (last (string-split line)))))
+                        (setq frame (db-uri name)
+                              good-name nil)
 ;;; causing problems?
-					;                     (delete-frame-contents frame) ;clear out any old stuff
-					;                      (setf (#^isA frame) (list (db-uri "Drug"))
-			(setf (sw::msv-hack #$rdfs:subtypeOf frame) (list (db-uri "Drug")))
-			(setf target-frames (make-hash-table))
-			(pushnew frame *drugbank-frames*)
-			))))
-	      ;; omit boring
-	      ((equal line "Not Available"))
-	      ((and (not good-name) (eq slot (db-slot-uri "Generic_Name")))
-	       (report-and-ignore-errors ;there are some apparent duplicates, this will deal with them if not well.
-		(rename-frame frame (create-db-frame-name line))
-		(setq good-name t))
-	       ;; do normal add as well.
-	       (push line (frame-slot-value frame slot))
-	       )
+                                        ;                     (delete-frame-contents frame) ;clear out any old stuff
+                                        ;                      (setf (#^isA frame) (list (db-uri "Drug"))
+                        (setf (sw::msv-hack #$rdfs:subtypeOf frame) (list (db-uri "Drug")))
+                        (setf target-frames (make-hash-table))
+                        (pushnew frame *drugbank-frames*)
+                        ))))
+              ;; omit boring
+              ((equal line "Not Available"))
+              ((and (not good-name) (eq slot (db-slot-uri "Generic_Name")))
+               (report-and-ignore-errors ;there are some apparent duplicates, this will deal with them if not well.
+                (rename-frame frame (create-db-frame-name line))
+                (setq good-name t))
+               ;; do normal add as well.
+               (push line (frame-slot-value frame slot))
+               )
 
-	      ((equal slot (db-slot-uri "Drug_Category"))
-	       (let ((cat (db-uri line)))
-		 (sw:add-triple frame #$rdfs:subtypeOf cat)
-		 ;; make the hierarchy neater (I think this leaves the inverse relationship in place, or something like that)
-		 (delete-element frame #$rdfs:subtypeOf (db-uri "Drug"))
-		 (sw:add-triple cat #$rdfs:subtypeOf (db-uri "Drug"))
-		 (pushnew cat *drugbank-frames*)))
+              ((equal slot (db-slot-uri "Drug_Category"))
+               (let ((cat (db-uri line)))
+                 (sw:add-triple frame #$rdfs:subtypeOf cat)
+                 ;; make the hierarchy neater (I think this leaves the inverse relationship in place, or something like that)
+                 (delete-element frame #$rdfs:subtypeOf (db-uri "Drug"))
+                 (sw:add-triple cat #$rdfs:subtypeOf (db-uri "Drug"))
+                 (pushnew cat *drugbank-frames*)))
 
-	      ;; unpack targets
-	      ((equal (subseq slot-name 0 (min 11 (length slot-name))) "Drug_Target")
-	       (let* ((substrings (string-split slot-name #\_))
-		      (index (read-from-string (nth 2 substrings)))
-		      (target-frame (gethash index target-frames))
-		      (sub-slot-name (string-join (subseq substrings 3) #\_))
-		      (sub-slot (db-slot-uri sub-slot-name))
-		      (idling nil))
-		 (when (null target-frame)
-		   (setf (gethash index target-frames)
-			 (setf target-frame (db-uri (string (gensym "temp")))))
-		   ;; causing problems
-		   ;; (delete-frame-contents target-frame)
-		   (sw:add-triple target-frame #$rdfs:subtypeOf (db-uri "Target"))
-		   (push target-frame *drugbank-frames*)
-		   (sw:add-triple frame (db-slot-uri "targets") target-frame))
-		 ;; this logic assumes that when a target is mentioned in multiple places the description is really the same (that is, that 
-		 ;; drugcards.txt is a denormalized view of a normalized database).
-		 (unless idling
-		   (if (eq sub-slot (db-slot-uri "Name"))
-		       (let ((name (create-db-frame-name line)))
-			 (if (sw::frame-named name)
-			     (progn (delete-element frame (db-slot-uri "targets") target-frame)
-				    (sw::delete-frame target-frame)
-				    (deletef target-frame *drugbank-frames*)
-				    (setf (gethash index target-frames)
-					  (setf target-frame (sw::frame-named name)))
-				    (sw:add-triple frame (db-slot-uri "targets") target-frame)
-				    (setf idling t))
-			     (rename-frame target-frame name))))
-		   (sw:add-triple target-frame sub-slot line :test #'equal))))
+              ;; unpack targets
+              ((equal (subseq slot-name 0 (min 11 (length slot-name))) "Drug_Target")
+               (let* ((substrings (string-split slot-name #\_))
+                      (index (read-from-string (nth 2 substrings)))
+                      (target-frame (gethash index target-frames))
+                      (sub-slot-name (string-join (subseq substrings 3) #\_))
+                      (sub-slot (db-slot-uri sub-slot-name))
+                      (idling nil))
+                 (when (null target-frame)
+                   (setf (gethash index target-frames)
+                         (setf target-frame (db-uri (string (gensym "temp")))))
+                   ;; causing problems
+                   ;; (delete-frame-contents target-frame)
+                   (sw:add-triple target-frame #$rdfs:subtypeOf (db-uri "Target"))
+                   (push target-frame *drugbank-frames*)
+                   (sw:add-triple frame (db-slot-uri "targets") target-frame))
+                 ;; this logic assumes that when a target is mentioned in multiple places the description is really the same (that is, that
+                 ;; drugcards.txt is a denormalized view of a normalized database).
+                 (unless idling
+                   (if (eq sub-slot (db-slot-uri "Name"))
+                       (let ((name (create-db-frame-name line)))
+                         (if (sw::frame-named name)
+                             (progn (delete-element frame (db-slot-uri "targets") target-frame)
+                                    (sw::delete-frame target-frame)
+                                    (deletef target-frame *drugbank-frames*)
+                                    (setf (gethash index target-frames)
+                                          (setf target-frame (sw::frame-named name)))
+                                    (sw:add-triple frame (db-slot-uri "targets") target-frame)
+                                    (setf idling t))
+                             (rename-frame target-frame name))))
+                   (sw:add-triple target-frame sub-slot line :test #'equal))))
 
-	      ;; thread KEGG
-	      ((eq slot (db-slot-uri "KEGG_Drug_ID"))
-	       (setf (frame-slot-value frame (db-slot-uri "KEGG_Drug"))
-		     (frame-fnamed (create-valid-frame-name line :prefix "KEGG."))))
-	      ((eq slot (db-slot-uri "KEGG_Compound_ID.s"))
-	       (setf (frame-slot-value frame (db-slot-uri "KEGG_Compound"))
-		     (frame-fnamed (create-valid-frame-name line :prefix "KEGG."))))
+              ;; thread KEGG
+              ((eq slot (db-slot-uri "KEGG_Drug_ID"))
+               (setf (frame-slot-value frame (db-slot-uri "KEGG_Drug"))
+                     (frame-fnamed (create-valid-frame-name line :prefix "KEGG."))))
+              ((eq slot (db-slot-uri "KEGG_Compound_ID.s"))
+               (setf (frame-slot-value frame (db-slot-uri "KEGG_Compound"))
+                     (frame-fnamed (create-valid-frame-name line :prefix "KEGG."))))
 
-	      (t
-	       (push line (frame-slot-value frame slot))))))
+              (t
+               (push line (frame-slot-value frame slot))))))
 ; temporarily not working +++
 ;;;    (thread-go)
     ))
@@ -157,8 +156,8 @@ Todo:
                              (or frame s)))
                        v)))
       (when nv
-	(setf (frame-slot-value f (db-slot-uri "GO_Classification"))
-	      nv))
+        (setf (frame-slot-value f (db-slot-uri "GO_Classification"))
+              nv))
       )))
 
 ;;; Hook into kdb system
@@ -196,8 +195,8 @@ Todo:
   (or *db-drugs*
       (setf *db-drugs*
             (mt:filter #'(lambda (f)
-			   (slotv f (db-slot-uri "Generic_Name")))
-		    (all-drugbank-frames)))))
+                           (slotv f (db-slot-uri "Generic_Name")))
+                    (all-drugbank-frames)))))
 
 (defun experimental-db-drugs ()
   (filter #'(lambda (f)
