@@ -121,11 +121,30 @@ Idle thoughts:
 (defsetf %slotv set-slotv)
 
 ;;; note that this and set-slotv-inverse never do fills
+;;; this can't really do inverses, can it? we'd have to a difference...
 (defmethod set-slotv ((frame frame) (slot frame) value)
-  ;; enforce rule that slot values are lists...
-  (unless (listp value)
-    (setf value (list value)))
-  (setf (gethash slot (frame-slots frame)) value))
+  (let ((old (%slotv frame slot)))
+    ;; enforce rule that slot values are lists...
+    (unless (listp value)
+      (setf value (list value)))
+    (setf (gethash slot (frame-slots frame)) value)
+    ;; +++ fairly serious change ... verify that this works
+    (when old
+      (dolist (removed (set-difference old value :test #'equal))
+	(when (frame-p removed)
+	  (deletef frame (gethash slot (frame-inverse-slots removed))))))
+    (dolist (added (set-difference value old :test #'equal))
+      (when (frame-p added)
+	(pushnew frame (gethash slot (frame-inverse-slots added)))))))
+
+#|
+Test
+(setf (slotv #$blither5 #$relatedTo) #$blather5)
+(describe-frame #$blather5)
+
+
+|#
+	
 
 (defmethod %slotv-inverse ((frame frame) (slot frame))
   (and (frame-inverse-slots frame)
