@@ -62,6 +62,11 @@
 	    (?target #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/geneName ,gene-name)
     )))
 
+(defun drugs-for-gene (gene-name)
+  (mapcar #'(lambda (bindings)
+	      (sparql-binding-elt bindings "drug"))
+	  (db-drugs gene-name)))
+
 ;;; use the drugbank frames in memory
 ;;; not working, but it may be the data
 (defun db-drugs-local (gene-name)

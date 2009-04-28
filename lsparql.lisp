@@ -25,7 +25,11 @@
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *sparql-default-timeout*))
   (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" sparql))
-    (knewos::run-sparql uri command :make-uri #'(lambda (u) (intern-uri u sparql)))))
+    (knewos::run-sparql uri command 
+			:make-uri #'(lambda (u) (intern-uri u sparql))
+			;; this suddenly became necessary since I was geting literals back...no idea why 
+			:eager-make-uri? t
+			)))
 
 (defmethod* do-sparql ((sparql sparql-endpoint) (command list) &key (timeout *sparql-default-timeout*))
   (do-sparql sparql (generate-sparql sparql command) :timeout timeout))
@@ -112,7 +116,6 @@
 
 (defun format-order-clause (order-clause)
 )
-					
 
 ;;; +++ methodize
 (defun sparql-term (thing)
@@ -120,7 +123,7 @@
     (frame (format nil "<~A>" (frame-uri thing)))
     (symbol
      (string-downcase (string thing)))
-    (string (if (position #\" thing)
+    (string (if (or (position #\" thing) (position #\Newline thing))
 		(format nil "'''~A'''" thing)
 		(format nil "\"~A\"" thing)))	
     (t (mt:fast-string thing))))

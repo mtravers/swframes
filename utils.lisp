@@ -19,6 +19,7 @@
 
 (defun coerce-number (slotv)
   (typecase slotv
+    (null (error "Cant' coerce nil to a number"))
     (list
      (warn "Multiple values ~A" slotv)
      (coerce-number (car slotv)))

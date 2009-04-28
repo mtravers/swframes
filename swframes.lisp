@@ -72,6 +72,7 @@ Idle thoughts:
   (setf (frame-inverse-slots frame) nil))
 
 ;;; Does not remove all references to frame (it could, I suppose, if we were rigorous about inverses III)
+;;; Does not delet from db
 (defmethod delete-frame ((frame frame))
   (reset-frame frame)
   (unintern-uri (frame-uri frame)))

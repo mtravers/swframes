@@ -36,7 +36,16 @@
     (dolist (slot (%frame-slots frame))
       (dolist (val (slotv frame slot))
 	(write-triple sparql frame slot val))))
-  frame) 
+  frame)
+
+;;; Nuke frame from db
+(defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))
+  (with-sparul-transaction (sparql)
+    (delete-triple sparql frame '?p '?o)
+    (delete-triple sparql '?s '?p frame))
+  ;; also do locally
+  (delete-frame frame)
+  )
 
 ;;; Delete EVERYTHING in this graph.
 ;;; Times out on our Virtuoso instance, no idea why.

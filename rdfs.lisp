@@ -102,11 +102,12 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 
 
 ;;; temp broken by #^ stuff
-;(defun rdfs-classes (thing)
-;  (utils::transitive-closure (#^rdf:type thing) #'#^rdfs:subClassOf))
+(defun rdfs-classes (thing)
+  (utils::transitive-closure (#^rdf:type thing) #'(lambda (x) (slotv x #$rdfs:subClassOf))))
 
 ;;; this is way wrong, but will do for now
 (defun rdfs-method (name thing)
+  (fill-frame thing)
   (let ((classes (rdfs-classes thing))
 	(methodtable (rdfs-methodtable name)))
     (some #'(lambda (class) (gethash class methodtable )) classes)))

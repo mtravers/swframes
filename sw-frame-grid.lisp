@@ -107,8 +107,6 @@
 
 (defun grid-redisplay-ajax (grid req ent)
   (with-http-body (req ent)
-    ;; this doesn't work, sadly
-    (setf (request-reply-content-type req) "text/javascript")
     (render-update
      (:update (session-persist-object grid) 
 	      (out-record-to-html grid "redisplay")
