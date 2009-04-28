@@ -176,6 +176,7 @@ Test
       (car thing)
       thing))
 
+;;; +++ these should have setfs
 (defmethod msv ((frame frame) slot)
   (delistify (slotv frame slot)))
 
