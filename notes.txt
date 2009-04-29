@@ -30,7 +30,8 @@ Theory of slot values
 Slot properties:
 - display
 - special save/restore behavior (ie, we might want some slots that can't be serialized or need special handling to do so)
-
+  - dependent
+- ordered/nonordered
 
 ----------------------------------------------------------------------------------
 
