@@ -102,13 +102,17 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 
 
 ;;; temp broken by #^ stuff
+;;; no ordering, blah
 (defun rdfs-classes (thing)
   (utils::transitive-closure (#^rdf:type thing) #'(lambda (x) (slotv x #$rdfs:subClassOf))))
+
+(defun order-classes (classes)
+  (sort classes #'(lambda (c1 c2) (member c2 (slotv c1 #$rdfs:subClassOf)))))
 
 ;;; this is way wrong, but will do for now
 (defun rdfs-method (name thing)
   (fill-frame thing)
-  (let ((classes (rdfs-classes thing))
+  (let ((classes (order-classes (rdfs-classes thing)))
 	(methodtable (rdfs-methodtable name)))
     (or (some #'(lambda (class) (gethash class methodtable )) classes)
 	(error "no method found for ~a on ~a" name thing))))
