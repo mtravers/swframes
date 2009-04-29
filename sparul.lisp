@@ -18,6 +18,15 @@
   (do-sparql sparql
     (build-delete sparql s p o)))
 
+;;; default these (+++ bad idea probably, and needs a better variable at least)
+(defmethod write-triple ((sparql null) s p o)
+  (write-triple *collabrx-bioblog* s p o))
+
+(defmethod delete-triple ((sparql null) s p o)
+  (delete-triple *collabrx-bioblog* s p o))
+
+
+
 (defmethod* build-insert ((sparql sparql-endpoint) s p o)
   (format nil
 	  "INSERT INTO GRAPH ~A { ~A ~A ~A }"
