@@ -97,7 +97,7 @@ Idle thoughts:
   (when (or force? (not (frame-loaded? frame)))
     (let ((*fill-by-default?* nil))	;prevent recursion
       (if (frame-source frame)
-	  (fill-frame-from frame (frame-source frame)) ;defaulting??
+	  (fill-frame-from frame (frame-source frame)) ;defaulting (handled in method now)??
 	  (mt:report-and-ignore-errors	;+++
 	   (dereference frame)))
       (setf (frame-loaded? frame) t))))

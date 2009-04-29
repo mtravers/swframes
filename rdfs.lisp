@@ -110,7 +110,8 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
   (fill-frame thing)
   (let ((classes (rdfs-classes thing))
 	(methodtable (rdfs-methodtable name)))
-    (some #'(lambda (class) (gethash class methodtable )) classes)))
+    (or (some #'(lambda (class) (gethash class methodtable )) classes)
+	(error "no method found for ~a on ~a" name thing))))
 
 (defmacro rdfs-call (name firstarg &rest restargs)
   `(apply (rdfs-method ',name ,firstarg)

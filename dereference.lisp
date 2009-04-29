@@ -116,8 +116,6 @@ http://data.linkedmdb.org/all/director
     (let ((xml (parse-xml body)))
       (process-rdf-xml xml))))
 
-  
-
 (defun process-rdf-xml (xml &key base)
   ;; base can be set as an argument or from the header attributes
   (let ((top-frames nil))
@@ -172,7 +170,7 @@ http://data.linkedmdb.org/all/director
     (assert (name-eq '|rdf|::RDF (car (car xml))))
     (do ((namespaces (cdr (car xml)) (cddr namespaces)))
 	((null namespaces))
-      (print `(ns ,(car namespaces) ,(cadr namespaces)))
+;      (print `(ns ,(car namespaces) ,(cadr namespaces)))
       (let* ((splits (utils:string-split (string (car namespaces)) #\:  ))
 	     (com (car splits))
 	     (ns (cadr splits))
