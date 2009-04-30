@@ -23,7 +23,7 @@
    (:file "mql")
    ;; web ui stuff
    (:file "browse")
-   (:file "sw-frame-grid")
+;moved   (:file "sw-frame-grid")
    (:file "xml")
    ;; particular knowledge sources
    (:file "drugbank")

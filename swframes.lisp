@@ -19,7 +19,7 @@ Idle thoughts:
 	  most-significant-name 
 	  %frame-slots %frame-inverse-slots frame-empty?
 	  reset-frames for-all-frames all-frames
-	  fill-frame fill-frame-inverse
+	  fill-frame fill-frame-inverse frame-loaded?
 	  slotv slotv-inverse
 	  svf svif
 	  msv msv-inverse msv-hack

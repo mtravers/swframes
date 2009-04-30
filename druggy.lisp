@@ -21,7 +21,7 @@
       (?trial #$http://data.linkedct.org/resource/linkedct/brief_title ?title))))
 
 (defun sparql-result->grid (results binding)
-  (wb::frame-grid
+  (nl::frame-grid
    (extract-sparql-binding results binding)))
 
 
@@ -75,7 +75,7 @@
     drugs))
 
 (defun drug-grid (target-gene)
-  (wb::frame-grid (mapcar #'(lambda (bindings)
+  (nl::frame-grid (mapcar #'(lambda (bindings)
 			      (sparql-binding-elt bindings "drug"))
 			  (db-drugs target-gene))
 		  nil
