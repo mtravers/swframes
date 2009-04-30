@@ -59,7 +59,7 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 	(setf (slotv frame (car rest)) 
 	      (cadr rest))))))
 
-(defun rdfs-find (value &key slot class (source *collabrx-sparql*))
+(defun rdfs-find (value &key slot class source)
   (do-sparql-one-var source
     `(:select (?s) ()
 	      (?s ,(if slot slot '?p) ,value)
@@ -70,7 +70,7 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 
 (defun gensym-instance-frame (class)
   (let ((uri (string+ (frame-uri class) "/" (string (gensym (frame-label class))))))
-    (if (uri-used? *collabrx-sparql* uri)
+    (if (uri-used? *default-frame-source* uri)
 	(gensym-instance-frame class)
 	(intern-uri uri))))
 

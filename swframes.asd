@@ -25,11 +25,7 @@
    (:file "browse")
 ;moved   (:file "sw-frame-grid")
    (:file "xml")
-   ;; particular knowledge sources
-   (:file "drugbank")
-   (:file "druggy")
-   (:file "genes")
-   (:file "sw-pathwaycommons")
+; particulars moved up.
    )
   :depends-on
   ())
