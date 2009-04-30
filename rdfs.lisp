@@ -118,6 +118,6 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 	(error "no method found for ~a on ~a" name thing))))
 
 (defmacro rdfs-call (name firstarg &rest restargs)
-  `(apply (rdfs-method ',name ,firstarg)
+  `(funcall (rdfs-method ',name ,firstarg)
 	  ,firstarg
-	  ,restargs))
+	  ,@restargs))
