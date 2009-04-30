@@ -6,5 +6,6 @@
   (:import-from :wb "HTML")
   (:import-from :knewos "LXML-ATTRIBUTE" "LXML-SUBELEMENTS" "LXML-ALL-SUBELEMENTS" "LXML-TAG")
   (:import-from :knewos "RUN-SPARQL")
+  ;; exports in the code for now
   )			
   

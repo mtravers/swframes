@@ -12,17 +12,19 @@ Idle thoughts:
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *default-frame-source* nil))
 
-;;; Growing an API here...
+;;; Growing an API here...should clean this up, consolidate some stuff
 (export '(uri
 	  *default-frame-source* *mark-new-frames-loaded?*
-	  frame frame-name frame-named frame-label
+	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
+	  most-significant-name 
 	  %frame-slots %frame-inverse-slots frame-empty?
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse
 	  slotv slotv-inverse
 	  svf svif
+	  msv msv-inverse msv-hack
 	  add-triple
-	  rename-frame delete-frame
+	  rename-frame delete-frame write-frame destroy-frame
 	  describe-frame
 	  sw-register-namespace))
 
@@ -31,11 +33,10 @@ Idle thoughts:
 
 (defun frame-label (frame)
   (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label")))
-;      (frame-name frame)
       (most-significant-name (frame-name frame))
       ))
 
-;;; +++ sometimes you want the part folliwing #
+;;; +++ sometimes you want the part following #
 (defun most-significant-name (string)
   (car (last (utils:string-split string #\/))))
 

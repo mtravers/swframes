@@ -1,4 +1,6 @@
-(in-package :swframes) ;;; +++ wrong package, fix this up
+(in-package :swframes)
+
+(export '(string+ parse-xml html-string uri-tag coerce-number))
 
 (defun string+ (&rest args)
   (apply #'concatenate 'string args))

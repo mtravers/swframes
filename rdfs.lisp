@@ -1,5 +1,9 @@
 (in-package :swframes)
 
+(export '(rdfs-def-class rdfs-make-instance 
+	  rdfs-classes rdfs-classp rdfs-subclasses
+	  rdfs-defmethod rdfs-call rdfs-find))
+
 #|
 Notes:
 - range
@@ -16,16 +20,12 @@ Make-instance
    - bad thought -- names could be uniquified on writing (ie, a frame keeps identity but changes its name) 
      - would screw interactive use
 
-
 Todo:
-rdfs-typep
-rdfs-types
 
 rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need to have a property that says if the value is a list (as opposed to just a collection of elements))
 
 
 |#
-
 
 (defmacro rdfs-def-class (name superclasses &body slots)
   (let ((clauses nil))
@@ -48,7 +48,7 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 (defun rdfs-make-instance (class &rest slots)
   (flet ((check-class (thing class)
 	   (when class
-	     (assert (rdfs-typep thing class)))))
+	     (assert (rdfs-classp thing class)))))
     (check-class class #$rdfs:Class)
     (let ((frame (gensym-instance-frame class)))
       (setf (slotv frame #$rdf:type) class)
@@ -76,10 +76,10 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 
 (defgeneric uri-used? (source uri))
 
-(defun rdfs-typep (frame class)
+(defun rdfs-classp (frame class)
   (or (slot-has? frame #$rdf:type class)
       (some #'(lambda (subclass)
-		(rdfs-typep frame subclass))
+		(rdfs-classp frame subclass))
 	    (rdfs-subclasses class))))
 
 (defun rdfs-subclasses (class)
