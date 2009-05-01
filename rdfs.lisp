@@ -88,6 +88,7 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 
 ;;; Method system.  Need to think about this, RDF things can be multiply typed and there is no ordering.  
 ;;; Alternative is to map rdf to CLOS classes which have a more well-behaved orderng.
+;;; Another alternative: define an ordinary function which does dispatching.  Eliminates need for rdfs-call, allows tracing
 
 (defun rdfs-methodtable (symbol)
   (or (get :rdfs-methods symbol)

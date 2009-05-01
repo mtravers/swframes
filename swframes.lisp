@@ -23,9 +23,10 @@ Idle thoughts:
 	  slotv slotv-inverse
 	  svf svif
 	  msv msv-inverse msv-hack
+	  declare-special-slot
 	  add-triple
 	  rename-frame delete-frame write-frame destroy-frame
-	  describe-frame
+	  describe-frame df
 	  sw-register-namespace))
 
 (defun frame-name (frame)
@@ -228,6 +229,8 @@ Test
     (format t "~&Inverse:")
     (pprint (mt:ht-contents (frame-inverse-slots frame))))
   frame )
+
+(defun df (frame) (describe-frame frame))
 
 #|
 Tests:

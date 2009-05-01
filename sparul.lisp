@@ -38,14 +38,35 @@
       (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))
 
+
+
 ;;; A stupid method that deletes all existing triples and writes them all anew.
 (defmethod write-frame ((frame frame) &optional (sparql (frame-source frame)))
   (with-sparul-transaction (sparql)
     (delete-triple sparql frame '?p '?o)
     (dolist (slot (%frame-slots frame))
-      (dolist (val (slotv frame slot))
-	(write-triple sparql frame slot val))))
+      (aif (%slotv slot #$crx:specialhandling)
+	  (rdfs-defmethod write-slot slot frame sparql)
+	  ;; normal behavior
+	  (dolist (val (slotv frame slot))
+	    (write-triple sparql frame slot val)))))
   frame)
+
+(rdfs-def-class #$crx:slots/specialSlot ())
+(rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
+
+(rdfs-defmethod write-slot ((slot #$crx:slots/LispValueSlot) frame sparql)
+		(let ((*print-readably* t))
+		  (dolist (val (slotv frame slot))
+		    (write-triple sparql frame slot (prin1-to-string val)))))
+
+;;; need to do the inverse on read! +++
+
+(defun declare-special-slot (slot type)
+  (setf (slotv slot #$rdfs:Class) type
+	(slotv slot #$crx:specialhandling) t))
+
+;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
 ;;; Nuke frame from db
 (defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))
