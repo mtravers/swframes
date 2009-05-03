@@ -46,7 +46,7 @@
     (delete-triple sparql frame '?p '?o)
     (dolist (slot (%frame-slots frame))
       (aif (%slotv slot #$crx:specialhandling)
-	  (rdfs-defmethod write-slot slot frame sparql)
+	  (rdfs-call write-slot slot frame sparql)
 	  ;; normal behavior
 	  (dolist (val (slotv frame slot))
 	    (write-triple sparql frame slot val)))))
