@@ -38,8 +38,6 @@
       (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))
 
-
-
 ;;; A stupid method that deletes all existing triples and writes them all anew.
 (defmethod write-frame ((frame frame) &optional (sparql (frame-source frame)))
   (with-sparul-transaction (sparql)
@@ -50,6 +48,8 @@
 	  ;; normal behavior
 	  (dolist (val (slotv frame slot))
 	    (write-triple sparql frame slot val)))))
+  ;; if we just wrote this out, then it's up to date!
+  (setf (frame-loaded? frame) t)
   frame)
 
 (rdfs-def-class #$crx:slots/specialSlot ())
