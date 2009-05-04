@@ -63,7 +63,7 @@
 ;;; need to do the inverse on read! +++
 
 (defun declare-special-slot (slot type)
-  (setf (slotv slot #$rdfs:Class) type
+  (setf (slotv slot #$rdf:type) type
 	(slotv slot #$crx:specialhandling) t))
 
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
