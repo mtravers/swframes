@@ -27,10 +27,19 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 
 |#
 
+(defun frame-from-code (f)
+  (setf (frame-loaded? f)
+	t))
+
 (defmacro rdfs-def-class (name superclasses &body slots)
   (let ((clauses nil))
     (flet ((a! (s p o)
-	     (push `(add-triple ,s ,p ,o) clauses)))
+	     (push `(add-triple ,s ,p ,o) clauses)
+	     (push `(frame-from-code ,s) clauses)
+	     (push `(frame-from-code ,p) clauses)
+	     (when (framep o)
+	       (push `(frame-from-code ,o) clauses))
+	     ))
       (a! name  #$rdf:type #$rdfs:Class)
       (mapc #'(lambda (superclass)
 		(a! name #$rdfs:subClassOf superclass))

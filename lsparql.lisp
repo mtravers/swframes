@@ -91,7 +91,7 @@
 		     )
 	     (loop for clause in clauses
 		do (emit-sparql-clause clause s))
-	     (format s "} ~a" (if limit (format nil "LIMIT ~a " limit) ""))
+	     (format s "}")
 	     (when order
 	       (unless (listp order) (setf order (list order)))
 	       (format s " ORDER BY ~{~A ~}"
@@ -103,7 +103,9 @@
 					 ((eq :desc (car clause))
 					  (format nil "DESC(~A)" (cadr clause)))))
 			       order)))
-
+	     ;; Virtuoso complains if LIMIT comes before ORDER, although that's perfectly valid...
+	     (when limit
+	       (format s "~%LIMIT ~a " limit))
 	     )))
 	  (t (error "Can't handle ~A command yet" (car form)))))
     ;; add prefixes

@@ -14,7 +14,7 @@ Idle thoughts:
 
 ;;; Growing an API here...should clean this up, consolidate some stuff
 (export '(uri
-	  *default-frame-source* *mark-new-frames-loaded?*
+	  *default-frame-source* *mark-new-frames-loaded?* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
 	  most-significant-name 
 	  %frame-slots %frame-inverse-slots frame-empty?
@@ -104,13 +104,19 @@ Idle thoughts:
 	   (dereference frame)))
       (setf (frame-loaded? frame) t))))
 
+;;; Called by rdfs-defmethod and other things to mark that a frame is defined from code, and not
+;;; expected to be read from the database.
+(defun frame-from-code (f)
+  (setf (frame-loaded? f)
+	t
+	(frame-source f)
+	*code-source*))
+
 (defun frame-empty? (frame)
   (and (null (%frame-slots frame))
        (null (%frame-inverse-slots frame))))
-
-
   
-(defvar *fill-by-default?* nil)
+(defvar *fill-by-default?* t)
 
 (defmethod %slotv ((frame frame) (slot frame))
   (gethash slot (frame-slots frame)))  

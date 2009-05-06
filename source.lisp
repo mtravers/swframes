@@ -42,3 +42,9 @@ Dereferencing is a "frame source" of sorts...
   `(let ((*default-frame-source* ,source))
      ,@body))
 	 
+;;; Singleton class to represent frames defined in code
+
+(defclass code-source (frame-source) 
+  ())
+
+(defvar *code-source* (make-instance 'code-source))
