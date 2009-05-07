@@ -7,13 +7,13 @@
 #|
 Notes:
 - range
-- need to avoid property name collisions 
+  - need to avoid property name collisions 
 - what to do with these triples?  Write them out?
+  - current solution: mark the URIs using frame-from-code
 
 Defclass
 - Might want to use a short name for slots and have uri generated with a template.
 - yes, have a standard abbrev so make-instance can use keywords
-
 
 Make-instance
 -  has to make a unique name, which requires a sparql source? Not sure what to do about that
@@ -22,14 +22,9 @@ Make-instance
 
 Todo:
 
-rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need to have a property that says if the value is a list (as opposed to just a collection of elements))
-
+rdfs-lists (important...to translate from/to frame rep, slots need to have a property that says if the value is a list (as opposed to just a collection of elements))
 
 |#
-
-(defun frame-from-code (f)
-  (setf (frame-loaded? f)
-	t))
 
 (defmacro rdfs-def-class (name superclasses &body slots)
   (let ((clauses nil))
@@ -37,8 +32,8 @@ rdfs-lists (important...to translate from/to frame rep, I'm guessing slots need 
 	     (push `(add-triple ,s ,p ,o) clauses)
 	     (push `(frame-from-code ,s) clauses)
 	     (push `(frame-from-code ,p) clauses)
-	     (when (framep o)
-	       (push `(frame-from-code ,o) clauses))
+	     (when (frame-p o)
+	       (push `(sw::frame-from-code ,o) clauses))
 	     ))
       (a! name  #$rdf:type #$rdfs:Class)
       (mapc #'(lambda (superclass)

@@ -3,19 +3,34 @@
 ;;; see /misc/sourceforge/hg/crx_rails/lib/active_rdf_patches/active_rdf_sparul.rb
 ;;; transactions
 
-;;; no-op for now (+++)
-(defmacro with-sparul-transaction ((endpoint) &body body)
-  `(progn ,@body))
+(defvar *sparql-group* nil)
+
+(defmacro with-sparql-group ((endpoint) &body body)
+  `(let ((*sparql-group* (list ,endpoint nil)))
+      ,@body
+      (when (cadr *sparql-group*)
+	(do-sparql ,endpoint
+	  (with-output-to-string (out)
+	    (dolist (s (cadr *sparql-group*))
+	      (write-string s out)
+	      (terpri out)))
+	  ))))
+
+(defmethod do-grouped-sparql ((sparql sparql-endpoint) string)
+  (if (and *sparql-group*
+	   (eq sparql (car *sparql-group*)))
+      (push-end string (cadr *sparql-group*))
+      (do-sparql sparql string)))
 
 (defmethod* write-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)
-  (do-sparql sparql
+  (do-grouped-sparql sparql
     (build-insert sparql s p o)))
 
 ;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod* delete-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)
-  (do-sparql sparql
+  (do-grouped-sparql sparql
     (build-delete sparql s p o)))
 
 ;;; default these (+++ bad idea probably, and needs a better variable at least)
@@ -24,8 +39,6 @@
 
 (defmethod delete-triple ((sparql null) s p o)
   (delete-triple *collabrx-bioblog* s p o))
-
-
 
 (defmethod* build-insert ((sparql sparql-endpoint) s p o)
   (format nil
@@ -38,9 +51,8 @@
       (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))
 
-;;; A stupid method that deletes all existing triples and writes them all anew.
 (defmethod write-frame ((frame frame) &optional (sparql (frame-source frame)))
-  (with-sparul-transaction (sparql)
+  (with-sparql-group (sparql)
     (delete-triple sparql frame '?p '?o)
     (dolist (slot (%frame-slots frame))
       (aif (%slotv slot #$crx:specialhandling)
