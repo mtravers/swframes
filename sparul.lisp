@@ -56,10 +56,10 @@
     (delete-triple sparql frame '?p '?o)
     (dolist (slot (%frame-slots frame))
       (aif (%slotv slot #$crx:specialhandling)
-	  (rdfs-call write-slot slot frame sparql)
+	   (rdfs-call write-slot slot frame sparql)
 	  ;; normal behavior
-	  (dolist (val (slotv frame slot))
-	    (write-triple sparql frame slot val)))))
+	   (dolist (val (slotv frame slot))
+	     (write-triple sparql frame slot val)))))
   ;; if we just wrote this out, then it's up to date!
   (setf (frame-loaded? frame) t)
   frame)
