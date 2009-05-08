@@ -81,10 +81,11 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defgeneric uri-used? (source uri))
 
 (defun rdfs-classp (frame class)
-  (or (slot-has? frame #$rdf:type class)
-      (some #'(lambda (subclass)
-		(rdfs-classp frame subclass))
-	    (rdfs-subclasses class))))
+  (and (frame-p frame)
+       (or (slot-has? frame #$rdf:type class)
+	   (some #'(lambda (subclass)
+		     (rdfs-classp frame subclass))
+		 (rdfs-subclasses class)))))
 
 (defun rdfs-subclasses (class)
   (slotv-inverse class #$rdfs:subClassOf))
