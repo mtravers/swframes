@@ -27,10 +27,23 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader )
 (set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
 
-;;; +++ would be good to allow #$"sdasdad" for hard to parse names
+
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (uri (frames::read-fname stream)))
+  (uri (read-fname stream)))
+
+;;; +++ would be good to allow #$"sdasdad" for hard to parse names
+(defun read-fname (stream)
+  (let ((name
+	 (read-until 
+	  stream
+	  (lambda (char)
+	    (or (member char *whitespace*)
+		(member char '(#\( #\)))))
+	  (new-string)
+	  t)))
+    (assert (not (char= #\# (char name 0)))) ;catch this common error
+    name))
 
 (defpackage :swfuncs)
 
