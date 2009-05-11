@@ -96,6 +96,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defun intern-uri (uri &optional (source *default-frame-source*) (mark-loaded? *mark-new-frames-loaded?*))
   (assert (stringp uri))
+  (setf uri (expand-uri uri))
   (or (frame-named uri)
       (intern-uri-0 uri 
 		    (make-frame :uri uri 
