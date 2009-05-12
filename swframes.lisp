@@ -56,6 +56,12 @@ Idle thoughts:
   (when (frame-inverse-slots frame)
     (wlisp::hash-keys (frame-inverse-slots frame))))
 
+(defmacro for-frame-slots ((frame slot value) &body body)
+  `(maphash #'(lambda (,slot ,value)
+	       ,@body)
+	   (frame-slots ,frame)))
+	       
+
 (defun reset-frames ()
   (clrhash *uri->frame-ht*))
 

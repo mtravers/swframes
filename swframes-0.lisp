@@ -146,3 +146,28 @@ This file has the minimum needed to get the frame system working (esp. the reade
     (rename-frame x "test27renamed")
     (assert (frame-fresh? x nil))
     (assert (equal (frame-uri x) "test27renamed"))))
+
+;;; NO this is never right, URI
+(defun clean-frame (frame)
+  (let ((cleaned (clean-uri (frame-uri frame))))
+    (when (not (equal cleaned (frame-uri frame)))
+      (rename-frame frame cleaned))))
+
+;;; clean a string so it can be part of a URI
+(defun clean-string (string)
+  (utils:url-encode string))
+
+;;; Reuse some biobike machinery
+(defun clean-string (string)
+  (frames::create-valid-frame-name 
+   string
+   :space-char-action #\_
+   :from-chars "$&+,/:;=?@<>#%"
+   :to-chars   ".............."))
+				   
+;;; redo this for urls.  Source http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
+(defparameter frames::*illegal-frame-chars*
+  (coerce 
+   (string+ "$&+:;,/=?<>#%"*whitespace*) 
+   'simple-string)
+  "Characters that are not allowed in strings representing frame names")
