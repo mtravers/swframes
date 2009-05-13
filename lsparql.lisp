@@ -82,7 +82,7 @@
 	    |#
       ((eq (car form) :select)
        ;; +++ don't like
-       (destructuring-bind (vars (&key limit distinct (from read-graph) order) &rest clauses) (cdr form)
+       (destructuring-bind (vars (&key limit offset distinct (from read-graph) order) &rest clauses) (cdr form)
 	 (with-output-to-string (s) 
 	     (format s "SELECT ~a~{~a~^ ~}~a~%WHERE { "
 		     (if distinct "DISTINCT " "")
@@ -106,6 +106,8 @@
 	     ;; Virtuoso complains if LIMIT comes before ORDER, although that's perfectly valid...
 	     (when limit
 	       (format s "~%LIMIT ~a " limit))
+	     (when offset
+	       (format s "~%OFFSET ~a " limit))
 	     )))
 	  (t (error "Can't handle ~A command yet" (car form)))))
     ;; add prefixes
