@@ -22,6 +22,7 @@ Dereferencing is a "frame source" of sorts...
 (defgeneric writeable? (frame-source))
 
 ;;; Generate a guaranteed unique new URI
+;;;
 (defgeneric gensym-uri (frame-source &optional prefix))
   
 ;;; our local, writeable frame repository

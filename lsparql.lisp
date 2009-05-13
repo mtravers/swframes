@@ -306,4 +306,4 @@
 (defmethod uri-used? ((source sparql-endpoint) uri)
   (do-sparql 
       source
-    (format nil "select ?p ?o where { <~A> ?p ?o . }" uri)))
+    (format nil "select ?p ?o  where { <~A> ?p ?o . } limit 1" uri)))

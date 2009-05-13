@@ -23,6 +23,7 @@ Idle thoughts:
 	  slotv slotv-inverse
 	  svf svif
 	  msv msv-inverse msv-hack
+	  ssv ssv-inverse
 	  declare-special-slot
 	  add-triple
 	  rename-frame delete-frame write-frame destroy-frame
@@ -191,6 +192,8 @@ Test
       (car thing)
       thing))
 
+;;; MSV functions deal transparently with multiple values (return a single elt if that's all there is, otherwise a list)
+
 ;;; +++ these should have setfs
 (defmethod msv ((frame frame) slot)
   (delistify (slotv frame slot)))
@@ -209,6 +212,20 @@ Test
     (dolist (f frames (delistify result))
       ;; warning: depends on nunion only being destructive to its FIRST argument
       (setf result (nunion result (slotv-inverse f slot) :test #'equal)))))
+
+;;; SSV functions enforce single values (useful for debugging).
+
+(defmethod ssv ((frame frame) slot)
+  (let ((v (slotv frame slot)))
+    (if (> (length v) 1)
+	(error "Multiple values where one expected"))
+    (car v)))
+
+(defmethod ssv-inverse ((frame frame) slot)
+  (let ((v (slotv-inverse frame slot)))
+    (if (> (length v) 1)
+	(error "Multiple values where one expected"))
+    (car v)))
 
 (defun slot-has? (frame slot value)
   (member value (slotv frame slot)))
