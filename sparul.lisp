@@ -35,10 +35,10 @@
 
 ;;; default these (+++ bad idea probably, and needs a better variable at least)
 (defmethod write-triple ((sparql null) s p o)
-  (write-triple *collabrx-bioblog* s p o))
+  (write-triple *default-frame-source* s p o))
 
 (defmethod delete-triple ((sparql null) s p o)
-  (delete-triple *collabrx-bioblog* s p o))
+  (delete-triple *default-frame-source* s p o))
 
 (defmethod* build-insert ((sparql sparql-endpoint) s p o)
   (format nil
@@ -82,7 +82,7 @@
 
 ;;; Nuke frame from db
 (defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))
-  (with-sparul-transaction (sparql)
+  (with-sparql-group (sparql)
     (delete-triple sparql frame '?p '?o)
     (delete-triple sparql '?s '?p frame))
   ;; also do locally
@@ -99,7 +99,7 @@
 
 (defmethod* nuke-everything ((sparql sparql-endpoint))
   (assert writeable?)			;+++ OK, this should be done in a class
-  (let ((all (do-sparql *collabrx-bioblog* `(:Select (?s ?p ?o) ( :from ,(intern-uri write-graph)) (?s ?p ?o)))))
+  (let ((all (do-sparql *default-frame-source* `(:select (?s ?p ?o) ( :from ,(intern-uri write-graph)) (?s ?p ?o)))))
     (dolist (binding all)
       (delete-triple sparql (sparql-binding-elt binding "s") (sparql-binding-elt binding "p") (sparql-binding-elt binding "o")))))
 
