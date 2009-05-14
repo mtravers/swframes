@@ -8,8 +8,6 @@
  :function
  (lambda (req ent)
    (let* ((input (wb::request-query req))
-;;; CCC
-;          (package-name (url-parameter-value :pkg input))
 	  (package-name (wb::cookie-package req))
           (package-symbol (keywordize package-name))
           (name (wb::url-parameter-value :name input))
@@ -68,9 +66,6 @@
    )
 
 
-
-
-
 ;;; Generate HTML output for a frame
 (defmethod frames::wob-html ((frame frame))
   ;; (frame-display-hook frame)		;experimental +++
@@ -122,8 +117,7 @@
 			     ))
 			:newline
 			((:font :color :green) (:princ-safe "#^")))
-		       ((:a :href (frames::wob-url slot-frame))
-			(:princ-safe (frame-name slot-frame)))
+		       (emit-frame-link slot-frame)
 		       :newline
 		       )
 		      (:td
@@ -163,15 +157,12 @@
 			     ))
 			:newline
 			((:font :color :green) (:princ-safe "#^")))
-		       ((:a :href (frames::wob-url slot-frame))
-			(:princ-safe (frame-name slot-frame)))
+		       (emit-frame-link slot-frame)
 		       :newline
 		       ))
 		     :newline
 		     )))))
-
-
-)
+	)
 
       #|
       (when (slotv frame #$isA)
@@ -190,6 +181,12 @@
 
       )))
 
+(defun emit-frame-link (frame)
+  (nl::make-weblistener-frames-ref frame))
+
+(defmethod frames::emit-value 
+    ((object frame) &optional (print-limit nil))
+  (emit-frame-link object))
 
 (defmethod frames::wob-url ((object frame))
   (formatn

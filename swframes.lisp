@@ -33,8 +33,9 @@ Idle thoughts:
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
 
+;;; Get the label, never fill
 (defun frame-label (frame)
-  (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label")))
+  (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label") nil))
       (most-significant-name (frame-name frame))
       ))
 
@@ -61,6 +62,11 @@ Idle thoughts:
   `(maphash #'(lambda (,slot ,value)
 	       ,@body)
 	   (frame-slots ,frame)))
+
+(defmacro for-frame-inverse-slots ((frame slot value) &body body)
+  `(maphash #'(lambda (,slot ,value)
+	       ,@body)
+	   (frame-inverse-slots ,frame)))
 	       
 
 (defun reset-frames ()
@@ -83,6 +89,17 @@ Idle thoughts:
 ;;; Does not remove all references to frame (it could, I suppose, if we were rigorous about inverses III)
 ;;; Does not delet from db
 (defmethod delete-frame ((frame frame))
+  ;;; remove references (that we know about)
+  (for-frame-slots (frame slot value)
+		   (dolist (elt value)
+		     (when (frame-p elt)
+		       (deletef frame (gethash slot (frame-inverse-slots elt))))))
+
+  (for-frame-inverse-slots (frame slot value)
+			   (dolist (elt value)
+			     (when (frame-p elt)
+			       (deletef frame (gethash slot (frame-slots elt))))))
+
   (reset-frame frame)
   (unintern-uri (frame-uri frame)))
 

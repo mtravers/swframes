@@ -221,6 +221,20 @@ New version of cl-json has different, smaller set of bugs.
     (append (do-query "name")
 	    (do-query "/common/topic/alias"))))
 
+
+(defun mql-name-lookup-wild (name &optional type)
+  (flet ((do-query (nproperty)
+	   (let* ((mql (mql-read
+			`((,(string+ (string nproperty) "~=") . ,name)
+			  ,@(if type `((:type . ,type)))
+			  (:id . nil)
+			  ("a:name" . nil)
+			  ("a:type" . :empty-list)
+			  ))))
+	     mql)))
+    (append (do-query "name")
+	    (do-query "/common/topic/alias"))))
+
 ;;; examples
 #|
 
@@ -230,6 +244,9 @@ New version of cl-json has different, smaller set of bugs.
 ;;; get ids for everything called 2001 (77!)
 (name-property-lookup "2001" "id")
 (name-property-lookup "Stanley Kubrick" "id") ;more reasonable
+
+(mql-name-lookup-wild "Marx")
+(mql-name-lookup-wild "Marx" "/book/author")
 
 |#
 
@@ -273,3 +290,6 @@ New version of cl-json has different, smaller set of bugs.
     (when frame
       (fill-frame frame)			;optional
       frame)))
+
+(defun mql-term (term)
+  (mql-read `(("*" .  ,term))))

@@ -107,7 +107,7 @@
 	     (when limit
 	       (format s "~%LIMIT ~a " limit))
 	     (when offset
-	       (format s "~%OFFSET ~a " limit))
+	       (format s "~%OFFSET ~a " offset))
 	     )))
 	  (t (error "Can't handle ~A command yet" (car form)))))
     ;; add prefixes

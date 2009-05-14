@@ -27,7 +27,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader )
 (set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
 
-
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
   (uri (read-fname stream)))
@@ -59,7 +58,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
     (eval `(defsetf ,symbol (f) (v) `(set-slotv ,f ,,slot ,v)))
     symbol
     ))
-
 
 ;;; go back to this, which won't work with setf
 (defun pound-carat-frame-reader (stream char arg)
@@ -139,14 +137,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (declare (ignore ignore))
   `(intern-uri ,(frame-uri frame)))
 
-;;; when test framework is in place
-'(define-test rename (x)
-  (let ((x (uri "test27")))
-    (assert (frame-fresh? x nil))
-    (rename-frame x "test27renamed")
-    (assert (frame-fresh? x nil))
-    (assert (equal (frame-uri x) "test27renamed"))))
-
 ;;; NO this is never right, URI
 (defun clean-frame (frame)
   (let ((cleaned (clean-uri (frame-uri frame))))
@@ -166,6 +156,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
    :to-chars   ".............."))
 				   
 ;;; redo this for urls.  Source http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
+;;; note that chars like : and / are legal for URIs, but only in a certain way...
 (defparameter frames::*illegal-frame-chars*
   (coerce 
    (string+ "$&+:;,/=?<>#%"*whitespace*) 
