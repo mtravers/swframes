@@ -65,7 +65,6 @@
 ;   (purge-wob-table (* 3600 3))
    )
 
-
 ;;; Generate HTML output for a frame
 (defmethod frames::wob-html ((frame frame))
   ;; (frame-display-hook frame)		;experimental +++
