@@ -181,7 +181,7 @@
       )))
 
 (defun emit-frame-link (frame)
-  (nl::make-weblistener-frames-ref frame))
+  (utils:forward-package-funcall :nl 'make-weblistener-frames-ref frame))
 
 (defmethod frames::emit-value 
     ((object frame) &optional (print-limit nil))
