@@ -70,10 +70,10 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	      ,@(if class `((?s #$rdf:type ,class))))))
 
 ;;; This has to be relative to a frame source so you can check for taken ids. Or something.
-;;; Currently broken
+;;; Currently horribly broken...probably classes should store the highest in-use number.
 
 (defun gensym-instance-frame (class)
-  (let ((uri (string+ (frame-uri class) "/" (string (gensym (frame-label class))))))
+  (let ((uri (string+ (frame-uri class) "/foo/" (string (gensym (frame-label class))))))
     (if (uri-used? *default-frame-source* uri)
 	(gensym-instance-frame class)
 	(intern-uri uri))))

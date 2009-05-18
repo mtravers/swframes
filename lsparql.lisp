@@ -221,10 +221,11 @@
 	   (emit-blank-node expression s))
 	  ((frame-p expression)		;uri
 	   (format s " <~a> " (expand-uri (frame-uri expression))))
-	  ;;  try to get FILTER clause in right format (still requires Jena)
  	  ((or (stringp expression)
 	       (numberp expression))
  	   (format s "~s" expression))
+	  ((eq (car expression) :regex)
+	   (format s "regex(~A, \"~A\", \"~A\")" (second expression) (third expression) (or (fourth expression) "")))
 	  (t
 	   (if (atom expression)
 	       (if (stringp expression)
@@ -309,3 +310,15 @@
   (do-sparql 
       source
     (format nil "select ?p ?o  where { <~A> ?p ?o . } limit 1" uri)))
+
+;;; convert all string literal objects into case-insensitive regex searches.
+(defun case-insensitize (query)
+  (let ((new-clauses nil))
+    (dolist (triple (nthcdr 3 query))
+      (when (stringp (third triple))
+	(let ((var (gensym "?v")))
+	  (push `(:filter (:regex ,var ,(formatn "^~A$" (third triple)) "i")) new-clauses)
+	  (setf (third triple) var)
+	  )))
+    (setf (nthcdr 3 query) (append (nthcdr 3 query) new-clauses)))
+  query)

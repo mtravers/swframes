@@ -24,8 +24,11 @@
 
 (defmethod* write-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)
-  (do-grouped-sparql sparql
-    (build-insert sparql s p o)))
+  ;; temp expedient +++
+  (if (wb::form-is-not-printable? o)
+      (warn "Can't write ~A to SPARQL, omitteing" o)
+      (do-grouped-sparql sparql
+	(build-insert sparql s p o))))
 
 ;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod* delete-triple ((sparql sparql-endpoint) s p o)
@@ -66,6 +69,7 @@
 
 (rdfs-def-class #$crx:slots/specialSlot ())
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
+
 
 (rdfs-defmethod write-slot ((slot #$crx:slots/LispValueSlot) frame sparql)
 		(let ((*print-readably* t))
