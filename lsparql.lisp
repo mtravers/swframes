@@ -224,7 +224,8 @@
  	  ((or (stringp expression)
 	       (numberp expression))
  	   (format s "~s" expression))
-	  ((eq (car expression) :regex)
+	  ((and (listp expression)
+		(eq (car expression) :regex))
 	   (format s "regex(~A, \"~A\", \"~A\")" (second expression) (third expression) (or (fourth expression) "")))
 	  (t
 	   (if (atom expression)
