@@ -13,9 +13,9 @@ t;;; find some trials with interventions
 (do-sparql *linkedct-frame-source*
   `(:select (?trial ?intervention ?drug)
 	    (:limit 50)
-	    (?trial ,(intern-uri (expand-uri "linkedct:intervention")) ?intervention )
-	    (?intervention ,(intern-uri (expand-uri "linkedct:intervention_type")) "Drug" )
-	    (?intervention ,(intern-uri (expand-uri "linkedct:intervention_name")) ?drug )
+	    (?trial ,(intern-uri "linkedct:intervention") ?intervention )
+	    (?intervention ,(intern-uri "linkedct:intervention_type") "Drug" )
+	    (?intervention ,(intern-uri "linkedct:intervention_name") ?drug )
 	    ))
 
 (trials-for-drug "Ezetimibe")
