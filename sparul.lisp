@@ -86,12 +86,20 @@
 
 ;;; Nuke frame from db
 (defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))
-  (with-sparql-group (sparql)
-    (delete-triple sparql frame '?p '?o)
-    (delete-triple sparql '?s '?p frame))
-  ;; also do locally
-  (delete-frame frame)
-  )
+  (let ((dependents
+	 (collecting  
+	  (for-frame-slots (frame slot value)
+			   (when (%slotv slot #$crx:slots/dependent)
+			     (dolist (v value)
+			       (collect-new v)))))))
+    (with-sparql-group (sparql)
+      (delete-triple sparql frame '?p '?o)
+      (delete-triple sparql '?s '?p frame))
+    ;; also do locally
+    (delete-frame frame)
+    (dolist (d dependents)
+      (destroy-frame d))
+    ))
 
 ;;; Delete EVERYTHING in this graph.
 ;;; Times out on our Virtuoso instance, no idea why.

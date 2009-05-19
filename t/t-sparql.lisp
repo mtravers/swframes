@@ -50,3 +50,11 @@
     (?TRIAL #$linkedct:intervention ?INTERVENTION)
     (?INTERVENTION #$linkedct:intervention_type ?INTTYPE)
     (?INTERVENTION #$linkedct:intervention_name ?INTNAME))))
+
+
+;;; This source won't work with POST, only GET.   It's also apparently different from the Uniprot RDF downloads
+
+(setq ep 
+      (make-instance 'sparql-endpoint :uri "http://labs.intellidimension.com/uniprot/sparql"))
+
+(sanity-check ep)
