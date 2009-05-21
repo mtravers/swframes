@@ -115,7 +115,9 @@
 			      (prin1-to-string `(slotv ,frame ,slot-frame)))
 			     ))
 			:newline
-			((:font :color :green) (:princ-safe "#^")))
+;;; we hates it
+;			((:font :color :green) (:princ-safe "#^"))
+			)
 		       (emit-frame-link slot-frame)
 		       :newline
 		       )
@@ -191,8 +193,13 @@
   (formatn
    (one-string
     "/frame"
-;    (wob-state-variable-values-url-argstring)
     "?name=~A")
+   (url-safe-string (frame-name object))
+   ))
+
+'(defmethod frames::wob-url ((object frame))
+  (formatn
+   "/display-frame?name=~A"
    (url-safe-string (frame-name object))
    ))
 

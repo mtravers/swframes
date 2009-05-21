@@ -28,7 +28,7 @@
 ; particulars moved up.
    )
   :depends-on
-  ())
+  (:cl-json))
 
 ;;;; eof
 
