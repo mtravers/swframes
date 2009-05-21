@@ -21,8 +21,6 @@
    (:file "sparul")
    (:file "files")
    (:file "mql")
-   ;; web ui stuff
-   (:file "browse")
 ;moved   (:file "sw-frame-grid")
    (:file "xml")
 ; particulars moved up.
