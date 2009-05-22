@@ -312,8 +312,13 @@
       source
     (format nil "select ?p ?o  where { <~A> ?p ?o . } limit 1" uri)))
 
+(defun var-p (thing)
+  (and (symbolp thing)
+       (char= #\? (char (string thing) 0))))
+
 ;;; convert all string literal objects into case-insensitive regex searches.
 (defun case-insensitize (query)
+  (setq query (copy-tree query))
   (let ((new-clauses nil))
     (dolist (triple (nthcdr 3 query))
       (when (stringp (third triple))
@@ -322,4 +327,23 @@
 	  (setf (third triple) var)
 	  )))
     (setf (nthcdr 3 query) (append (nthcdr 3 query) new-clauses)))
+  query)
+
+;;; +++ could be generalized for other dependent properties
+(defun include-labels (vars query)
+  ;; this defaulting of vars is almost never the right thing.  Also, won't deal with :optional and other constructs
+  (unless vars
+    (setq vars
+	  (utils:collecting 
+	   (dolist (clause (nthcdr 3 query))
+	     (when (var-p (third clause))
+	       (utils::collect-new (third clause)))
+	     (when (var-p (first clause))
+	       (utils::collect-new (first clause)))
+	     ))))
+  (setq query (copy-tree query))
+  (dolist (var vars)
+    (let ((label-var (intern (string+ (string var) "_label") :keyword)))
+      (push-end label-var (second query))
+      (push-end `(:optional (,var #$rdfs:label ,label-var)) query)))
   query)
