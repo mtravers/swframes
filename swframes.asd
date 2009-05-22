@@ -4,6 +4,7 @@
   :name "Semantic Web Frame system"
   :author "Mike Travers"
   :serial t
+  :depends-on (:cl-json)		;for MQL only
   :components
   (;; setup and utilities
    ;; basics
