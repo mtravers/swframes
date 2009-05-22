@@ -67,6 +67,16 @@
   (setf (frame-loaded? frame) t)
   frame)
 
+;;; write out a single slot
+(defmethod write-slot ((frame frame) (slot frame) &optional (sparql (frame-source frame)))
+  (with-sparql-group (sparql)
+    (delete-triple sparql frame slot '?o)
+    (aif (%slotv slot #$crx:specialhandling)
+	 (rdfs-call write-slot slot frame sparql)
+	 ;; normal behavior
+	 (dolist (val (slotv frame slot))
+	   (write-triple sparql frame slot val)))))
+
 (rdfs-def-class #$crx:slots/specialSlot ())
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 

@@ -70,10 +70,17 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	      ,@(if class `((?s #$rdf:type ,class))))))
 
 ;;; This has to be relative to a frame source so you can check for taken ids. Or something.
-;;; Currently horribly broken...probably classes should store the highest in-use number.
+(defun class-genid (class)
+  (let* ((last (msv class #$crx:last_used_id))
+	 (next (if last
+		   (1+ (coerce-number last))
+		   0)))
+    (setf (msv-hack #$crx:last_used_id class) next)
+    (write-slot class #$crx:last_used_id *default-frame-source*)
+    next))
 
 (defun gensym-instance-frame (class)
-  (let ((uri (string+ (frame-uri class) "/foo/" (string (gensym (frame-label class))))))
+  (let ((uri (string+ (frame-uri class) "/" (fast-string (class-genid class)))))
     (if (uri-used? *default-frame-source* uri)
 	(gensym-instance-frame class)
 	(intern-uri uri))))
