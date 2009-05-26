@@ -26,7 +26,7 @@
   (assert writeable?)
   ;; temp expedient +++
   (if (wb::form-is-not-printable? o)
-      (warn "Can't write ~A to SPARQL, omitteing" o)
+      (warn "Can't write ~A to SPARQL, omitting" o)
       (do-grouped-sparql sparql
 	(build-insert sparql s p o))))
 
