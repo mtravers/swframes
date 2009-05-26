@@ -6,6 +6,7 @@
   (:import-from :wb "HTML")
   (:import-from :knewos "LXML-ATTRIBUTE" "LXML-SUBELEMENTS" "LXML-ALL-SUBELEMENTS" "LXML-TAG" "LXML-FIND-ELEMENTS-WITH-TAG")
   (:import-from :knewos "RUN-SPARQL")
+  (:import-from :mt "DELETEF")
   ;; exports in the code for now
-  )			
-  
+  )
+
