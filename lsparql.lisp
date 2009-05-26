@@ -260,6 +260,7 @@
 
 ;;; sparql clauses define a set using variable ?s, this loads all forward links fro those uris.
 ;;; +++ should be method on server.
+;;; +++ should maybe be done in the style of case-insensitize/bulk-load
 (defmethod bulk-load ((server sparql-endpoint) sparql-clauses)
   (let* ((full-query `(:select (?s ?p ?o) () ,@sparql-clauses (?s ?p ?o)))
 	 (res (do-sparql server full-query)))
@@ -330,6 +331,7 @@
   query)
 
 ;;; +++ could be generalized for other dependent properties
+;;; OPTIONAL could be optional
 (defun include-labels (vars query)
   ;; this defaulting of vars is almost never the right thing.  Also, won't deal with :optional and other constructs
   (unless vars

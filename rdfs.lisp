@@ -65,9 +65,13 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 (defun rdfs-find (value &key slot class source)
   (do-sparql-one-var source
+    (rdfs-find-sparql value :slot slot :class class)))
+
+(defun rdfs-find-sparql (value &key slot class)
     `(:select (?s) ()
-	      (?s ,(if slot slot '?p) ,value)
-	      ,@(if class `((?s #$rdf:type ,class))))))
+	      ,@(unless (eq value :all)
+			`((?s ,(if slot slot '?p) ,value)))
+	      ,@(if class `((?s #$rdf:type ,class)))))
 
 ;;; This has to be relative to a frame source so you can check for taken ids. Or something.
 (defun class-genid (class)

@@ -82,9 +82,13 @@
 
 
 (rdfs-defmethod write-slot ((slot #$crx:slots/LispValueSlot) frame sparql)
-		(let ((*print-readably* t))
-		  (dolist (val (slotv frame slot))
-		    (write-triple sparql frame slot (prin1-to-string val)))))
+		(handler-case 
+		    (let ((*print-readably* t))
+		      (dolist (val (slotv frame slot))
+			(write-triple sparql frame slot (prin1-to-string val))))
+		  (print-not-readable (e)
+		    (warn "Can't save nonreadable object in ~A/~A" frame slot) 
+		    )))
 
 ;;; need to do the inverse on read! +++
 

@@ -145,9 +145,9 @@ http://data.linkedmdb.org/all/director
                    )
                  (unless (eq (lxml-tag desc) '|rdf|::|Description|)
                    (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
-                 (dolist (elt (lxml-subelements desc))
+                 (dolist (elt (lxml-all-subelements desc))
                    ;; stupid dbpedia defines namespaces in the element they it is used in!
-                   (do ((rest (mt::lxml-attributes elt) (cddr rest)))
+                   (do ((rest (lxml-attributes elt) (cddr rest)))
                        ((null rest))
                      (when (string-prefix-equals (symbol-name (car rest)) "xmlns:")
                        (sw-register-namespace (cadr (utils:string-split (symbol-name (car rest)) #\:  ))
@@ -161,7 +161,7 @@ http://data.linkedmdb.org/all/director
                             ((stringp (cadr elt))
                              ;; no resource, so a literal? or another description?
                              (add-value (cadr elt) about property))
-                            (t (dolist (sub (lxml-subelements elt))
+                            (t (dolist (sub (lxml-all-subelements elt))
                                  (add-value (process-description sub) about property)))
                                         ;                            (t (error "Cant figure out what to do with ~A" elt))
                             )
@@ -183,7 +183,7 @@ http://data.linkedmdb.org/all/director
                  (setq base full))
                 (t (error "Don't know what to do with ~A" (car namespaces))))))
 
-      (dolist (desc (lxml-subelements xml))
+      (dolist (desc (lxml-all-subelements xml))
         (process-description desc t))
       (unregister-namespace "NS-0")
       (dolist (f top-frames)
