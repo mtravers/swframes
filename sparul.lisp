@@ -55,17 +55,21 @@
     base))
 
 (defmethod write-frame ((frame frame) &optional (sparql (frame-source frame)))
-  (with-sparql-group (sparql)
-    (delete-triple sparql frame '?p '?o)
-    (dolist (slot (%frame-slots frame))
-      (aif (%slotv slot #$crx:specialhandling)
-	   (rdfs-call write-slot slot frame sparql)
-	  ;; normal behavior
-	   (dolist (val (slotv frame slot))
-	     (write-triple sparql frame slot val)))))
-  ;; if we just wrote this out, then it's up to date!
-  (setf (frame-loaded? frame) t)
-  frame)
+  (let ((dependents (frame-dependents frame)))
+    (with-sparql-group (sparql)
+      (delete-triple sparql frame '?p '?o)
+      (dolist (slot (%frame-slots frame))
+	(aif (%slotv slot #$crx:specialhandling)
+	     (rdfs-call write-slot slot frame sparql)
+	     ;; normal behavior
+	     (dolist (val (slotv frame slot))
+	       (write-triple sparql frame slot val))))
+      ;; write out dependents
+      (dolist (d dependents)
+	(write-frame d sparql))
+    ;; if we just wrote this out, then it's up to date!
+      (setf (frame-loaded? frame) t))
+    frame))
 
 ;;; write out a single slot
 (defmethod write-slot ((frame frame) (slot frame) &optional (sparql (frame-source frame)))
@@ -98,14 +102,17 @@
 
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
+(defun frame-dependents (frame)
+  (collecting  
+   (for-frame-slots (frame slot value)
+		    (when (%slotv slot #$crx:slots/dependent)
+		      (dolist (v value)
+			(collect-new v))))))
+
+
 ;;; Nuke frame from db
 (defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))
-  (let ((dependents
-	 (collecting  
-	  (for-frame-slots (frame slot value)
-			   (when (%slotv slot #$crx:slots/dependent)
-			     (dolist (v value)
-			       (collect-new v)))))))
+  (let ((dependents (frame-dependents frame)))
     (with-sparql-group (sparql)
       (delete-triple sparql frame '?p '?o)
       (delete-triple sparql '?s '?p frame))
