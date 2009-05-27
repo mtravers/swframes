@@ -188,6 +188,6 @@ http://data.linkedmdb.org/all/director
       (unregister-namespace "NS-0")
       (dolist (f top-frames)
         (setf (frame-loaded? f) t))
-      top-frames)))
+      (nreverse top-frames))))
 
 
