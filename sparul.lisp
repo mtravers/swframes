@@ -3,23 +3,40 @@
 ;;; see /misc/sourceforge/hg/crx_rails/lib/active_rdf_patches/active_rdf_sparul.rb
 ;;; transactions
 
-(defvar *sparql-group* nil)
+(defvar *sparul-group* nil)
 
-(defmacro with-sparql-group ((endpoint) &body body)
-  `(let ((*sparql-group* (list ,endpoint nil)))
-      ,@body
-      (when (cadr *sparql-group*)
-	(do-sparql ,endpoint
-	  (with-output-to-string (out)
-	    (dolist (s (cadr *sparql-group*))
-	      (write-string s out)
-	      (terpri out)))
-	  ))))
+;;; move to utils +++
+;;; needs some error handling
+(defmacro in-background-thread (&body body)
+  `(acl-compat.mp:process-run-function
+    (string (gensym "THREAD"))
+    #'(lambda () ,@body)))
 
-(defmethod do-grouped-sparql ((sparql sparql-endpoint) string)
-  (if (and *sparql-group*
-	   (eq sparql (car *sparql-group*)))
-      (push-end string (cadr *sparql-group*))
+;;; :async? option not yet used, but available if it starts taking too long.
+(defmacro with-sparul-group ((endpoint &key async?) &body body)
+  `(let ((prior-group *sparul-group*)	;make sure we only do it after all groups unwound
+	 (*sparul-group* (or *sparul-group* (list ,endpoint nil))))
+     (unless (eq (car *sparul-group*) ,endpoint)
+       (error "Bad nested SPARUL groups"))
+     ,@body
+     (when (and (cadr *sparul-group*)
+		(not prior-group))
+       (flet ((do-it ()
+		(do-sparql ,endpoint
+		  (with-output-to-string (out)
+		    (dolist (s (cadr *sparul-group*))
+		      (write-string s out)
+		      (terpri out))))))
+	 (if ,async?
+	     (in-background-thread (do-it))
+	     (do-it))))))
+
+(defmethod do-grouped-sparul ((sparql sparql-endpoint) string)
+  (print `(do-grouped-sparul ,*sparul-group* ,sparql ,string))
+  (if (and *sparul-group*
+	   (eq sparql (car *sparul-group*)))
+      (push-end string (cadr *sparul-group*))
+      ;; otherwise do immediately
       (do-sparql sparql string)))
 
 (defmethod* write-triple ((sparql sparql-endpoint) s p o)
@@ -27,13 +44,13 @@
   ;; temp expedient +++
   (if (wb::form-is-not-printable? o)
       (warn "Can't write ~A to SPARQL, omitting" o)
-      (do-grouped-sparql sparql
+      (do-grouped-sparul sparql
 	(build-insert sparql s p o))))
 
 ;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod* delete-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)
-  (do-grouped-sparql sparql
+  (do-grouped-sparul sparql
     (build-delete sparql s p o)))
 
 ;;; default these (+++ bad idea probably, and needs a better variable at least)
@@ -54,9 +71,9 @@
       (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))
 
-(defmethod write-frame ((frame frame) &optional (sparql (frame-source frame)))
+(defmethod write-frame ((frame frame) &optional (sparql (frame-source frame)) (async? nil))
   (let ((dependents (frame-dependents frame)))
-    (with-sparql-group (sparql)
+    (with-sparul-group (sparql :async? async?)
       (delete-triple sparql frame '?p '?o)
       (dolist (slot (%frame-slots frame))
 	(aif (%slotv slot #$crx:specialhandling)
@@ -66,14 +83,14 @@
 	       (write-triple sparql frame slot val))))
       ;; write out dependents
       (dolist (d dependents)
-	(write-frame d sparql))
+	(write-frame d))
     ;; if we just wrote this out, then it's up to date!
       (setf (frame-loaded? frame) t))
     frame))
 
 ;;; write out a single slot
 (defmethod write-slot ((frame frame) (slot frame) &optional (sparql (frame-source frame)))
-  (with-sparql-group (sparql)
+  (with-sparul-group (sparql)
     (delete-triple sparql frame slot '?o)
     (aif (%slotv slot #$crx:specialhandling)
 	 (rdfs-call write-slot slot frame sparql)
@@ -113,7 +130,7 @@
 ;;; Nuke frame from db
 (defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))
   (let ((dependents (frame-dependents frame)))
-    (with-sparql-group (sparql)
+    (with-sparul-group (sparql)
       (delete-triple sparql frame '?p '?o)
       (delete-triple sparql '?s '?p frame))
     ;; also do locally
@@ -136,32 +153,3 @@
     (dolist (binding all)
       (delete-triple sparql (sparql-binding-elt binding "s") (sparql-binding-elt binding "p") (sparql-binding-elt binding "o")))))
 
-;;; Tests
-#|
-
-
-(defvar *collabrx-sparql-writeable*
-  (make-instance 'sparql-endpoint
-		 :uri "http://sparql.collabrx.com/sparql/"
-		 :writeable? t
-		 :write-graph "http://collabrx.com/my_graph"))
-
-(test2 *collabrx-sparql-writeable*)
-
-(defmethod test3 ((sparql sparql-endpoint))
-  (let* ((frame (genuri sparql "http://collabrx.com/testing/"))
-	 (uri (frame-uri frame)))
-    (setf (slotv frame #$foo) '(23))
-    (setf (slotv frame #$bar) '(#$foo))
-    (write-frame sparql frame)
-    (print `(frame ,frame written))
-    (delete-frame frame)			;clear it out
-    (setf frame (intern-uri uri))
-    (assert (null (slotv frame #$foo)))
-    (fill-frame-sparql frame sparql)	;+++ this API should change
-    (print (slotv frame #$foo))
-    (assert (member "23" (slotv frame #$foo) :test #'equal))
-    (print `(frame ,frame read back))
-    ))
-
-|#
