@@ -1,6 +1,6 @@
 (in-package :swframes)
 
-(export '(string+ parse-xml html-string uri-tag coerce-number))
+(export '(string+ parse-xml html-string uri-tag coerce-number in-background-thread))
 
 (defun string+ (&rest args)
   (apply #'concatenate 'string args))
@@ -31,3 +31,9 @@
        (assert (numberp n))
        n))
     (t (error "can't coerce ~A to a number" slotv))))
+
+;;; needs some error handling +++
+(defmacro in-background-thread (&body body)
+  `(acl-compat.mp:process-run-function
+    (string (gensym "THREAD"))
+    #'(lambda () ,@body)))
