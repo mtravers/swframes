@@ -63,15 +63,19 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	(setf (slotv frame (car rest)) 
 	      (cadr rest))))))
 
-(defun rdfs-find (value &key slot class source)
+(defun rdfs-find (value &key slot class source word?)
   (do-sparql-one-var source
-    (rdfs-find-sparql value :slot slot :class class)))
+    (rdfs-find-sparql value :slot slot :class class :word? word?)))
 
-(defun rdfs-find-sparql (value &key slot class)
+(defun rdfs-find-sparql (value &key slot class word?)
+  (let ((vvar (if word? (gensym "?V"))))
     `(:select (?s) ()
 	      ,@(unless (eq value :all)
-			`((?s ,(if slot slot '?p) ,value)))
-	      ,@(if class `((?s #$rdf:type ,class)))))
+			`((?s ,(if slot slot '?p) ,(if word? vvar value))))
+	      ,@(if class `((?s #$rdf:type ,class)))
+	      ;; UGH quoting, but I think this is right...
+	      ,@(if word? `((:filter (:regex ,vvar ,(formatn "\\\\W~A\\\\W" value) "i"))))
+	      )))
 
 ;;; This has to be relative to a frame source so you can check for taken ids. Or something.
 (defun class-genid (class)

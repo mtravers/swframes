@@ -19,12 +19,6 @@ Todo:
 
 ;;; would be nice to have this and drugcard share a common abstraction.
 
-;;; +++ for utils
-(defmacro dolines ((var stream) &body body)
-  `(do ((,var (read-line ,stream nil :eof) (read-line ,stream nil :eof)))
-       ((eq ,var :eof))
-     ,@body))
-
 ;(parse-gpp "/misc/kbs/refseq/human.protein.gpff")
 
 (defun parse-gpp (file &key limit)

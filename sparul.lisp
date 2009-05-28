@@ -5,13 +5,6 @@
 
 (defvar *sparul-group* nil)
 
-;;; move to utils +++
-;;; needs some error handling
-(defmacro in-background-thread (&body body)
-  `(acl-compat.mp:process-run-function
-    (string (gensym "THREAD"))
-    #'(lambda () ,@body)))
-
 ;;; :async? option not yet used, but available if it starts taking too long.
 (defmacro with-sparul-group ((endpoint &key async?) &body body)
   `(let ((prior-group *sparul-group*)	;make sure we only do it after all groups unwound
@@ -32,7 +25,6 @@
 	     (do-it))))))
 
 (defmethod do-grouped-sparul ((sparql sparql-endpoint) string)
-  (print `(do-grouped-sparul ,*sparul-group* ,sparql ,string))
   (if (and *sparul-group*
 	   (eq sparql (car *sparul-group*)))
       (push-end string (cadr *sparul-group*))
