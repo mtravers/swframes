@@ -106,6 +106,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defvar *mark-new-frames-loaded?* nil)	;Bind this for frame creation 
 
 (defun intern-uri (uri &optional (source *default-frame-source*) (mark-loaded? *mark-new-frames-loaded?*))
+  (if (frame-p uri) (return-from intern-uri uri))
   (assert (stringp uri))
   (setf uri (expand-uri uri))
   (or (frame-named uri)
