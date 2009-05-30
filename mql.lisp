@@ -271,9 +271,10 @@ New version of cl-json has different, smaller set of bugs.
     (dolist (type types)
       (setf result 
 	    (append result
+		    (ignore-errors 	;+++ some types give errors, just ignore
 		    (mql-read `((:id . ,id)
 				(:type . ,type)
-				("*" . (:empty-dict))))))) ; or ("*" . nil) to get values only
+				("*" . (:empty-dict)))))))) ; or ("*" . nil) to get values only
     result))
       
 
@@ -293,3 +294,10 @@ New version of cl-json has different, smaller set of bugs.
 
 (defun mql-term (term)
   (mql-read `(("*" .  ,term))))
+
+(defun links (id)
+  (mql-read `((:type . "/type/link")
+	      (:source . ((:id . ,id)))
+	      (:master_property . nil)
+	      (:target . :empty-dict)
+	      (:target_value . nil))))
