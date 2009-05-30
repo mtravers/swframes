@@ -253,29 +253,13 @@
 
 ;;; ???
 (defun sparql-binding-elt (binding v)
+  (if (symbolp v) (setf v (string-downcase (string v))))
+  (if (char= #\? (char v 0)) (setf v (subseq v 1)))
   (cadr (find v binding :key #'car :test #'equal)))
 
 (defun extract-sparql-binding (binding-list v)
   (mapcar #'(lambda (binding) (sparql-binding-elt binding v)) binding-list))
 
-;;; sparql clauses define a set using variable ?s, this loads all forward links fro those uris.
-;;; +++ should be method on server.
-;;; +++ should maybe be done in the style of case-insensitize/bulk-load
-(defmethod bulk-load ((server sparql-endpoint) sparql-clauses)
-  (let* ((full-query `(:select (?s ?p ?o) () ,@sparql-clauses (?s ?p ?o)))
-	 (res (do-sparql server full-query)))
-    (collecting
-      (dolist (bind res)
-	(let ((s (sparql-binding-elt bind "s"))
-	      (p (sparql-binding-elt bind "p"))
-	      (o (sparql-binding-elt bind "o")))
-	  (add-triple s p o)
-	  (collect-new s)
-	  (setf (frame-dereferenced? s) t) ;not really, but the equivalent
-	  (setf (frame-source s) server)
-	  (when (frame-p o)		;not sure about this, but for now
-	    (setf (frame-source o) server))
-	  )))))
 
 (defmethod sanity-check ((endpoint sparql-endpoint))
   (do-sparql endpoint `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) )))
@@ -349,3 +333,25 @@
       (push-end label-var (second query))
       (push-end `(:optional (,var #$rdfs:label ,label-var)) query)))
   query)
+
+
+;;; Given a SPARQL query and a var, extend the query to load all slots of var and mark frames as loaded.
+(defun bulk-load-query (source query &optional (var (car (second query))))
+  (setq query (copy-tree query))
+  (push-end `(,var ?bl_p ?bl_o) query)
+  (push-end '?bl_p (second query))
+  (push-end '?bl_o (second query))
+  (let ((res (do-sparql source query)))
+    (collecting
+     (dolist (bind res)
+	(let ((s (sparql-binding-elt bind var))
+	      (p (sparql-binding-elt bind "bl_p"))
+	      (o (sparql-binding-elt bind "bl_o")))
+	  (add-triple s p o)
+	  (collect-new s)
+	  (setf (frame-loaded? s) t)
+	  (setf (frame-source s) source)
+	  (when (frame-p o)		;not sure about this, but for now
+	    (setf (frame-source o) source))
+	  )))))
+    
