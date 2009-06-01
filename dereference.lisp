@@ -122,6 +122,12 @@ http://data.linkedmdb.org/all/director
     (labels ((symbol->frame (symbol)
                (let ((ns (package-name (symbol-package symbol)))
                      (text (symbol-name symbol)))
+		 ;; weird bug in xml parser results in SEQUENCE instead of bp:sequence, ie:
+		 ;; (get-pathways #$http://cbio.mskcc.org/cpath#CPATH-71202)
+		 ;; +++ kludge around it because I don't have time to fix it.
+		 (when (equal ns "COMMON-LISP")
+		   (warn "Bad package in XML parse ~A" symbol)
+		   (setf ns "bp"))
                  (intern-uri (expand-uri-0 ns text) )))
              (add-value (v frame slot)
                (add-triple frame slot v)
