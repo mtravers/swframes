@@ -3,7 +3,8 @@
 ;;; Freebase doesn't do SPARQL, so here's a start at an MQL interface
 ;;; based on metaweb.py (/Volumes/revenant/a/projects/freebase/metaweb.py)
 
-;;; get the darcs version of cl-json, which has better bugs
+;;; Plumbing
+
 (require :cl-json)
 
 (defvar *freebase-host* "www.freebase.com") ; The Metaweb host
@@ -34,6 +35,13 @@
       (print response))
     (utils::assocdr :result response)))
 
+(defun mql-read-raw (q &optional credentials)
+  (let* ((args (net.aserve:uriencode-string q))
+	 (url (format nil "http://~A~A?query=~A" *freebase-host* *freebase-readservice* args)))
+    (json:decode-json-from-string
+;     (net.aserve.client::do-http-request url :protocol :http/1.0)
+     (get-via-curl url)
+     )))
 
 ;;; there's some damn bug in the client code
 (defun get-via-curl (uri)
@@ -46,141 +54,47 @@
 (defun trim-first-line (s)
   (subseq s (1+ (position #\Newline s))))
 
-(defun mql-read-raw (q &optional credentials)
-  (let* (
-	 (args (net.aserve:uriencode-string q))
-	 (url (format nil "http://~A~A?query=~A" *freebase-host* *freebase-readservice* args)))
-    (json:decode-json-from-string
-;     (net.aserve.client::do-http-request url :protocol :http/1.0)
-     (get-via-curl url)
-     )))
+;;; Utility queries 
 
-;;; Try to understand their weird encoding...
-(defun json->lisp (s)
-  (json:decode-json-from-string
-   (mt:string-replace 
-    (mt:string-replace s "'" "\"")
-    "None" "null")))
+(defun name-types (name)
+  (mql-name-property-lookup name "type" nil))
 
-(defun lisp->json (l)
-  (json:encode-json-to-string l))
+;;; this should be memoized.
+(defun type-properties (type)
+  (mql-read `((:id . ,type)
+	      ("properties" . :empty-list)
+	      (:type . "/type/type"))))  
 
-#|
+;;; Given a GUID, return everything we can find
+;;; I think this is isomorphic to what you get from dereferencing the RDF?
+(defun id->everything (id)
+  (let ((types
+	 (utils:assocdr 
+	  :type 
+	  (car (mql-read `((:id . ,id)
+			   (:type . :empty-list))))))
+	(result nil))
+    (dolist (type types)
+      (setf result 
+	    (append result
+		    (ignore-errors 	;+++ some types give errors, just ignore
+		    (mql-read `((:id . ,id)
+				(:type . ,type)
+				("*" . (:empty-dict)))))))) ; or ("*" . nil) to get values only
+    result))
+      
+(defun mql-result->frame (id)
+  (uri (expand-uri (string+ "fb:" (substitute #\. #\/ (subseq id 1))))))
 
-Tests and experimentation
+(defun mql-term (term)
+  (mql-read `(("*" .  ,term))))
 
-(defun d-then-e (s)
-  (let* ((decoded (json->lisp s))
-	 (encoded     (mt:string-replace  (lisp->json decoded) "\"" "'")))
-    (print decoded)
-    (unless (equal s encoded)
-      (print `(differs ,s ,encoded)))))
-	
-
-from ~/.sbcl/site/cl-json_0.3.1/src/encoder.lisp   -- the real one seems broken
-;;; exp
-(defmethod encode-json((s list) stream)
-  (if (listp (car s))
-      (encode-json-alist s stream)
-      (call-next-method s stream)))
-
-This case loses
-(d-then-e "{'a': {'b': 'fred'}}")
-
-But this is OK..
-(d-then-e "{'a': {'b': 23}}")
-
-
-(setq album-query "{ 'type': '/music/artist',
-          'name': 'Pink Floyd',
-          'album': [{ 'name': None,         
-                      'release_date': None,
-                      'sort': 'release_date' }]}}")
-
-
-;;; THIS ACTUALLY WORKS DO NOT CHANGE IT (from curl, not lisp at the moment)
-;;; looks like bug in client, NET.ASERVE.CLIENT::GET-HEADER-LINE-BUFFER is showing garbage chars..
-;;; 
-(setq album-query-env "{'query': [{ 'type': '/music/artist',
-          'name': 'Pink Floyd',
-          'album': [{ 'name': null,         
-                      'release_date': null,
-                      'sort': 'release_date' }]}]}")
-
-(mql-read-raw (mt:string-replace album-query-env "'" "\""))
-
-
-
-;;; NOTE: need to have null
-
-
-(setq pf-query
-      '((:TYPE . "/music/artist")
-	(:NAME . "Pink Floyd")
-	(:ALBUM ((:NAME) 
-		 (:RELEASE_DATE)
-		 (:SORT . "release_date")))))
-
-(mql-read pf-query)
-
-(setq pf-query-w-envelope
-      '((:QUERY ((:TYPE . "/music/artist") (:NAME . "Pink Floyd") (:ALBUM ((:NAME) (:RELEASE_DATE) (:SORT . "release_date")))))))
-
-
-(mql-read  '((:name . "Retuximab")))
-
-;;; everything about something
-(mql-read  '((:name . "Pink Floyd") ("*" . nil)))
-
-;;; works
-(mql-read  '((:name . "Pink Floyd") ("*" . nil) (:type . "/music/musical_group")))
-
-;;; try to expand property...doesn't work, I have no idea 
-(mql-read  '((:name . "Pink Floyd") ("*" . (nil)) (:type . "/music/musical_group")))
-
-;;; Works with yet another patch to cl-json
-(mql-read  '((:name . "Pink Floyd") ("*" . (:empty-dict)) (:type . "/music/musical_group")))
-
-;;; this is better (er no, just seems to return admin stuff)
-(mql-read  '(("*" . "Gleevec") ("*" . nil)))
-
-;;; an error, not sure why.
-(mql-read  '(("*" . "Gleevec")))
-;;; this too
-(mql-read  '(("*" . "Gleevec") (:type . "/medicine/drug")))
-
-;;; this works nice...er no returns 100 random drugs
-(mql-read  '(("*" . "Gleevec") ("*" . nil) (:type . "/medicine/drug")))
-
-
-
-;;; returns nothing
-(mql-read  '((:name . "Gleevec") ("*" . nil) (:type . "/medicine/drug")))
-
-;;; this works well...
-(mql-read  '(("/common/topic/alias" . "Gleevec") ("*" . nil) (:type . "/medicine/drug")))
-
-;;; uses an extr property on a different type (the only way I could get the name of this was by looking at the RDF!)
-(mql-read  '(("/common/topic/alias" . "Gleevec") ("*" . nil) (:type . "/medicine/drug") ("/base/bioventurist/product/developed_by"  . nil)))
-
-
-;;; nothing
-(mql-read  '(("/common/topic/alias" . "Asprin") ("*" . nil) (:type . "/medicine/drug")))
-
-;;; have to do it this way (there must be an OR)
-(mql-read  '(("name" . "Asprin") ("*" . nil) (:type . "/medicine/drug")))
-
-
-New version of cl-json has different, smaller set of bugs.
-(in /misc/sourceforge/cl-json/ )
-
-|#
-
-(defun mql-drug-mfr (drugname)
-  (mql-name-property-lookup 
-   drugname
-   "/base/bioventurist/product/developed_by"
-   "/medicine/drug"))
+(defun links (id)
+  (mql-read `((:type . "/type/link")
+	      (:source . ((:id . ,id)))
+	      (:master_property . nil)
+	      (:target . :empty-dict)
+	      (:target_value . nil))))
 
 ;;; Generalized
 ;;; this doesn't work, because you need to provide a type or you get errors
@@ -221,10 +135,11 @@ New version of cl-json has different, smaller set of bugs.
     (append (do-query "name")
 	    (do-query "/common/topic/alias"))))
 
-
+;;; almost the same as above
 (defun mql-name-lookup-wild (name &optional type)
   (flet ((do-query (nproperty)
 	   (let* ((mql (mql-read
+			;; THIS LINE IS DFFERENT
 			`((,(string+ (string nproperty) "~=") . ,name)
 			  ,@(if type `((:type . ,type)))
 			  (:id . nil)
@@ -235,55 +150,16 @@ New version of cl-json has different, smaller set of bugs.
     (append (do-query "name")
 	    (do-query "/common/topic/alias"))))
 
-;;; examples
-#|
+;;; RDF/Frame support
 
-(name-property-lookup "2001" "directed_by" "/film/film")
-(name-property-lookup "Lisp" "type" nil) ;type can be nil because "type" is a common property?
-
-;;; get ids for everything called 2001 (77!)
-(name-property-lookup "2001" "id")
-(name-property-lookup "Stanley Kubrick" "id") ;more reasonable
-
-(mql-name-lookup-wild "Marx")
-(mql-name-lookup-wild "Marx" "/book/author")
-
-|#
-
-(defun name-types (name)
-  (mql-name-property-lookup name "type" nil))
-
-;;; this should be memoized.
-(defun type-properties (type)
-  (mql-read `((:id . ,type)
-	      ("properties" . :empty-list)
-	      (:type . "/type/type"))))  
-
-;;; Given a GUID, return everything we can find
-;;; I think this is isomorphic to what you get from dereferencing the RDF?
-(defun id->everything (id)
-  (let ((types
-	 (utils:assocdr 
-	  :type 
-	  (car (mql-read `((:id . ,id)
-			   (:type . :empty-list))))))
-	(result nil))
-    (dolist (type types)
-      (setf result 
-	    (append result
-		    (ignore-errors 	;+++ some types give errors, just ignore
-		    (mql-read `((:id . ,id)
-				(:type . ,type)
-				("*" . (:empty-dict)))))))) ; or ("*" . nil) to get values only
-    result))
-      
 
 ;;; Turns a Freebase ID into a frame name (ie, duplicating what they do to go to RDF)
 (sw-register-namespace "fb" "http://rdf.freebase.com/ns/")
 
-(defun mql-result->frame (id)
-  (uri (expand-uri (string+ "fb:" (substitute #\. #\/ (subseq id 1))))))
 
+
+
+;;;; Bio specific
 (defun mql-gene (gene-id)
   (let* ((raw (mql-read `(("/biology/gene/symbol" . ,gene-id) (:id  . nil))))
 	 (id (assocdr :id (car raw)))
@@ -292,12 +168,3 @@ New version of cl-json has different, smaller set of bugs.
       (fill-frame frame)			;optional
       frame)))
 
-(defun mql-term (term)
-  (mql-read `(("*" .  ,term))))
-
-(defun links (id)
-  (mql-read `((:type . "/type/link")
-	      (:source . ((:id . ,id)))
-	      (:master_property . nil)
-	      (:target . :empty-dict)
-	      (:target_value . nil))))

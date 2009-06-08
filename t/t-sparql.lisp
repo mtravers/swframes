@@ -58,3 +58,15 @@
       (make-instance 'sparql-endpoint :uri "http://labs.intellidimension.com/uniprot/sparql"))
 
 (sanity-check ep)
+
+
+;;; Sample query library
+
+;;; Should return all types, but times out
+(do-sparql *default-frame-source* '(:select (?t) (:distinct ?t) (?s #$rdf:type ?t)))
+
+;;; This returns 10000 rows, must be an internal  limit
+(do-sparql *default-frame-source* '(:select (?t) () (?s #$rdf:type ?t)))
+
+;;; only returns a few things
+(do-sparql *default-frame-source* '(:select (?s) () (?s  #$rdf:type #$rdfs:Class)))
