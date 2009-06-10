@@ -84,7 +84,9 @@
     result))
       
 (defun mql-result->frame (id)
-  (uri (expand-uri (string+ "fb:" (substitute #\. #\/ (subseq id 1))))))
+  (let ((f (uri (expand-uri (string+ "fb:" (substitute #\. #\/ (subseq id 1)))))))
+    (setf (frame-source f) nil)		;+++ or have a MQL-specific source object
+    f))
 
 (defun mql-term (term)
   (mql-read `(("*" .  ,term))))
@@ -168,3 +170,9 @@
       (fill-frame frame)			;optional
       frame)))
 
+(defun mql-drug-mfr (drugname)
+  (assert drugname)			;nil causes problems
+  (mql-name-property-lookup 
+   drugname
+   "/base/bioventurist/product/developed_by"
+   "/medicine/drug"))
