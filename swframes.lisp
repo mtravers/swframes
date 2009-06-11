@@ -249,7 +249,9 @@ Test
 
 ;;; This is the real underlying primitive.  Never fills
 ;;; Note the default test is equal.  This could be slow.
-(defun add-triple (s p o &key (test #'equal) to-db)
+(defun add-triple (s p o &key (test #'equal) to-db remove-old)
+  (when remove-old
+    (remove-triple s p '?o :to-db to-db :test test))
   (if (frame-p o) (frame-fresh? o))
   (pushnew o (%slotv s p) :test test)
   (when (frame-p o)
@@ -259,10 +261,16 @@ Test
   nil)					;makes tracing saner
 
 ;;; see comment on delete-triple
-(defun remove-triple (s p o  &key (test #'equal) to-db)
-  (deletef p (%slotv s p) :test test)
-  (when (frame-p o)
-    (deletef s (%slotv-inverse o p) :test test))
+(defun remove-triple (s p o &key (test #'equal) to-db &aux savedo)
+  (when (var-p o)
+    (setf savedo (%slotv s p) (%slotv s p) nil)
+    (deletef o (%slotv s p) :test test))
+  (if savedo
+      (dolist (o savedo)
+	(when (frame-p o)
+	  (deletef s (%slotv-inverse o p) :test test)))
+      (when (frame-p o)
+	(deletef s (%slotv-inverse o p) :test test)))
   (when to-db
     (delete-triple (frame-source s) s p o)))
 
@@ -316,9 +324,7 @@ Tests:
 	      (utils::collect f)
 	      (return-from frame))))))))
 
-
-
-;;; untested...
+;;; +++ it would be better to have info on how to treat slots on the slots themselves, or in classes.
 (defun frame-copy (frame &key shallow-slots omit-slots uri-generator)
   (if (not (frame-p frame))
       frame				;nonframes remain the same (makes recursion easier)
