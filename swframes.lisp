@@ -317,3 +317,20 @@ Tests:
 	      (return-from frame))))))))
 
 
+
+;;; untested...
+(defun frame-copy (frame &key shallow-slots omit-slots uri-generator)
+  (if (not (frame-p frame))
+      frame				;nonframes remain the same (makes recursion easier)
+      (let ((nframe (funcall uri-generator frame)))
+	(maphash #'(lambda (slot value)
+		     (cond ((member slot omit-slots))
+			   ((member slot shallow-slots)
+			    (setf (slotv nframe slot) (copy-list value)))
+			   (t
+			    (setf (slotv nframe slot) (mapcar #'(lambda (sf)
+								  (frame-copy sf :shallow-slots shallow-slots :omit-slots omit-slots :uri-generator uri-generator))
+							      value)))))
+		 (frame-slots frame))
+	nframe)))
+
