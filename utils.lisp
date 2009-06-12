@@ -19,7 +19,7 @@
 (defun uri-tag (uri)
   (subseq uri (1+ (position #\# uri))))
 
-(defun coerce-number (slotv)
+(defun coerce-number (slotv &key no-error)
   (typecase slotv
     (null (error "Cant' coerce nil to a number"))
     (list
@@ -28,8 +28,11 @@
     (number slotv)
     (string 
      (let ((n (read-from-string slotv)))
-       (assert (numberp n))
-       n))
+       (if no-error
+	   (if (numberp n) n slotv)
+	   (progn
+	     (assert (numberp n))
+	     n))))
     (t (error "can't coerce ~A to a number" slotv))))
 
 ;;; needs some error handling +++

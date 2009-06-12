@@ -41,7 +41,7 @@
 
 
 #|
-Recipe for building a local semwebed drugbank.
+Recipe for building a local semweb drugbank.
 
 (bio::parse-drugcards bio::*drugbank-drugcards-file*)
 

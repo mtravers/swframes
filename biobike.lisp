@@ -34,8 +34,6 @@
 
 (defmethod frames::wob-html ((frame frame))
 
-;  (frame-display-hook frame)		;experimental +++
-
   ;; Generate HTML output for a frame
 
   (labels ((emit-section-title (title)

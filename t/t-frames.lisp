@@ -2,7 +2,6 @@
 
 (use-package :lisp-unit)
 
-
 (define-test intern
     (assert-eq (intern-uri "blither")
 	       (intern-uri "blither")))
@@ -28,6 +27,21 @@
       (delete-frame x)
       (assert-false (member x (slotv-inverse y p)))
       ))
+
+(define-test namespaces
+    (sw-register-namespace "test" "http://collabrx.com/test")
+  (assert-equal "http://collabrx.com/testfoo"
+		(expand-uri "test:foo"))
+  (assert-eq (intern-uri "test:foo")
+	     (intern-uri "http://collabrx.com/testfoo"))
+  (unregister-namespace "test")
+  (assert-false (eq (intern-uri "test:foo")
+		    (intern-uri "http://collabrx.com/testfoo")))
+  )
+
+(define-test slots
+    
+  
 
 
 ;;; +++ test dependency delete

@@ -64,7 +64,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (declare (ignore char arg))
   (let* ((slot (uri (frames::read-fname stream))))
     `(lambda (f) (msv f ,slot))))
-    
 
 (defun pound-inverse-frame-reader (stream char arg)
   (declare (ignore char arg))
@@ -87,9 +86,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defsetf msv-hack (s f) (v) `(set-slotv ,f ,s ,v))
 
-;;; I suppose we should have an #v (or something) for inverse-slots...
-
-;;; reader 
+;;; +++ this is misnamed
 (defun uri (thing)
   (typecase thing
     (frame thing)

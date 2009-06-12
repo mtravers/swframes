@@ -10,7 +10,6 @@
   (make-instance 'sparql-endpoint
 		 :uri uri))
 
-;;; +++ promulgate
 (defclass* sparql-endpoint (frame-source)
   (uri
    (writeable? nil)
@@ -42,12 +41,6 @@
   (multiple-value-bind (res vars)
       (do-sparql sparql query)
     (extract-sparql-binding res (or var (car vars)))))
-
-;;; should generate a guaranteed unique new URI (+++ not really doing it yet)
-(defmethod genuri ((sparql sparql-endpoint) prefix)
-  (let ((frame (intern-uri (format nil "~A/~A" prefix (string (gensym))))))
-    (setf (frame-source frame) sparql)
-    frame))
 
 ;;; +++ to be replaced with something better.  Virtuoso indicates bnodes in the XML returned now.
 (defun bnode? (frame)
@@ -333,7 +326,6 @@
       (push-end label-var (second query))
       (push-end `(:optional (,var #$rdfs:label ,label-var)) query)))
   query)
-
 
 ;;; Given a SPARQL query and a var, extend the query to load all slots of var and mark frames as loaded.
 (defun bulk-load-query (source query &optional (var (car (second query))))

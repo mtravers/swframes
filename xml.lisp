@@ -1,5 +1,6 @@
-;;; For Laszlo
 (in-package :swframes)
+
+;;; For Laszlo (so not currently used)
 
 (net.aserve:publish :path "/frame.xml"
 		    :function 'frame-xml)
