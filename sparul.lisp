@@ -5,7 +5,7 @@
 
 (defvar *sparul-group* nil)
 
-;;; :async? option not yet used, but available if it starts taking too long.
+;;; async is NOT WORKING PROPERLY yet, so don't use it!
 (defmacro with-sparul-group ((endpoint &key async?) &body body)
   `(let ((prior-group *sparul-group*)	;make sure we only do it after all groups unwound
 	 (*sparul-group* (or *sparul-group* (list ,endpoint nil))))
@@ -63,7 +63,7 @@
       (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))
 
-(defmethod write-frame ((frame frame) &optional (sparql (frame-source frame)) (async? nil))
+(defmethod write-frame ((frame frame) &key (sparql (frame-source frame)) (async? nil))
   (let ((dependents (frame-dependents frame)))
     (with-sparul-group (sparql :async? async?)
       (delete-triple sparql frame '?p '?o)

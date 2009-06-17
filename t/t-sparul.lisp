@@ -15,7 +15,7 @@
 	 (uri (frame-uri frame)))
     (setf (slotv frame #$foo) '(23))
     (setf (slotv frame #$bar) '(#$foo))
-    (write-frame sparql frame)
+    (write-frame frame :source sparql)
     (print `(frame ,frame written))
     (delete-frame frame)			;clear it out
     (setf frame (intern-uri uri))

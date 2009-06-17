@@ -121,6 +121,7 @@ Idle thoughts:
 
 (defmethod fill-frame ((frame frame) &key force?)
   (when (or force? (not (frame-loaded? frame)))
+    (reset-frame frame)			;+++ new, risky, only works if rdfs-make-instance sets loaded? flag
     (let ((*fill-by-default?* nil))	;prevent recursion
       (if (frame-source frame)
 	  (fill-frame-from frame (frame-source frame)) ;defaulting (handled in method now)??
@@ -276,7 +277,7 @@ Test
 
 ;;; query (sexp sparql syntax from lsw) 
 (defun describe-frame (frame &optional (fill? t))
-  (when fill? (fill-frame frame))
+  (when fill? (fill-frame frame :force? t))
   (format t "~&Forward:")
   (pprint (mt:ht-contents (frame-slots frame)))
   (when (frame-inverse-slots frame)
@@ -284,7 +285,7 @@ Test
     (pprint (mt:ht-contents (frame-inverse-slots frame))))
   frame )
 
-(defun df (frame) (describe-frame frame))
+(defun df (frame &optional (fill? t)) (describe-frame frame fill?))
 
 #|
 Tests:
