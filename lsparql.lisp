@@ -175,8 +175,7 @@
 	  ((eq (car clause) :union)
 	   (loop for (sub more) on (cdr clause) do
 		(format s "~% { ")
-;		(mapcar (lambda (c) (emit-sparql-clause c s)) sub)
-		(emit-sparql-clause sub s)
+		(mapcar (lambda (c) (emit-sparql-clause c s)) sub)
 		(write-string "}" s)
 		(when more (write-string " UNION " s)))
 	   (write-string "." s))
