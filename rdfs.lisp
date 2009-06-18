@@ -79,20 +79,18 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	      )))
 
 ;;; This has to be relative to a frame source so you can check for taken ids. Or something.
-(defun class-genid (class)
-  (let* ((last (msv class #$crx:last_used_id))
+(defun gensym-instance-frame (class &optional start)
+  (let* ((last (or start (msv class #$crx:last_used_id)))
 	 (next (if last
 		   (1+ (coerce-number last))
-		   0)))
-    (setf (msv-hack #$crx:last_used_id class) next)
-    (write-slot class #$crx:last_used_id *default-frame-source*)
-    next))
-
-(defun gensym-instance-frame (class)
-  (let ((uri (string+ (frame-uri class) "/" (fast-string (class-genid class)))))
+		   0))
+	 (uri (string+ (frame-uri class) "/" (fast-string next))))
     (if (uri-used? *default-frame-source* uri)
-	(gensym-instance-frame class)
-	(intern-uri uri))))
+	(gensym-instance-frame class next)
+	(progn
+	  (setf (msv-hack #$crx:last_used_id class) next)
+	  (write-slot class #$crx:last_used_id *default-frame-source*)
+	  (intern-uri uri)))))
 
 (defgeneric uri-used? (source uri))
 
@@ -132,14 +130,23 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
   (sort classes #'(lambda (c1 c2) (member c2 (slotv c1 #$rdfs:subClassOf)))))
 
 ;;; this is way wrong, but will do for now
-(defun rdfs-method (name thing)
+(defun rdfs-method (name thing &optional (errorp t))
   (fill-frame thing)
   (let ((classes (order-classes (rdfs-classes thing)))
 	(methodtable (rdfs-methodtable name)))
     (or (some #'(lambda (class) (gethash class methodtable )) classes)
-	(error "no method found for ~a on ~a" name thing))))
+	(if errorp
+	    (error "no method found for ~a on ~a" name thing)
+	    nil))))
 
 (defmacro rdfs-call (name firstarg &rest restargs)
   `(funcall (rdfs-method ',name ,firstarg)
 	  ,firstarg
 	  ,@restargs))
+
+(defmacro rdfs-call-if (name firstarg &rest restargs)
+  `(let ((method (rdfs-method ',name ,firstarg nil)))
+     (when method
+       (funcall method
+		,firstarg
+		,@restargs))))

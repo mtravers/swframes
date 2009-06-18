@@ -63,10 +63,11 @@
       (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))
 
-(defmethod write-frame ((frame frame) &key (sparql (frame-source frame)) (async? nil))
+(defmethod write-frame ((frame frame) &key (sparql (frame-source frame)) (async? nil) (no-delete? nil))
   (let ((dependents (frame-dependents frame)))
     (with-sparul-group (sparql :async? async?)
-      (delete-triple sparql frame '?p '?o)
+      (unless no-delete?
+	(delete-triple sparql frame '?p '?o))
       (dolist (slot (%frame-slots frame))
 	(aif (%slotv slot #$crx:specialhandling)
 	     (rdfs-call write-slot slot frame sparql)
