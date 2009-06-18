@@ -84,15 +84,14 @@
 (defmethod write-slot ((frame frame) (slot frame) &optional (sparql (frame-source frame)))
   (with-sparul-group (sparql)
     (delete-triple sparql frame slot '?o)
-    (aif (%slotv slot #$crx:specialhandling)
-	 (rdfs-call write-slot slot frame sparql)
-	 ;; normal behavior
-	 (dolist (val (slotv frame slot))
-	   (write-triple sparql frame slot val)))))
+    (if (%slotv slot #$crx:specialhandling)
+	(rdfs-call write-slot slot frame sparql)
+	;; normal behavior
+	(dolist (val (slotv frame slot))
+	  (write-triple sparql frame slot val)))))
 
 (rdfs-def-class #$crx:slots/specialSlot ())
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
-
 
 (rdfs-defmethod write-slot ((slot #$crx:slots/LispValueSlot) frame sparql)
 		(handler-case 
@@ -103,7 +102,7 @@
 		    (warn "Can't save nonreadable object in ~A/~A" frame slot) 
 		    )))
 
-;;; need to do the inverse on read! +++
+;;; need to do the inverse on read! See deserialize-value (+++ make more parallel)
 
 (defun declare-special-slot (slot type)
   (setf (slotv slot #$rdf:type) type

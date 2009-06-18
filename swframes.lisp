@@ -121,13 +121,15 @@ Idle thoughts:
 
 (defmethod fill-frame ((frame frame) &key force?)
   (when (or force? (not (frame-loaded? frame)))
-    (reset-frame frame)			;+++ new, risky, only works if rdfs-make-instance sets loaded? flag
+    ;; reset-frame was here, but moved to sparql.  This all needs rethinking
     (let ((*fill-by-default?* nil))	;prevent recursion
       (if (frame-source frame)
 	  (fill-frame-from frame (frame-source frame)) ;defaulting (handled in method now)??
 	  (mt:report-and-ignore-errors	;+++
 	   (dereference frame)))
       (setf (frame-loaded? frame) t))))
+
+
 
 ;;; Called by rdfs-defmethod and other things to mark that a frame is defined from code, and not
 ;;; expected to be read from the database.

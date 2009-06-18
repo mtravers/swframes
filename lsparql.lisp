@@ -258,6 +258,7 @@
   (do-sparql endpoint `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) )))
 
 (defmethod fill-frame-from ((frame frame) (source sparql-endpoint))
+  (reset-frame frame)	
   (fill-frame-sparql frame source)
   (fill-frame-inverse-sparql frame source))
 
@@ -266,12 +267,18 @@
       (dolist (binding (do-sparql 
 			   source
 			 (format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame))))
-	(add-triple frame
-		    (sparql-binding-elt binding "p")
-		    (sparql-binding-elt binding "o"))
-	)
+	(let ((p (sparql-binding-elt binding "p"))
+	      (o (sparql-binding-elt binding "o")))
+	  (if (%slotv p #$crx:specialhandling)
+	      (setf o (rdfs-call deserialize-value p o)))
+	  (add-triple frame p o)
+	  ))
       (setf (frame-loaded? frame) t)
       ))
+
+(rdfs-defmethod deserialize-value ((slot #$crx:slots/LispValueSlot) value)
+		(report-and-ignore-errors
+		 (read-from-string value)))
 
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
   (unless (frame-inverse-slots frame)
