@@ -330,6 +330,7 @@ Tests:
   (if (not (frame-p frame))
       frame				;nonframes remain the same (makes recursion easier)
       (let ((nframe (funcall uri-generator frame)))
+	(setf (frame-loaded? nframe) t)
 	(maphash #'(lambda (slot value)
 		     (cond ((member slot omit-slots))
 			   ((member slot shallow-slots)
