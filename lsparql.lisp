@@ -1,7 +1,8 @@
 (in-package :swframes)
 
 (export '(sparql-endpoint
-	  do-sparql do-sparql-one-var))
+	  do-sparql do-sparql-one-var
+	  post-fill))
 
 (defvar *sparql-namespace-uses*)
 
