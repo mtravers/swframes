@@ -148,13 +148,17 @@ Idle thoughts:
 (defmethod %slotv ((frame frame) (slot frame))
   (gethash slot (frame-slots frame)))  
 
+(defsetf %slotv %set-slotv)
+
+(defmethod %set-slotv ((frame frame) (slot frame) value)
+  (setf (gethash slot (frame-slots frame)) value))  
+
 ;;; optional argument doesn't play well with setf.
 (defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
   (if fill? (fill-frame frame))
   (%slotv frame slot))
 
 (defsetf slotv set-slotv)
-(defsetf %slotv set-slotv)
 
 ;;; note that this and set-slotv-inverse never do fills
 ;;; this can't really do inverses, can it? we'd have to a difference...
@@ -164,14 +168,16 @@ Idle thoughts:
     (unless (listp value)
       (setf value (list value)))
     (setf (gethash slot (frame-slots frame)) value)
-    ;; +++ fairly serious change ... verify that this works
+    ;; +++ fairly serious change ... verify that this works 
+    ;; (too slow for long lists)
     (when old
       (dolist (removed (set-difference old value :test #'equal))
 	(when (frame-p removed)
 	  (deletef frame (gethash slot (frame-inverse-slots removed))))))
     (dolist (added (set-difference value old :test #'equal))
       (when (frame-p added)
-	(pushnew frame (gethash slot (frame-inverse-slots added)))))))
+	(pushnew frame (gethash slot (frame-inverse-slots added)))))
+    value))
 
 #|
 Test
@@ -252,6 +258,7 @@ Test
 
 ;;; This is the real underlying primitive.  Never fills
 ;;; Note the default test is equal.  This could be slow.
+;;; +++ setf %slotv was not primitive, now fixed, but who knows if ths will work now.
 (defun add-triple (s p o &key (test #'equal) to-db remove-old)
   (when remove-old
     (remove-triple s p '?o :to-db to-db :test test))
@@ -261,7 +268,7 @@ Test
     (pushnew s (%slotv-inverse o p) :test test))
   (when to-db
     (write-triple (frame-source s) s p o))
-  nil)					;makes tracing saner
+  nil)
 
 ;;; see comment on delete-triple
 (defun remove-triple (s p o &key (test #'equal) to-db &aux savedo)
@@ -278,7 +285,7 @@ Test
     (delete-triple (frame-source s) s p o)))
 
 ;;; query (sexp sparql syntax from lsw) 
-(defun describe-frame (frame &optional (fill? t))
+(defun describe-frame (frame &optional (fill? nil))
   (when fill? (fill-frame frame :force? t))
   (format t "~&Forward:")
   (pprint (mt:ht-contents (frame-slots frame)))
@@ -287,7 +294,7 @@ Test
     (pprint (mt:ht-contents (frame-inverse-slots frame))))
   frame )
 
-(defun df (frame &optional (fill? t)) (describe-frame frame fill?))
+(defun df (frame &optional (fill? nil)) (describe-frame frame fill?))
 
 #|
 Tests:

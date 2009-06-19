@@ -2,7 +2,7 @@
 
 (export '(rdfs-def-class rdfs-make-instance 
 	  rdfs-classes rdfs-classp rdfs-subclasses
-	  rdfs-defmethod rdfs-call rdfs-find))
+	  rdfs-defmethod rdfs-call rdfs-call-if rdfs-find))
 
 #|
 Notes:
