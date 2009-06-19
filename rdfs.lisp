@@ -80,6 +80,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 ;;; This has to be relative to a frame source so you can check for taken ids. Or something.
 (defun gensym-instance-frame (class &optional start)
+  (fill-frame class :force? t :source *default-frame-source*)
   (let* ((last (or start (msv class #$crx:last_used_id)))
 	 (next (if last
 		   (1+ (coerce-number last))
