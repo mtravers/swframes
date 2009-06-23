@@ -64,5 +64,7 @@
 
 (dolist (n *standard-namespaces*)
   (sw-register-namespace (car n) (cadr n)))
- 
 
+;;; Generate headers for SPARQL (not used)
+(defun sparql-namespace-prefix (&optional abbrevs)
+  (format nil "~:{~%PREFIX ~A: <~A>~}" *sw-namespaces*))

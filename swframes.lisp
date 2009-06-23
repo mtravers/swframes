@@ -218,6 +218,9 @@ Test
       (car thing)
       thing))
 
+(defun slot-accessor (slot)
+  #'(lambda (f) (slotv f slot)))
+
 ;;; MSV functions deal transparently with multiple values (return a single elt if that's all there is, otherwise a list)
 
 ;;; +++ these should have setfs
@@ -267,7 +270,10 @@ Test
   (when (frame-p o)
     (pushnew s (%slotv-inverse o p) :test test))
   (when to-db
-    (write-triple (frame-source s) s p o))
+    (let ((source (if (typep to-db 'frame-source)
+		      to-db
+		      (frame-source s))))
+      (write-triple source s p o)))
   nil)
 
 ;;; see comment on delete-triple

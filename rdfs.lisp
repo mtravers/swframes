@@ -90,17 +90,21 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	(gensym-instance-frame class next)
 	(progn
 	  (setf (msv-hack #$crx:last_used_id class) next)
-	  (write-slot class #$crx:last_used_id *default-frame-source*)
+	  (add-slot class #$crx:last_used_id *default-frame-source*)
 	  (intern-uri uri)))))
 
 (defgeneric uri-used? (source uri))
 
 (defun rdfs-classp (frame class)
-  (and (frame-p frame)
-       (or (slot-has? frame #$rdf:type class)
+  (if (frame-p frame)
+      (or (eq class #$rdfs:Resource)	;special handling, everything is a Resource (???)
+	   (slot-has? frame #$rdf:type class)
 	   (some #'(lambda (subclass)
 		     (rdfs-classp frame subclass))
-		 (rdfs-subclasses class)))))
+		 (rdfs-subclasses class)))
+      ;;non-frame
+      (eq class #$rdfs:Literal)		;+++ are their subtypes of this?
+      ))
 
 (defun rdfs-subclasses (class)
   (slotv-inverse class #$rdfs:subClassOf))
