@@ -89,8 +89,8 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
     (if (uri-used? *default-frame-source* uri)
 	(gensym-instance-frame class next)
 	(progn
-	  (setf (msv-hack #$crx:last_used_id class) next)
-	  (add-slot class #$crx:last_used_id *default-frame-source*)
+;	  (setf (msv-hack #$crx:last_used_id class) next)
+	  (add-triple class #$crx:last_used_id next :to-db *default-frame-source*)
 	  (intern-uri uri)))))
 
 (defgeneric uri-used? (source uri))

@@ -179,10 +179,7 @@
 
 #|
 for demo:
-  (mql-name-property-lookup 
-   (#^crxdb:slot/Generic_Name it)
-   "/base/bioventurist/product/developed_by"
-   "/medicine/drug")
+
 
 (mapcar #'(lambda (res) 
 	    (sw::mql-result->frame (cdr (assoc :id res))))

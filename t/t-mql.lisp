@@ -83,8 +83,18 @@ New version of cl-json has different, smaller set of bugs.
   (mql-name-property-lookup 
    drugname
    "/base/bioventurist/product/developed_by"
-   "/medicine/drug"))
+   "/medicine/drug")
 
+
+ 
+;;; Suitablt for spreadsheet
+;;; Frame version would be nice.
+  (sw::mql-name-property-lookup 
+   (#^crxdb:slot/Generic_Name it)
+   "/base/bioventurist/product/developed_by"
+   "/medicine/drug")
+
+(reverse (sw::frame-label it))
 
 
 ;;; examples
