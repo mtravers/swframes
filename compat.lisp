@@ -43,7 +43,7 @@
 (defun frames::defslot 
        (frame 
         &key
-        (base #$slot)
+        (base #$crx:slot)
         (applicable-to nil) ;default is applies to everything
         (value-type nil) ;default is anything
         (set-valued? nil)

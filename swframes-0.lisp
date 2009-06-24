@@ -105,7 +105,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defun intern-uri (uri &optional (source *default-frame-source*) (mark-loaded? *mark-new-frames-loaded?*))
   (if (frame-p uri) (return-from intern-uri uri))
   (assert (stringp uri))
-  (setf uri (expand-uri uri))
+  (setf uri (expand-uri uri))		;+++ decide if this expands or not!
   (or (frame-named uri)
       (intern-uri-0 uri 
 		    (make-frame :uri uri 
@@ -114,7 +114,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 				))))
 
 (defun frame-named (uri)
-  (gethash (expand-uri uri) *uri->frame-ht*))
+  (gethash uri *uri->frame-ht*))
 
 (defun intern-uri-0 (uri frame)
   (setf (gethash uri *uri->frame-ht*) frame))

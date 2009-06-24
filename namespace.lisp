@@ -15,12 +15,17 @@
 (defun abbreviate-uri (uri)
   (dolist (namespace *sw-namespaces*)
     (let ((full (cadr namespace)))
-      (when (and (>= (length uri) (length full))
+      (when (and (not (eq full :uri-scheme))
+		 (>= (length uri) (length full))
 		 (string= uri full :end1 (length full)))
 	(return-from abbreviate-uri (values (format nil "~A:~A" (car namespace) (subseq uri (length full)))
 					    (car namespace)
 					    )))))
   (values uri nil))
+
+;;; Define known real (non-abbreviated) schemas
+(sw-register-namespace "http" :uri-scheme)
+(sw-register-namespace "urn" :uri-scheme)
 
 (defun namespace-lookup (namespace)
   (find namespace *sw-namespaces* :key #'car :test #'string=))
@@ -28,14 +33,20 @@
 (defun namespace-expand (namespace)
   (cadr (namespace-lookup namespace)))
 
-(defun expand-uri (uri)
-  (let ((colonpos (position #\: uri)))
-    (if colonpos
-	(let ((namespace (namespace-lookup (subseq uri 0 colonpos))))
-	  (if namespace
-	      (format nil "~A~A" (cadr namespace) (subseq uri (1+ colonpos)))
-	      uri))
-	uri)))
+(defun expand-uri (uri &optional no-error)
+  (let* ((colonpos (position #\: uri))
+	 (prefix (and colonpos (subseq uri 0 colonpos)))
+	 (namespace (and prefix (namespace-expand prefix))))
+    (cond ((null prefix)
+	   (error "No prefix"))
+	  ((null namespace)
+	   (if no-error
+	       uri
+	       (error "Unknown namespace ~A" prefix)))
+	  ((eq namespace :uri-scheme)
+	   uri)
+	  (t (format nil "~A~A" namespace (subseq uri (1+ colonpos)))))))
+
 
 (defun expand-uri-0 (ns string)
   (let ((namespace (namespace-lookup ns)))
