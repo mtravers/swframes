@@ -9,6 +9,11 @@
 	 (warn "Attempt to redefine namespace ~A from ~A to ~A" abbrev (cadr (car it)) full))
        (push (list abbrev full) *sw-namespaces*)))
 
+;;; Use this in code
+(defmacro def-namespace (abbrev full)
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (sw-register-namespace ,abbrev ,full)))
+
 (defun unregister-namespace (abbrev)
   (deletef abbrev *sw-namespaces* :test #'equal :key #'car))
 
@@ -28,24 +33,33 @@
 (sw-register-namespace "urn" :uri-scheme)
 
 (defun namespace-lookup (namespace)
-  (find namespace *sw-namespaces* :key #'car :test #'string=))
+  (find namespace *sw-namespaces* :key #'car :test #'string-equal))
 
 (defun namespace-expand (namespace)
   (cadr (namespace-lookup namespace)))
 
+(defvar *default-namespace* "crx")
+
 (defun expand-uri (uri &optional no-error)
   (let* ((colonpos (position #\: uri))
-	 (prefix (and colonpos (subseq uri 0 colonpos)))
+	 (prefix (and colonpos
+		     (subseq uri 0 colonpos)))
 	 (namespace (and prefix (namespace-expand prefix))))
-    (cond ((null prefix)
-	   (error "No prefix"))
-	  ((null namespace)
-	   (if no-error
-	       uri
-	       (error "Unknown namespace ~A" prefix)))
-	  ((eq namespace :uri-scheme)
-	   uri)
-	  (t (format nil "~A~A" namespace (subseq uri (1+ colonpos)))))))
+    (cond 
+      ((zerop (length uri))
+       "")
+      ;; special case for parsing BioPax
+      ((char= (char uri 0) #\#)
+       (format nil "~A~A" (namespace-expand "NS-0") (subseq uri 1)))
+      ((null prefix)
+       (format nil "~A~A" (namespace-expand *default-namespace*) uri))
+      ((null namespace)
+       (if no-error
+	   uri
+	   (error "Unknown namespace ~A" prefix)))
+      ((eq namespace :uri-scheme)
+       uri)
+      (t (format nil "~A~A" namespace (subseq uri (1+ colonpos)))))))
 
 
 (defun expand-uri-0 (ns string)
