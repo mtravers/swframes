@@ -31,6 +31,7 @@
 ;;; Define known real (non-abbreviated) schemas
 (sw-register-namespace "http" :uri-scheme)
 (sw-register-namespace "urn" :uri-scheme)
+(sw-register-namespace "nodeID" :uri-scheme) ;+++ temp: for Virtuoso blank nodes
 
 (defun namespace-lookup (namespace)
   (find namespace *sw-namespaces* :key #'car :test #'string-equal))
