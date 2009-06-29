@@ -28,7 +28,7 @@ Idle thoughts:
 	  add-triple
 	  rename-frame delete-frame write-frame destroy-frame
 	  describe-frame df
-	  sw-register-namespace))
+	  sw-register-namespace def-namespace))
 
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
