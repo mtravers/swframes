@@ -77,3 +77,17 @@
 
 (defun term-search (term)
   (do-sparql *default-frame-source* `(:select (?s ?p) () (?s ?p ,term))))
+
+(defun term-search-grid (term)
+  (nl::frame-grid (do-sparql-one-var *default-frame-source* `(:select (?s) (:distinct t) (?s ?p ,term)))))
+
+;;; Science Commons specific
+(defun gene-lookup (name)
+  (do-sparql-one-var *default-frame-source*
+    `(:select (?gene) (:distinct t) 
+	      (?gene #$http://purl.org/science/owl/sciencecommons/ggp_has_symbol ,name)
+	      (?gene #$rdf:type #$http://purl.org/science/owl/sciencecommons/gene_record))))
+
+
+;;; PubMed articles are like this:
+; #$http://purl.org/science/article/pmid/17108814
