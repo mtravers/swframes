@@ -3,10 +3,13 @@
 ;;; was colliding with s-xml.  Actually, why don't I just reuse it, it's about the same code.  
 (defparameter *sw-namespaces* nil)
 
-(defun sw-register-namespace (abbrev full)
+(defun sw-register-namespace (abbrev full &optional force?)
   (aif (member abbrev *sw-namespaces* :key #'car :test #'string-equal)
        (unless (equal (cadr (car it)) full)
-	 (warn "Attempt to redefine namespace ~A from ~A to ~A" abbrev (cadr (car it)) full))
+	 (if force?
+	     (progn (deletef abbrev *sw-namespaces* :key #'car :test #'string-equal)
+		    (push (list abbrev full) *sw-namespaces*))
+	     (warn "Attempt to redefine namespace ~A from ~A to ~A" abbrev (cadr (car it)) full)))
        (push (list abbrev full) *sw-namespaces*)))
 
 ;;; Use this in code
@@ -86,10 +89,13 @@
     ("linkedct" "http://data.linkedct.org/resource/linkedct/")
     ("d2r" "http://sites.wiwiss.fu-berlin.de/suhl/bizer/d2r-server/config.rdf#")
     ("dbpedia" "http://dbpedia.org/property/")
-    ("drugbank" "http://www4.wiwiss.fu-berlin.de/drugbank/")))
+    ("drugbank" "http://www4.wiwiss.fu-berlin.de/drugbank/resource/")
+    ("dailymed" "http://www4.wiwiss.fu-berlin.de/dailymed/resource/")
+    ("diseasome" "http://www4.wiwiss.fu-berlin.de/diseasome/resource/")
+    ))
 
 (dolist (n *standard-namespaces*)
-  (sw-register-namespace (car n) (cadr n)))
+  (sw-register-namespace (car n) (cadr n) t))
 
 ;;; Generate headers for SPARQL (not used)
 (defun sparql-namespace-prefix (&optional abbrevs)
