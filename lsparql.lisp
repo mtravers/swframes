@@ -126,7 +126,7 @@
      (string-downcase (string thing)))
     (string (if (or (position #\" thing) (position #\Newline thing))
 		(format nil "'''~A'''" thing)
-		(format nil "\"~A\"" thing)))	
+		(format nil "\"~A\"" thing))) ;add @en for fun
     (t (mt:fast-string thing))))
 
 
@@ -283,13 +283,14 @@
 		(report-and-ignore-errors
 		 (read-from-string value)))
 
+;;; +++ this can time out without the limit, but of course it produces incorrect results.  Maybe ths should only be done on demand.
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
   (unless (frame-inverse-slots frame)
     (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
   (let ((*default-frame-source* source))
     (dolist (binding (do-sparql 
 			 source
-		       `(:select (?s ?p) () (?s ?p ,frame))))
+		       `(:select (?s ?p) (:limit 100) (?s ?p ,frame))))
       (add-triple (sparql-binding-elt binding "s") 
 		  (sparql-binding-elt binding "p")
 		  frame)

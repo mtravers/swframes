@@ -76,7 +76,7 @@
 (do-sparql *default-frame-source* '(:select (?s) () (?s  #$rdf:type #$rdfs:Class)))
 
 (defun term-search (term)
-  (do-sparql *default-frame-source* `(:select (?s ?p) () (?s ?p ,term))))
+  (do-sparql-one-var *default-frame-source* `(:select (?s) () (?s ?p ,term))))
 
 (defun term-search-grid (term)
   (nl::frame-grid (do-sparql-one-var *default-frame-source* `(:select (?s) (:distinct t) (?s ?p ,term)))))
@@ -91,3 +91,10 @@
 
 ;;; PubMed articles are like this:
 ; #$http://purl.org/science/article/pmid/17108814
+
+(defun go-term-lookup (name)
+  (do-sparql *default-frame-source*
+    '(:select (?g) (:distinct t)
+      (?b #$http://www.geneontology.org/formats/oboInOwl#hasURI ?g)
+      (?b 
+      

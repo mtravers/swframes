@@ -262,13 +262,15 @@ Test
 ;;; This is the real underlying primitive.  Never fills
 ;;; Note the default test is equal.  This could be slow.
 ;;; +++ setf %slotv was not primitive, now fixed, but who knows if ths will work now.
-(defun add-triple (s p o &key (test #'equal) to-db remove-old)
+(defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
   (when remove-old
     (remove-triple s p '?o :to-db to-db :test test))
   (if (frame-p o) (frame-fresh? o))
   (pushnew o (%slotv s p) :test test)
+  ;; PPP this can be a performance bottleneck for things like types that can have thousands of members.  
+  ;; Need to use hashtables or some structure with better performance 
   (when (frame-p o)
-    (pushnew s (%slotv-inverse o p) :test test))
+    (pushnew s (%slotv-inverse o p) :test #'eq))
   (when to-db
     (let ((source (if (typep to-db 'frame-source)
 		      to-db

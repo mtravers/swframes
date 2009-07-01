@@ -54,49 +54,54 @@
        "")
       ;; special case for parsing BioPax
       ((char= (char uri 0) #\#)
-       (format nil "~A~A" (namespace-expand "NS-0") (subseq uri 1)))
+       (string+ (namespace-expand "NS-0") (subseq uri 1)))
       ((null prefix)
-       (format nil "~A~A" (namespace-expand *default-namespace*) uri))
+       (string+ (namespace-expand *default-namespace*) uri))
       ((null namespace)
        (if no-error
 	   uri
 	   (error "Unknown namespace ~A" prefix)))
       ((eq namespace :uri-scheme)
        uri)
-      (t (format nil "~A~A" namespace (subseq uri (1+ colonpos)))))))
+      (t (string+ namespace (subseq uri (1+ colonpos)))))))
 
 
 (defun expand-uri-0 (ns string)
   (let ((namespace (namespace-lookup ns)))
     (if namespace
-	(format nil "~A~A" (cadr namespace) string)
+	(string+ (cadr namespace) string)
 	(error "No namespace ~A" ns))))
 
-;;; Some standards
+;;; Some standard namespaces
 (defparameter *standard-namespaces*
-  '(("rdf" "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+  '(;; SemWeb infrastructure
+    ("rdf" "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
     ("rdfs" "http://www.w3.org/2000/01/rdf-schema#")
     ("xsd" "http://www.w3.org/2001/XMLSchema#")
     ("owl" "http://www.w3.org/2002/07/owl#")
 
+    ;; Common schemas
     ("dc" "http://purl.org/dc/terms/")
     ("foaf" "http://xmlns.com/foaf/0.1/")
     ("skos" "http://www.w3.org/2004/02/skos/core#")
 
-    ("crx" "http://collabrx.com/rdf/")
-
-    ("db" "http://data.linkedct.org/resource/")
+    ;; Linked Data related
+    ("linkedct" "http://data.linkedct.org/resource/")
     ("linkedct" "http://data.linkedct.org/resource/linkedct/")
     ("d2r" "http://sites.wiwiss.fu-berlin.de/suhl/bizer/d2r-server/config.rdf#")
     ("dbpedia" "http://dbpedia.org/property/")
     ("drugbank" "http://www4.wiwiss.fu-berlin.de/drugbank/resource/")
     ("dailymed" "http://www4.wiwiss.fu-berlin.de/dailymed/resource/")
     ("diseasome" "http://www4.wiwiss.fu-berlin.de/diseasome/resource/")
+
+    ;; Local
+    ("crx" "http://collabrx.com/rdf/")
+
     ))
 
 (dolist (n *standard-namespaces*)
   (sw-register-namespace (car n) (cadr n) t))
 
-;;; Generate headers for SPARQL (not used)
+;;; Generate headers for SPARQL (not currently used)
 (defun sparql-namespace-prefix (&optional abbrevs)
   (format nil "~:{~%PREFIX ~A: <~A>~}" *sw-namespaces*))
