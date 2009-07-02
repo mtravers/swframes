@@ -78,7 +78,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	      ,@(if word? `((:filter (:regex ,vvar ,(formatn "\\\\W~A\\\\W" value) "i"))))
 	      )))
 
-;;; This has to be relative to a frame source so you can check for taken ids. Or something.
+;;; This has to be relative to a frame source so you can check for taken ids. 
 (defun gensym-instance-frame (class &optional start)
   (fill-frame class :force? t :source *default-frame-source*)
   (let* ((last (or start (msv class #$crx:last_used_id)))

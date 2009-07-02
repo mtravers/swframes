@@ -39,9 +39,5 @@
 		    (intern-uri "http://collabrx.com/testfoo")))
   )
 
-(define-test slots
-    
-  
-
 
 ;;; +++ test dependency delete

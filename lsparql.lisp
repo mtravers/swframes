@@ -1,15 +1,17 @@
 (in-package :swframes)
 
-(export '(sparql-endpoint
+(export '(sparql-endpoint make-sparql-source
 	  do-sparql do-sparql-one-var
-	  post-fill))
+	  post-fill *default-sparql-endpoint*))
 
+(defvar *default-sparql-endpoint* nil)
 (defvar *sparql-namespace-uses*)
 
 ;;; might want to register these somewhere
-(defun make-sparql-source (uri)
+(defun make-sparql-source (uri &key writeable?)
   (make-instance 'sparql-endpoint
-		 :uri uri))
+		 :uri uri
+		 :writeable? writeable?))
 
 (defclass* sparql-endpoint (frame-source)
   (uri
@@ -21,9 +23,12 @@
   )
 
 (defmethod* print-object ((sparql sparql-endpoint) stream)
-  (format stream "#<~A ~A>" (type-of sparql) uri))
+  (format stream "#<~A ~A ~A>" (type-of sparql) uri (if writeable? "w" "nw")))
 
 (defvar *sparql-default-timeout* 30)
+
+(defmethod do-sparql ((sparql null) (command t) &key (timeout *sparql-default-timeout*))
+  (do-sparql *default-sparql-endpoint* command :timeout timeout))
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *sparql-default-timeout*))
@@ -119,6 +124,7 @@
 )
 
 ;;; +++ methodize
+;;; see http://www.w3.org/TR/rdf-sparql-query/#QSynLiterals
 (defun sparql-term (thing)
   (typecase thing
     (frame (format nil "<~A>" (frame-uri thing)))
@@ -127,6 +133,8 @@
     (string (if (or (position #\" thing) (position #\Newline thing))
 		(format nil "'''~A'''" thing)
 		(format nil "\"~A\"" thing))) ;add @en for fun
+    ;; SPARQL can't handle 3.0D3
+    (double-float (mt:fast-string (coerce thing 'single-float)))
     (t (mt:fast-string thing))))
 
 

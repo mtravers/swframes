@@ -1,30 +1,20 @@
-(defun d-then-e (s)
-  (let* ((decoded (json->lisp s))
-	 (encoded     (mt:string-replace  (lisp->json decoded) "\"" "'")))
-    (print decoded)
-    (unless (equal s encoded)
-      (print `(differs ,s ,encoded)))))
-	
+(in-package :sw)
 
-from ~/.sbcl/site/cl-json_0.3.1/src/encoder.lisp   -- the real one seems broken
-;;; exp
-(defmethod encode-json((s list) stream)
-  (if (listp (car s))
-      (encode-json-alist s stream)
-      (call-next-method s stream)))
+(use-package :lisp-unit)
 
-This case loses
-(d-then-e "{'a': {'b': 'fred'}}")
+(defun json-round-trip-test (s)
+  (assert-equal s (json:decode-json-from-string (json:encode-json-to-string s))))
 
-But this is OK..
-(d-then-e "{'a': {'b': 23}}")
+(define-test basic-json
+    (json-round-trip-test '((:foo . "bar")))
+    (json-round-trip-test "blther")
+    (json-round-trip-test '(1 2 3))
+    (json-round-trip-test nil))
 
-;;; +++ Should test out json extensions :empty-list and :empty-dict
+(define-test json-local-enhancements
+    (assert-equal "{}" (json:encode-json-to-string :empty-dict))
+  (assert-equal "[]" (json:encode-json-to-string :empty-list))
+  (assert-equal "{\"foo\":testing}" (json:encode-json-to-string '((:foo . (:raw "testing")))))
+  )
 
-;;; Try to understand their weird encoding...
-(defun json->lisp (s)
-  (json:decode-json-from-string
-   (mt:string-replace 
-    (mt:string-replace s "'" "\"")
-    "None" "null")))
-
+  
