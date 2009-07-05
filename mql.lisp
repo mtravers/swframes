@@ -183,7 +183,7 @@ for demo:
 
 (mapcar #'(lambda (res) 
 	    (sw::mql-result->frame (cdr (assoc :id res))))
-	(sw::mql-name-lookup (#^crxdb:slot/Generic_Name it)))
+	(sw::mql-name-lookup (#^drugbank:drugbank/genericName it)))
 
 
 
