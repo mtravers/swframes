@@ -54,7 +54,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	   (when class
 	     (assert (rdfs-classp thing class)))))
     (check-class class #$rdfs:Class)
-    (let ((frame (gensym-instance-frame class)))
+    (let ((frame (gensym-instance-frame class :fast? t)))
       (setf (slotv frame #$rdf:type) class)
       (setf (frame-loaded? frame) t)	;+++ new, not sure of this
       (do ((rest slots (cddr rest)))
@@ -79,19 +79,22 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	      )))
 
 ;;; This has to be relative to a frame source so you can check for taken ids. 
-(defun gensym-instance-frame (class &optional start)
+;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  Might break if there are multiple.
+(defun gensym-instance-frame (class &key start fast?)
   (if (eq (frame-source class) *code-source*)
       (setf (frame-source class) *default-frame-source*)
       ;; Here we might want to do an initial write of frame to db
       )
-  (fill-frame class :force? t)
+  (unless (and fast?
+	      (msv class #$crx:last_used_id))
+    (fill-frame class :force? t))
   (let* ((last (or start (msv class #$crx:last_used_id)))
 	 (next (if last
 		   (1+ (coerce-number last))
 		   0))
 	 (uri (string+ (frame-uri class) "/" (fast-string next))))
     (if (uri-used? *default-frame-source* uri)
-	(gensym-instance-frame class next)
+	(gensym-instance-frame class :start next :fast? fast?)
 	(progn
 	  (add-triple class #$crx:last_used_id next :to-db *default-frame-source* :remove-old t)
 	  (intern-uri uri)))))

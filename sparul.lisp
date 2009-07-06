@@ -5,13 +5,16 @@
 
 (defvar *sparul-group* nil)
 
+(export 'with-sparul-group)
+
 ;;; async is NOT WORKING PROPERLY yet, so don't use it!
 (defmacro with-sparul-group ((endpoint &key async?) &body body)
   `(let ((prior-group *sparul-group*)	;make sure we only do it after all groups unwound
-	 (*sparul-group* (or *sparul-group* (list ,endpoint nil))))
+	 (*sparul-group* (or *sparul-group* (list ,endpoint nil)))
+	 retval)			
      (unless (eq (car *sparul-group*) ,endpoint)
        (error "Bad nested SPARUL groups"))
-     ,@body
+     (setf retval (progn ,@body))
      (when (and (cadr *sparul-group*)
 		(not prior-group))
        (flet ((do-it ()
@@ -22,7 +25,8 @@
 		      (terpri out))))))
 	 (if ,async?
 	     (in-background-thread (do-it))
-	     (do-it))))))
+	     (do-it))))
+     retval))
 
 (defmethod do-grouped-sparul ((sparql sparql-endpoint) string)
   (if (and *sparul-group*

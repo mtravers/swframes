@@ -1,3 +1,5 @@
+(in-package :sw)
+
 -----------------------------------
 
 ;;; This source won't work with POST, only GET.   It's also apparently different from the Uniprot RDF downloads
@@ -35,3 +37,8 @@ Also returns URIs with bad namespaces.
       (?b #$http://www.geneontology.org/formats/oboInOwl#hasURI ?g)
       (?b 
       
+
+
+
+;;; PubMed articles are like this:
+; #$http://purl.org/science/article/pmid/17108814
