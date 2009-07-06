@@ -119,7 +119,7 @@ Idle thoughts:
 (defmethod fill-frame-inverse ((frame frame))
   (fill-frame frame))
 
-(defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)))
+(defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) forward-only?)
   (when (or force? (not (frame-loaded? frame)))
     ;; reset-frame was here, but moved to sparql.  This all needs rethinking
     (let ((*fill-by-default?* nil))	;prevent recursion
@@ -290,7 +290,11 @@ Test
       (when (frame-p o)
 	(deletef s (%slotv-inverse o p) :test test)))
   (when to-db
-    (delete-triple (frame-source s) s p o)))
+    (let ((source (if (typep to-db 'frame-source)
+		      to-db
+		      (frame-source s))))
+
+      (delete-triple source s p o))))
 
 ;;; query (sexp sparql syntax from lsw) 
 (defun describe-frame (frame &optional (fill? nil))

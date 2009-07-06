@@ -270,7 +270,8 @@
 ;;; this causes too many problems...needs rethinking
 ;  (reset-frame frame)	
   (fill-frame-sparql frame source)
-  (fill-frame-inverse-sparql frame source)
+;;; TEMP -- this is making gensym-instance-frame slow, so disabled. Should be flagged.
+;  (fill-frame-inverse-sparql frame source)
   (rdfs-call-if post-fill frame))
 
 (defmethod fill-frame-sparql ((frame frame) (source sparql-endpoint))
