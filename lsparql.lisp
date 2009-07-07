@@ -43,7 +43,7 @@
   (do-sparql sparql (generate-sparql sparql command) :timeout timeout))
 
 ;;; Return a simple list of results.  Query should either have one open variable or you can specify one with the optional argument
-(defmethod* do-sparql-one-var ((sparql sparql-endpoint) query &optional var)
+(defmethod do-sparql-one-var ((sparql t) query &optional var)
   (multiple-value-bind (res vars)
       (do-sparql sparql query)
     (extract-sparql-binding res (or var (car vars)))))
