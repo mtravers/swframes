@@ -50,5 +50,6 @@ Dereferencing is a "frame source" of sorts...
 
 (defvar *code-source* (make-instance 'code-source))
 
-(defmethod fill-frame-from ((frame frame) (source code-source))
+(defmethod fill-frame-from ((frame frame) (source code-source) &key inverse?)
+  (declare (ignore frame source inverse?))
   )

@@ -119,12 +119,12 @@ Idle thoughts:
 (defmethod fill-frame-inverse ((frame frame))
   (fill-frame frame))
 
-(defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) forward-only?)
+(defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
     ;; reset-frame was here, but moved to sparql.  This all needs rethinking
     (let ((*fill-by-default?* nil))	;prevent recursion
       (if source
-	  (fill-frame-from frame source) ;defaulting (handled in method now)??
+	  (fill-frame-from frame source :inverse? inverse?)
 	  (mt:report-and-ignore-errors	;+++
 	   (dereference frame)))
       (setf (frame-loaded? frame) t))))

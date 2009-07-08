@@ -107,17 +107,17 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (assert (stringp uri))
   (setf uri (expand-uri uri))		;+++ decide if this expands or not!
   (or (frame-named uri)
-      (intern-uri-0 uri 
-		    (make-frame :uri uri 
-				:source source
-				:loaded? mark-loaded?
-				))))
+      (intern-frame
+       (make-frame :uri uri 
+		   :source source
+		   :loaded? mark-loaded?
+		   ))))
+
+(defun intern-frame (frame)
+  (setf (gethash (frame-uri frame) *uri->frame-ht*) frame))  
 
 (defun frame-named (uri)
   (gethash uri *uri->frame-ht*))
-
-(defun intern-uri-0 (uri frame)
-  (setf (gethash uri *uri->frame-ht*) frame))
 
 (defun unintern-uri (uri)
   (remhash uri *uri->frame-ht*))
@@ -128,7 +128,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
       (error "There is already a frame named ~A" new-name))
   (unintern-uri (frame-uri f))
   (setf (frame-uri f) new-name)
-  (intern-uri-0 new-name f))
+  (intern-frame f))
 
 ;;; this isn't working for some reason...interned  objects are not frames?
 (defmethod make-load-form ((frame frame) &optional ignore)

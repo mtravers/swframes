@@ -7,7 +7,8 @@
   :initable-instance-variables)
 
 ;;; no-op 
-(defmethod fill-frame-from ((frame frame) (source file-frame-source))
+(defmethod fill-frame-from ((frame frame) (source file-frame-source) &key inverse?)
+  (declare (ignore frame source inverse?))
   )
 
 (defun parse-rdf-xml-file (file)
