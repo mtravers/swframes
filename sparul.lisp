@@ -4,8 +4,10 @@
 ;;; transactions
 
 (defvar *sparul-group* nil)
+(defvar *sparul-group-limit* 1000)	;max # of groups (virtuoso has a 10000 LINE limit, this is groups)
 
 (export 'with-sparul-group)
+
 
 ;;; async is NOT WORKING PROPERLY yet, so don't use it!
 (defmacro with-sparul-group ((endpoint &key async?) &body body)
@@ -31,7 +33,15 @@
 (defmethod do-grouped-sparul ((sparql sparql-endpoint) string)
   (if (and *sparul-group*
 	   (eq sparql (car *sparul-group*)))
-      (push-end string (cadr *sparul-group*))
+      (progn 
+	(push-end string (cadr *sparul-group*))
+	(when (> (length (cadr *sparul-group*)) *sparul-group-limit*)
+	  (do-sparql (car *sparul-group*)
+	    (with-output-to-string (out)
+	      (dolist (s (cadr *sparul-group*))
+		(write-string s out)
+		(terpri out))))
+	  (setf (cadr *sparul-group*) nil)))
       ;; otherwise do immediately
       (do-sparql sparql string)))
 
@@ -134,6 +144,16 @@
     (dolist (d dependents)
       (destroy-frame d))
     ))
+
+;;; OOPS -- if you accidently destroy a frame but have a df of it somewhere, this can recreate it!
+(defun recreate-frame (frame forward backward)
+  (with-sparul-group (nil)
+    (dolist (f forward)
+      (dolist (v (cadr f))
+	(add-triple frame (car f) v :to-db t)))
+    (dolist (i backward)
+      (dolist (v (cadr i))
+	(add-triple v (car i) frame :to-db t)))))
 
 ;;; Delete EVERYTHING in this graph.
 ;;; Times out on our Virtuoso instance, no idea why.

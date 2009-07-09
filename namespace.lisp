@@ -34,6 +34,7 @@
 ;;; Define known real (non-abbreviated) schemas
 (sw-register-namespace "http" :uri-scheme)
 (sw-register-namespace "urn" :uri-scheme)
+(sw-register-namespace "bnode" :uri-scheme) ;for rdf-file parsing
 (sw-register-namespace "nodeID" :uri-scheme) ;+++ temp: for Virtuoso blank nodes
 
 (defun namespace-lookup (namespace)

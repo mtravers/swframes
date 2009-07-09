@@ -35,7 +35,7 @@ Small
 (parse-owl-file "/misc/kbs/swan.owl")
 
 Big
-Fails because of !!!entitites
+Fails because of !!!entitites  Need to extend parser, blah
 (parse-owl-file "/misc/downloads/so.owl")
 
 Patch this into xml.lisp, long term fix is to smarten up the parser
@@ -69,8 +69,15 @@ Patch this into xml.lisp, long term fix is to smarten up the parser
   (dolist (e ents)
     (setf (gethash (car e) ht) (cadr e))))
 
+;;; try this (works with new sparql limit hack). But easier to load through virtuoso.
+(with-sparul-group (*default-sparql-endpoint*)
+  (dolist (s (cdr sos))
+    (write-frame s :sparql *default-sparql-endpoint* :no-delete? t)))
+
 (owl-file-to-virtuoso "/misc/kbs/swan.owl" "http://collabrx.com/graphs/swan")
 (local-term-query "Journal Article")	;see if it wrote it...
 
+
+(parse-rdf-xml-file "/misc/kbs/go/go_200904-termdb.rdf-xml")
 
 |#

@@ -135,7 +135,12 @@
 		(format nil "\"~A\"" thing))) ;add @en for fun
     ;; SPARQL can't handle 3.0D3
     (double-float (mt:fast-string (coerce thing 'single-float)))
-    (t (mt:fast-string thing))))
+    ;; Newish way to generate language-specific literals (ie Melanoma@en)
+    (list
+     (format nil "~A@~A" (sparql-term (car thing)) (cadr thing)))
+    (t (error "Can't translate ~A into a SPARQL term" thing)
+       ;(mt:fast-string thing)
+       )))
 
 
 #| for later
