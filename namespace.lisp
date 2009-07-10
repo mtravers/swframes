@@ -95,6 +95,9 @@
     ("dailymed" "http://www4.wiwiss.fu-berlin.de/dailymed/resource/")
     ("diseasome" "http://www4.wiwiss.fu-berlin.de/diseasome/resource/")
 
+    ;; Other
+    ("nci" "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#")
+
     ;; Local
     ("crx" "http://collabrx.com/rdf/")
 

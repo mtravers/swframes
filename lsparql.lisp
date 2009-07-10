@@ -83,9 +83,11 @@
        ;; +++ don't like
        (destructuring-bind (vars (&key limit offset distinct (from read-graph) order) &rest clauses) (cdr form)
 	 (with-output-to-string (s) 
-	     (format s "SELECT ~a~{~a~^ ~}~a~%WHERE { "
+	     (format s "SELECT ~a ~a ~a~%WHERE { "
 		     (if distinct "DISTINCT " "")
-		     vars 
+		     (if (eq vars '*)
+			 "*"
+			 (format nil "~{~a~^ ~}" vars))
 		     (if from (format nil "~{ FROM ~a ~^~%~}" (mapcar #'sparql-term (mapcar #'intern-uri (if (listp from) from (list from))))) " ")
 		     )
 	     (loop for clause in clauses
@@ -138,8 +140,8 @@
     ;; Newish way to generate language-specific literals (ie Melanoma@en)
     (list
      (format nil "~A@~A" (sparql-term (car thing)) (cadr thing)))
-    (t (error "Can't translate ~A into a SPARQL term" thing)
-       ;(mt:fast-string thing)
+    (t ; (error "Can't translate ~A into a SPARQL term" thing)
+       (mt:fast-string thing)
        )))
 
 
@@ -354,12 +356,15 @@
   query)
 
 ;;; Given a SPARQL query and a var, extend the query to load all slots of var and mark frames as loaded.
+;;; BAD PROBLEM, a maximum of 10K results are returned with no particular warning...Argh.
 (defun bulk-load-query (source query &optional (var (car (second query))))
   (setq query (copy-tree query))
   (push-end `(,var ?bl_p ?bl_o) query)
   (push-end '?bl_p (second query))
   (push-end '?bl_o (second query))
   (let ((res (do-sparql source query)))
+    (when (= (length res) 10000)	;+++ this should be done at do-sparql level
+      (error "Bulk query returned too many results and was cut off"))
     (collecting
      (dolist (bind res)
 	(let ((s (sparql-binding-elt bind var))

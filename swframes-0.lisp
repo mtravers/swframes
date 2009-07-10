@@ -15,9 +15,13 @@ This file has the minimum needed to get the frame system working (esp. the reade
   dereferenced? 
   )
 
+(defvar *print-frame-labels* nil)
+
 (defun frame-printer (frame stream ignore)
   (mt:report-and-ignore-errors
-    (format stream "#$~A" (frame-name frame))))
+   (if *print-frame-labels*
+       (format stream "[~A]" (frame-label frame t))
+       (format stream "#$~A" (frame-name frame)))))
 
 (set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader (frames::frames-readtable))
 (set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader (frames::frames-readtable))

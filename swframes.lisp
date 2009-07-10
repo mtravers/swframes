@@ -34,8 +34,8 @@ Idle thoughts:
   (abbreviate-uri (frame-uri frame)))  
 
 ;;; Get the label, never fill
-(defun frame-label (frame)
-  (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label") nil))
+(defun frame-label (frame &optional fill?)
+  (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label") fill?))
       (most-significant-name (frame-name frame))
       ))
 
@@ -218,8 +218,13 @@ Test
       (car thing)
       thing))
 
-(defun slot-accessor (slot)
-  #'(lambda (f) (slotv f slot)))
+(defun slot-accessor (slot &optional fill?)
+  #'(lambda (f) 
+      (slotv f slot fill?)))
+
+(defun inverse-slot-accessor (slot &optional fill?)
+  #'(lambda (f) 
+      (slotv-inverse f slot fill?)))
 
 ;;; MSV functions deal transparently with multiple values (return a single elt if that's all there is, otherwise a list)
 

@@ -199,11 +199,10 @@ http://data.linkedmdb.org/all/director
 	    (dolist (f top-frames)
 	      (setf (frame-loaded? f) t))
 	    (nreverse top-frames))
-	  (process
-    ;; RDF not at top level, try walking in
-	   (process-rdf-xml 
-	    (lxml-find-element xml '|rdf|::RDF)
-	    :base base))
-	  ))))
+	  ;; RDF not at top level, try walking in
+	  (process-rdf-xml 
+	   (lxml-find-element xml '|rdf|::RDF)
+	   :base base))
+	  )))
 
 
