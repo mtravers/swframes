@@ -32,15 +32,42 @@
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *sparql-default-timeout*))
-  (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" sparql))
     (knewos::run-sparql uri command 
 			:make-uri #'(lambda (u) (intern-uri u sparql))
 			;; this suddenly became necessary since I was geting literals back...no idea why 
 			:eager-make-uri? t
-			)))
+			:timeout timeout
+			))
 
-(defmethod* do-sparql ((sparql sparql-endpoint) (command list) &key (timeout *sparql-default-timeout*))
-  (do-sparql sparql (generate-sparql sparql command) :timeout timeout))
+;;; Handles translation and breaking up query into chunks if result set is too big
+(defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *sparql-default-timeout*) (chunk-size 1000))
+  (flet ((do-it ()
+	   (do-sparql sparql (generate-sparql sparql query) :timeout timeout))
+	 (modify-query (offset)
+	   (setf (third query)
+		 (append  `(:offset ,offset :limit ,chunk-size)
+			  (if (zerop offset)
+			      (third query)
+			      (subseq (third query) 4))))))
+    ;; if query already has limit or offset, no chunking
+    (if (or (member :offset (third query))
+	    (member :limit (third query)))
+	(do-it)
+	(progn 
+	  (modify-query 0)
+	  (do ((offset 0 (+ offset chunk-size))
+	       (result (do-it) (do-it))
+	       (concat nil))
+	      ((< (length result) chunk-size)
+	       concat)
+	    (setf concat (nconc concat result))
+	    (modify-query offset))))))
+	   
+
+
+
+
+  
 
 ;;; Return a simple list of results.  Query should either have one open variable or you can specify one with the optional argument
 (defmethod do-sparql-one-var ((sparql t) query &optional var)
@@ -356,15 +383,12 @@
   query)
 
 ;;; Given a SPARQL query and a var, extend the query to load all slots of var and mark frames as loaded.
-;;; BAD PROBLEM, a maximum of 10K results are returned with no particular warning...Argh.
-(defun bulk-load-query (source query &optional (var (car (second query))))
+(defun bulk-load-query (source query &key (var (car (second query))))
   (setq query (copy-tree query))
   (push-end `(,var ?bl_p ?bl_o) query)
   (push-end '?bl_p (second query))
   (push-end '?bl_o (second query))
   (let ((res (do-sparql source query)))
-    (when (= (length res) 10000)	;+++ this should be done at do-sparql level
-      (error "Bulk query returned too many results and was cut off"))
     (collecting
      (dolist (bind res)
 	(let ((s (sparql-binding-elt bind var))

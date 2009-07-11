@@ -104,7 +104,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defvar *uri->frame-ht* (make-hash-table :test 'equal))
 
 (defvar *default-frame-source* nil)	;Bind this for frame creation 
-(defvar *mark-new-frames-loaded?* nil)	;Bind this for frame creation 
+(defvar *mark-new-frames-loaded?* nil)	;Bind this for frame creation (+++ nothing uses this yet, consider flushing)
 
 (defun intern-uri (uri &optional (source *default-frame-source*) (mark-loaded? *mark-new-frames-loaded?*))
   (if (frame-p uri) (return-from intern-uri uri))
@@ -126,7 +126,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defun unintern-uri (uri)
   (remhash uri *uri->frame-ht*))
 
-;;; Dangerous
 (defun rename-frame (f new-name)
   (if (frame-named new-name) 
       (error "There is already a frame named ~A" new-name))
@@ -138,16 +137,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defmethod make-load-form ((frame frame) &optional ignore)
   (declare (ignore ignore))
   `(intern-uri ,(frame-uri frame)))
-
-;;; NO this is never right, URI
-(defun clean-frame (frame)
-  (let ((cleaned (clean-uri (frame-uri frame))))
-    (when (not (equal cleaned (frame-uri frame)))
-      (rename-frame frame cleaned))))
-
-;;; clean a string so it can be part of a URI
-(defun clean-string (string)
-  (utils:url-encode string))
 
 ;;; Reuse some biobike machinery
 (defun clean-string (string)
@@ -164,3 +153,5 @@ This file has the minimum needed to get the frame system working (esp. the reade
    (string+ "$&+:;,/=?<>#%"*whitespace*) 
    'simple-string)
   "Characters that are not allowed in strings representing frame names")
+
+

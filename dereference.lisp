@@ -15,7 +15,6 @@ Here we'll keep track of some of the available data sources:
 
 ; This one works at least some of the time.
 ; #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00022
-; this stuff is weird, it contains mostly back links rather than forward links.  Sigh.
 
 ;#$http://dbpedia.org/page/Aminophyllinen
 ;  returns HTML with embedded RDFa(?) but it can't be XML parsed.
@@ -26,7 +25,7 @@ Here we'll keep track of some of the available data sources:
 ;  http://dbpedia.org/data/Panitumumab.n3
 
 
-;;;
+;;; Times out
 ;(dereference #$http://bio2rdf.org/proteinlinks/cas:317-34-0)
 
 Many linked data sets here:
@@ -136,7 +135,7 @@ http://data.linkedmdb.org/all/director
              (make-blank-node (type)
                (intern-uri (format nil "bnode:~A" (gensym (symbol-name type)))))
              (process-description (desc &optional top)
-	       (print `(process-description ,desc))
+;;;	       (print `(process-description ,desc))
                (let* ((about0 (or (lxml-attribute desc '|rdf|::|about|)
                                   (and (lxml-attribute desc '|rdf|::|ID|)
                                        base

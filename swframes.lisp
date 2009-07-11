@@ -87,7 +87,7 @@ Idle thoughts:
   (setf (frame-inverse-slots frame) nil))
 
 ;;; Does not remove all references to frame (it could, I suppose, if we were rigorous about inverses III)
-;;; Does not delet from db
+;;; Does not delete from db
 (defmethod delete-frame ((frame frame))
   ;;; remove references (that we know about)
   (for-frame-slots (frame slot value)
@@ -183,10 +183,7 @@ Idle thoughts:
 Test
 (setf (slotv #$blither5 #$relatedTo) #$blather5)
 (describe-frame #$blather5)
-
-
 |#
-	
 
 (defmethod %slotv-inverse ((frame frame) (slot frame))
   (and (frame-inverse-slots frame)

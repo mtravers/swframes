@@ -6,6 +6,18 @@
     (assert-eq (intern-uri "blither")
 	       (intern-uri "blither")))
 
+(define-test frame-reader
+    (let ((f1 (read-from-string "#$frame0"))
+	  (f2 (read-from-string "#$frame0"))
+	  (fun1 (read-from-string "#^frame0"))
+	  (inv1 (read-from-string "#vframe0")))
+      (assert-true (frame-p f1))
+      (assert-eq f1 f2)
+      (assert-false (eq f1 fun1))
+      (assert-false (eq fun1 inv1))
+      ))
+
+
 (define-test rename
   (let ((x (uri "test27"))
 	(y (uri "test28")))
@@ -35,9 +47,7 @@
   (assert-eq (intern-uri "test:foo")
 	     (intern-uri "http://collabrx.com/testfoo"))
   (unregister-namespace "test")
-  (assert-false (eq (intern-uri "test:foo")
-		    (intern-uri "http://collabrx.com/testfoo")))
-  )
+  (assert-error 'error (intern-uri "test:foo")))
 
 
 ;;; +++ test dependency delete
