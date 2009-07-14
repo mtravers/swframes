@@ -21,6 +21,7 @@ Idle thoughts:
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse frame-loaded?
 	  slotv slotv-inverse
+	  slot-accessor inverse-slot-accessor
 	  svf svif
 	  msv msv-inverse msv-hack
 	  ssv ssv-inverse

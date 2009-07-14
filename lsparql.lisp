@@ -56,18 +56,16 @@
 	(progn 
 	  (modify-query 0)
 	  (do ((offset 0 (+ offset chunk-size))
-	       (result (do-it) (do-it))
+	       (vars nil) (result nil)
 	       (concat nil))
-	      ((< (length result) chunk-size)
-	       concat)
-	    (setf concat (nconc concat result))
-	    (modify-query offset))))))
+	      ((and vars (< (length result) chunk-size))
+	       (values concat vars))
+	    (multiple-value-bind (iresult ivars) 
+		(do-it)
+	      (setf vars ivars result iresult)
+	      (setf concat (nconc concat result))
+	      (modify-query offset)))))))
 	   
-
-
-
-
-  
 
 ;;; Return a simple list of results.  Query should either have one open variable or you can specify one with the optional argument
 (defmethod do-sparql-one-var ((sparql t) query &optional var)
