@@ -147,9 +147,6 @@
 	  query))
     ))
 
-(defun format-order-clause (order-clause)
-)
-
 ;;; +++ methodize
 ;;; see http://www.w3.org/TR/rdf-sparql-query/#QSynLiterals
 (defun sparql-term (thing)
@@ -282,10 +279,6 @@
 	    (emit-blank-node '[] stream)
 	    (concatenate 'string "_:" name)))))
 
-(defun sparql-binding-elt (bindings name)
-  (cadar (member name bindings :key #'car :test #'string-equal)))
-
-;;; ???
 (defun sparql-binding-elt (binding v)
   (if (symbolp v) (setf v (string-downcase (string v))))
   (if (char= #\? (char v 0)) (setf v (subseq v 1)))

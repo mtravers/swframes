@@ -129,7 +129,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
   (let ((realargs (cons (car (car args)) (cdr args)))
 	(class (cadr (car args))))
     `(setf (gethash ,class (rdfs-methodtable ',name))
-	   #'(lambda ,realargs ,@body))))
+	   #'(lambda ,realargs
+	       #+CCL (declare (ccl::ignore-if-unused ,(car realargs)))
+	       ,@body))))
 
 
 ;;; temp broken by #^ stuff

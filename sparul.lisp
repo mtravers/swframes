@@ -114,6 +114,7 @@
 		      (dolist (val (slotv frame slot))
 			(write-triple sparql frame slot (prin1-to-string val))))
 		  (print-not-readable (e)
+		    (declare (ignore e))
 		    (warn "Can't save nonreadable object in ~A/~A" frame slot) 
 		    )))
 
@@ -162,8 +163,8 @@
   (do-sparql sparql
     (build-delete sparql '?s '?p '?o)))
 
-
-(defmethod* nuke-everything ((sparql sparql-endpoint))
+;;; alternate method -- 
+(defmethod* nuke-everything2 ((sparql sparql-endpoint))
   (assert writeable?)			;+++ OK, this should be done in a class
   (let ((all (do-sparql *default-frame-source* `(:select (?s ?p ?o) ( :from ,(intern-uri write-graph)) (?s ?p ?o)))))
     (dolist (binding all)
