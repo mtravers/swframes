@@ -97,6 +97,7 @@
 
     ;; Other
     ("nci" "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#")
+    ("go" "http://www.geneontology.org/go#")
 
     ;; Local
     ("crx" "http://collabrx.com/rdf/")

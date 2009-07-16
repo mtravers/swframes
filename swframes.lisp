@@ -309,6 +309,7 @@ Test
   frame )
 
 (defun df (frame &optional (fill? nil)) (describe-frame frame fill?))
+(defun dft (frame) (df frame t))
 
 #|
 Tests:

@@ -2,11 +2,15 @@
 
 ;;; Clean these up so we can use-package :swframes
 (unexport '(FRAMES:DESCRIBE-FRAME
-	    WEBLISTENER:PARSE-XML
 	    FRAMES:RENAME-FRAME
 	    FRAMES:DF
 	    FRAMES:SLOTV
-	    FRAMES:FOR-ALL-FRAMES))
+	    FRAMES:FOR-ALL-FRAMES)
+	  :biolisp)
+
+(unexport '(WEBLISTENER:PARSE-XML) 
+	  :biolisp)
+
 
 (defpackage :swframes
   (:use :cl :utils :clos*)

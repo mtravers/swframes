@@ -66,6 +66,7 @@
 (defmethod delete-triple ((sparql null) s p o)
   (delete-triple *default-frame-source* s p o))
 
+;;; +++ these should be done in same manner as :selects
 (defmethod* build-insert ((sparql sparql-endpoint) s p o)
   (format nil
 	  "INSERT INTO GRAPH ~A { ~A ~A ~A }"
@@ -169,4 +170,5 @@
   (let ((all (do-sparql *default-frame-source* `(:select (?s ?p ?o) ( :from ,(intern-uri write-graph)) (?s ?p ?o)))))
     (dolist (binding all)
       (delete-triple sparql (sparql-binding-elt binding "s") (sparql-binding-elt binding "p") (sparql-binding-elt binding "o")))))
+
 
