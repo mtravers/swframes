@@ -98,6 +98,7 @@
     ;; Other
     ("nci" "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#")
     ("go" "http://www.geneontology.org/go#")
+    ("go1" "http://www.geneontology.org/dtds/go.dtd#") ;slots use this
 
     ;; Local
     ("crx" "http://collabrx.com/rdf/")

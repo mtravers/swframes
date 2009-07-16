@@ -397,7 +397,29 @@
 	  (collect-new s)
 	  (setf (frame-loaded? s) t)
 	  (setf (frame-source s) source)
-	  (when (frame-p o)		;not sure about this, but for now
+	  (when (and (frame-p o)		;not sure about this, but for now
+		     (null (frame-source o)))
 	    (setf (frame-source o) source))
 	  )))))
+
+;;; Add some slots to a one-var query (like bulk-load but selective rather than every thing)
+(defun augment-query (source query &key (var (car (second query))) slots &aux slot-vars)
+  (setq query (copy-tree query))
+  (dolist (slot slots)
+    (let ((slot-var (intern (format nil "?SLOT~D" (position slot slots)))))
+      (push slot-var slot-vars)
+      (push-end `(:optional (,var ,slot ,slot-var)) query)
+      (push-end slot-var (second query))))
+  (setf slot-vars (nreverse slot-vars))
+  (let ((res (do-sparql source query)))
+    (utils:collecting 
+     (dolist (bind res)
+       (let ((s (sparql-binding-elt bind var)))
+	 (util:collect-new s)
+	 (mapc #'(lambda (slot slot-var)
+		   (let ((val (sparql-binding-elt bind slot-var)))
+		    (when val
+		      (add-triple s slot val))))
+	      slots slot-vars
+	  ))))))
     
