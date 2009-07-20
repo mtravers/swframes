@@ -115,11 +115,22 @@ http://data.linkedmdb.org/all/director
     (let ((xml (parse-xml body)))
       (process-rdf-xml xml))))
 
+;;; undo some s-xml damage (translates its NS-2 type names back into reality)
+(defun translate-symbol (identifier)
+  (let* ((package (symbol-package identifier))
+	 (name (symbol-name identifier))
+	 (namespace (find package s-xml::*known-namespaces* :key #'s-xml:get-package))
+	 (namespace-uri (s-xml::get-uri namespace)))
+;    (print `(,prefix ,namespace-uri ,name))
+    (string+ namespace-uri name)))
+
 (defun process-rdf-xml (xml &key base)
+  (assert xml)
   ;; base can be set as an argument or from the header attributes
   (let ((top-frames nil))
     (labels ((symbol->frame (symbol)
-               (let ((ns (package-name (symbol-package symbol)))
+	       ;; old way, obsolete but we still might need the SEQUENCE hack.
+               '(let ((ns (package-name (symbol-package symbol)))
                      (text (symbol-name symbol)))
 		 ;; weird bug in xml parser results in SEQUENCE instead of bp:sequence, ie:
 		 ;; (get-pathways #$http://cbio.mskcc.org/cpath#CPATH-71202)
@@ -127,7 +138,10 @@ http://data.linkedmdb.org/all/director
 		 (when (equal ns "COMMON-LISP")
 		   (warn "Bad package in XML parse ~A" symbol)
 		   (setf ns "bp"))
-                 (intern-uri (expand-uri-0 ns text) )))
+                 (intern-uri (expand-uri-0 ns text) ))
+	       ;; new way
+	       (intern-uri (translate-symbol symbol))
+	       )
              (add-value (v frame slot)
                (add-triple frame slot v)
                )
@@ -172,6 +186,7 @@ http://data.linkedmdb.org/all/director
                             )
                      ))
                  about))
+	     ;; may be entirely unnecessary now that we've figured out what s-xml does
 	     (process-namespaces (xml)
 	       (do ((namespaces (and (listp (car xml))
 				     (cdr (car xml)))
@@ -184,7 +199,8 @@ http://data.linkedmdb.org/all/director
 			(full (cadr namespaces)))
 		   (cond ((equal com "xmlns")
 			  (if (null ns)
-			      (sw-register-namespace "NS-0" full)
+			      ;(sw-register-namespace "NS-0" full)
+			      nil	;+++ prob need to do something here!
 			      (sw-register-namespace ns full)))
 			 ((equal com "base")
 			  (setq base full))

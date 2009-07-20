@@ -106,6 +106,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defvar *default-frame-source* nil)	;Bind this for frame creation 
 (defvar *mark-new-frames-loaded?* nil)	;Bind this for frame creation (+++ nothing uses this yet, consider flushing)
 
+;;; mark-loaded? arg is not presently used.
 (defun intern-uri (uri &optional (source *default-frame-source*) (mark-loaded? *mark-new-frames-loaded?*))
   (if (frame-p uri) (return-from intern-uri uri))
   (assert (stringp uri))
@@ -116,6 +117,10 @@ This file has the minimum needed to get the frame system working (esp. the reade
 		   :source source
 		   :loaded? mark-loaded?
 		   ))))
+
+;;; here for tracability.
+(defun set-frame-loaded? (frame &optional (loaded? t))
+  (setf (frame-loaded? frame) loaded?))
 
 (defun intern-frame (frame)
   (setf (gethash (frame-uri frame) *uri->frame-ht*) frame))  

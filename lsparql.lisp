@@ -160,12 +160,12 @@
 		(format nil "'''~A'''" thing)
 		(format nil "\"~A\"" thing))) ;add @en for fun
     ;; SPARQL can't handle 3.0D3
-    (double-float (mt:fast-string (coerce thing 'single-float)))
+    (double-float (utils:fast-string (coerce thing 'single-float)))
     ;; Newish way to generate language-specific literals (ie Melanoma@en)
     (list
      (format nil "~A@~A" (sparql-term (car thing)) (cadr thing)))
     (t ; (error "Can't translate ~A into a SPARQL term" thing)
-       (mt:fast-string thing)
+       (utils:fast-string thing)
        )))
 
 
@@ -297,7 +297,6 @@
 ;;; this causes too many problems...needs rethinking
 ;  (reset-frame frame)	
   (fill-frame-sparql frame source)
-;;; TEMP -- this is making gensym-instance-frame slow, so disabled. Should be flagged.
   (when inverse?
     (fill-frame-inverse-sparql frame source))
   (rdfs-call-if post-fill frame))
@@ -313,7 +312,7 @@
 	      (setf o (rdfs-call deserialize-value p o)))
 	  (add-triple frame p o)
 	  ))
-      (setf (frame-loaded? frame) t)
+      (set-frame-loaded? frame)
       ))
 
 (rdfs-defmethod deserialize-value ((slot #$crx:slots/LispValueSlot) value)
@@ -343,6 +342,7 @@
        (char= #\? (char (string thing) 0))))
 
 ;;; convert all string literal objects into case-insensitive regex searches.
+;;; +++ not working in all cases, see drugs-for-genes1
 (defun case-insensitize (query)
   (setq query (copy-tree query))
   (let ((new-clauses nil))
@@ -395,7 +395,7 @@
 	      (o (sparql-binding-elt bind "bl_o")))
 	  (add-triple s p o)
 	  (collect-new s)
-	  (setf (frame-loaded? s) t)
+	  (set-frame-loaded? s)
 	  (setf (frame-source s) source)
 	  (when (and (frame-p o)		;not sure about this, but for now
 		     (null (frame-source o)))

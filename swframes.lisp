@@ -34,7 +34,7 @@ Idle thoughts:
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
 
-;;; Get the label, never fill
+;;; Get the label, optionally filling
 (defun frame-label (frame &optional fill?)
   (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label") fill?))
       (most-significant-name (frame-name frame))
@@ -123,12 +123,18 @@ Idle thoughts:
 (defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
     ;; reset-frame was here, but moved to sparql.  This all needs rethinking
-    (let ((*fill-by-default?* nil))	;prevent recursion
+    (let ((*fill-by-default?* nil)	;prevent recursion
+	  (existing-nslots (hash-table-count (frame-slots frame))))
       (if source
-	  (fill-frame-from frame source :inverse? inverse?)
-	  (mt:report-and-ignore-errors	;+++
+	  (progn (fill-frame-from frame source :inverse? inverse?)
+		 ;; if nothing from db, try dereferncing
+		 (unless (> (hash-table-count (frame-slots frame)) existing-nslots)
+		   (utils:report-and-ignore-errors	;+++
+		    (setf (frame-source frame) nil)
+		    (dereference frame))))
+	  (progn ; utils:report-and-ignore-errors	;+++
 	   (dereference frame)))
-      (setf (frame-loaded? frame) t))))
+      (set-frame-loaded? frame))))
 
 
 
@@ -302,10 +308,10 @@ Test
 (defun describe-frame (frame &optional (fill? nil))
   (when fill? (fill-frame frame :force? t))
   (format t "~&Forward:")
-  (pprint (mt:ht-contents (frame-slots frame)))
+  (pprint (utils:ht-contents (frame-slots frame)))
   (when (frame-inverse-slots frame)
     (format t "~&Inverse:")
-    (pprint (mt:ht-contents (frame-inverse-slots frame))))
+    (pprint (utils:ht-contents (frame-inverse-slots frame))))
   frame )
 
 (defun df (frame &optional (fill? nil)) (describe-frame frame fill?))

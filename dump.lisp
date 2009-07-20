@@ -37,7 +37,7 @@
 
 ;;; +++ prob inadequate -- should check for printability.
 (defmethod* write-entity ((out nt-writer) (thing t))
-  (prin1 (mt:fast-string thing) stream))
+  (prin1 (utils:fast-string thing) stream))
 
 
 #|

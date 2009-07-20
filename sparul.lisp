@@ -92,7 +92,7 @@
       ;; write out dependents
       (dolist (d dependents)
 	(write-frame d))
-    ;; if we just wrote this out, then it's up to date!
+      ;; if we just wrote this out, then it's up to date!
       (setf (frame-loaded? frame) t))
     frame))
 

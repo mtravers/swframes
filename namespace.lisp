@@ -43,7 +43,7 @@
 (defun namespace-expand (namespace)
   (cadr (namespace-lookup namespace)))
 
-(defvar *default-namespace* "crx")
+(defvar *default-namespace* nil)	;+++ was crx, but we need to have prefixless namespace for GO
 
 (defun expand-uri (uri &optional no-error)
   (let* ((colonpos (position #\: uri))
@@ -57,7 +57,9 @@
       ((char= (char uri 0) #\#)
        (string+ (namespace-expand "NS-0") (subseq uri 1)))
       ((null prefix)
-       (string+ (namespace-expand *default-namespace*) uri))
+       (if *default-namespace*
+	   (string+ (namespace-expand *default-namespace*) uri)
+	   uri))
       ((null namespace)
        (if no-error
 	   uri
