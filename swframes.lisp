@@ -104,6 +104,13 @@ Idle thoughts:
   (reset-frame frame)
   (unintern-uri (frame-uri frame)))
 
+(defun frames-matching (uri-frag)
+  (utils:collecting 
+   (for-all-frames (f)
+		   (if (search uri-frag (frame-uri f))
+		       (utils::collect f)))))
+
+
 (defun delete-frames-matching (uri-frag)
   (for-all-frames (f)
 		  (if (search uri-frag (frame-uri f))
@@ -122,13 +129,14 @@ Idle thoughts:
 
 (defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
+    (setf (frame-loaded? frame) nil)
     ;; reset-frame was here, but moved to sparql.  This all needs rethinking
     (let ((*fill-by-default?* nil)	;prevent recursion
 	  (existing-nslots (hash-table-count (frame-slots frame))))
       (if source
 	  (progn (fill-frame-from frame source :inverse? inverse?)
 		 ;; if nothing from db, try dereferncing
-		 (unless (> (hash-table-count (frame-slots frame)) existing-nslots)
+		 (unless (frame-loaded? frame)
 		   (utils:report-and-ignore-errors	;+++
 		    (setf (frame-source frame) nil)
 		    (dereference frame))))

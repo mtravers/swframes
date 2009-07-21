@@ -302,17 +302,19 @@
   (rdfs-call-if post-fill frame))
 
 (defmethod fill-frame-sparql ((frame frame) (source sparql-endpoint))
-    (let ((*default-frame-source* source)) ;not sure
-      (dolist (binding (do-sparql 
+    (let* ((*default-frame-source* source) ;not sure
+	   (results  (do-sparql 
 			   source
-			 (format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame))))
+			 (format nil "select ?p ?o where { <~A> ?p ?o . }" (frame-uri frame)))))
+      (dolist (binding results)
 	(let ((p (sparql-binding-elt binding "p"))
 	      (o (sparql-binding-elt binding "o")))
 	  (if (%slotv p #$crx:specialhandling)
 	      (setf o (rdfs-call deserialize-value p o)))
 	  (add-triple frame p o)
 	  ))
-      (set-frame-loaded? frame)
+      (when results
+	(set-frame-loaded? frame))
       ))
 
 (rdfs-defmethod deserialize-value ((slot #$crx:slots/LispValueSlot) value)

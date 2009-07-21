@@ -91,16 +91,21 @@ http://data.linkedmdb.org/all/director
       (setf (frame-dereferenced? frame) t))))
 
 (defmethod dereference-1 ((frame frame))
-  (multiple-value-bind (body response-code response-headers uri)
-      ;; turns out this processes the 303 redirect without any further intervention
-      (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
-        (utils:get-url (frame-uri frame) :accept "application/rdf+xml"))
-    #+:CCL (declare (ccl::ignore-if-unused response-headers uri))
+  (handler-case 
+      (multiple-value-bind (body response-code response-headers uri)
+	  ;; turns out this processes the 303 redirect without any further intervention
+	  (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
+	    (utils:get-url (frame-uri frame) :accept "application/rdf+xml"))
+	#+:CCL (declare (ccl::ignore-if-unused response-headers uri))
 ;;;    (print `(response-code ,response-code response-headers ,response-headers ,uri))
-    (unless (= response-code 200)
-      (error "Failed to dereference ~A, response code ~A" frame response-code))
-    (let ((xml (parse-xml body)))
-      (process-rdf-xml xml))))
+	(unless (= response-code 200)
+	  (error "Failed to dereference ~A, response code ~A" frame response-code))
+	(let ((xml (parse-xml body)))
+	  (process-rdf-xml xml)))
+    ;; +++ actually could parse rdf out of html if we were ambitious
+    (s-xml:xml-parser-error (e)
+      (warn "Attempt to dereference ~A got non-XML response" frame)
+      nil)))
 
 ;;; can get RSS feeds, ie
 (defun process-rdf-url (url)
@@ -115,13 +120,19 @@ http://data.linkedmdb.org/all/director
     (let ((xml (parse-xml body)))
       (process-rdf-xml xml))))
 
-;;; undo some s-xml damage (translates its NS-2 type names back into reality)
+;;; undo some s-xml damage (translates its NS-2 style names back into uris)
 (defun translate-symbol (identifier)
+  ;; weird bug in xml parser results in SEQUENCE instead of bp:sequence, ie:
+  ;; (get-pathways #$http://cbio.mskcc.org/cpath#CPATH-71202)
+  ;; +++ kludge around it because I don't have time to fix it.
+  (when (eq identifier 'cl:sequence)
+    (return-from translate-symbol (expand-uri "bp:sequence")))
   (let* ((package (symbol-package identifier))
 	 (name (symbol-name identifier))
 	 (namespace (find package s-xml::*known-namespaces* :key #'s-xml:get-package))
-	 (namespace-uri (s-xml::get-uri namespace)))
-;    (print `(,prefix ,namespace-uri ,name))
+	 (namespace-uri (and namespace (s-xml::get-uri namespace))))
+    (unless namespace
+      (error "Unknown XML namespspace for ~A" identifier))
     (string+ namespace-uri name)))
 
 (defun process-rdf-xml (xml &key base)
@@ -129,19 +140,7 @@ http://data.linkedmdb.org/all/director
   ;; base can be set as an argument or from the header attributes
   (let ((top-frames nil))
     (labels ((symbol->frame (symbol)
-	       ;; old way, obsolete but we still might need the SEQUENCE hack.
-               '(let ((ns (package-name (symbol-package symbol)))
-                     (text (symbol-name symbol)))
-		 ;; weird bug in xml parser results in SEQUENCE instead of bp:sequence, ie:
-		 ;; (get-pathways #$http://cbio.mskcc.org/cpath#CPATH-71202)
-		 ;; +++ kludge around it because I don't have time to fix it.
-		 (when (equal ns "COMMON-LISP")
-		   (warn "Bad package in XML parse ~A" symbol)
-		   (setf ns "bp"))
-                 (intern-uri (expand-uri-0 ns text) ))
-	       ;; new way
-	       (intern-uri (translate-symbol symbol))
-	       )
+	       (intern-uri (translate-symbol symbol)))
              (add-value (v frame slot)
                (add-triple frame slot v)
                )

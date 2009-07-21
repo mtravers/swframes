@@ -144,7 +144,8 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 ;;; this is way wrong, but will do for now
 (defun rdfs-method (name thing &optional (errorp t))
-  (fill-frame thing)
+  ;; this can cause loops so defintely not right
+  ;; (fill-frame thing)
   (let ((classes (order-classes (rdfs-classes thing)))
 	(methodtable (rdfs-methodtable name)))
     (or (some #'(lambda (class) (gethash class methodtable )) classes)
