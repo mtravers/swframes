@@ -23,7 +23,11 @@
   )
 
 (defmethod* print-object ((sparql sparql-endpoint) stream)
-  (format stream "#<~A ~A ~A>" (type-of sparql) uri (if writeable? "w" "nw")))
+  (format stream "#<~A ~A ~A ~A>" 
+	  (type-of sparql)
+	  uri
+	  (if writeable? "[w]" "[nw]")
+	  (if read-graph (format nil "[rg: ~A]" read-graph))))
 
 (defvar *sparql-default-timeout* 30)
 
@@ -163,7 +167,9 @@
     (double-float (utils:fast-string (coerce thing 'single-float)))
     ;; Newish way to generate language-specific literals (ie Melanoma@en)
     (list
-     (format nil "~A@~A" (sparql-term (car thing)) (cadr thing)))
+     (cond ((eq (car thing) :uri)
+	    (format nil "<~A>" (cadr thing)))	    
+	   (t (format nil "~A@~A" (sparql-term (car thing)) (cadr thing)))))
     (t ; (error "Can't translate ~A into a SPARQL term" thing)
        (utils:fast-string thing)
        )))
@@ -337,7 +343,7 @@
 (defmethod uri-used? ((source sparql-endpoint) uri)
   (do-sparql 
       source
-    (format nil "select ?s ?p ?o  where { { <~A> ?p ?o } UNION { ?s ?p <~A> } } limit 1" uri uri)))
+    `(:select (?s ?p ?o) (:limit 1) (:union (((:uri ,uri) ?p ?o)) ((?s ?p (:uri ,uri)))))))
 
 (defun var-p (thing)
   (and (symbolp thing)

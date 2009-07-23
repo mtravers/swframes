@@ -80,9 +80,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 ;;; This has to be relative to a frame source so you can check for taken ids. 
 ;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  Might break if there are multiple.
-(defun gensym-instance-frame (class &key start fast?)
+(defun gensym-instance-frame (class &key start fast? (source *default-frame-source*))
   (if (eq (frame-source class) *code-source*)
-      (setf (frame-source class) *default-frame-source*)
+      (setf (frame-source class) source)
       ;; Here we might want to do an initial write of frame to db
       )
   (unless (and fast?
@@ -93,7 +93,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		   (1+ (coerce-number last))
 		   0))
 	 (uri (string+ (frame-uri class) "/" (fast-string next))))
-    (if (uri-used? *default-frame-source* uri)
+    (if (uri-used? source uri)
 	(gensym-instance-frame class :start next :fast? fast?)
 	(progn
 	  (add-triple class #$crx:last_used_id next :to-db *default-frame-source* :remove-old t)

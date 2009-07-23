@@ -105,7 +105,17 @@ http://data.linkedmdb.org/all/director
     ;; +++ actually could parse rdf out of html if we were ambitious
     (s-xml:xml-parser-error (e)
       (warn "Attempt to dereference ~A got non-XML response" frame)
+      nil)
+    ;; +++ deal with 404
+    (condition (e)
+      (warn "Unexpected error ~A while dereferencing ~A" e frame)
       nil)))
+
+(defun foo ()
+  (handler-case 
+      (+ 1 2)
+    (error (e)
+      (print e))))
 
 ;;; can get RSS feeds, ie
 (defun process-rdf-url (url)
