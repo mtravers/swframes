@@ -15,7 +15,8 @@
 	 (*sparul-group* (or *sparul-group* (list ,endpoint nil)))
 	 retval)			
      (unless (eq (car *sparul-group*) ,endpoint)
-       (error "Bad nested SPARUL groups"))
+       ;; +++ was error, temp disabled
+       (warn "Bad nested SPARUL groups: ~A ~A" (car *sparul-group*) ,endpoint))
      (setf retval (progn ,@body))
      (when (and (cadr *sparul-group*)
 		(not prior-group))

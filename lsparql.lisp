@@ -351,6 +351,7 @@
 
 ;;; convert all string literal objects into case-insensitive regex searches.
 ;;; +++ not working in all cases, see drugs-for-genes1
+;;; +++ also too slow
 (defun case-insensitize (query)
   (setq query (copy-tree query))
   (let ((new-clauses nil))
@@ -368,6 +369,32 @@
 	      (t (process-triple clause)))))
     (setf (nthcdr 3 query) (append (nthcdr 3 query) new-clauses)))
   query)
+
+;;; alternate, less powerful but faster
+(defun case-insensitize-2 (query)
+  (setq query (copy-tree query))
+    (flet ((modify-triple (triple)
+	     (if (stringp (third triple))	;+++ doesn't play with ("foo" :en) clauses
+		 `(:union ((,(car triple) ,(cadr triple) ,(caddr triple)))
+			  ((,(car triple) ,(cadr triple) ,(string-downcase (caddr triple))))
+			  ((,(car triple) ,(cadr triple) ,(string-upcase (caddr triple))))
+			  ((,(car triple) ,(cadr triple) ,(string-capitalize (caddr triple)))))
+		 triple
+		 )))	     
+      `(,(car query) 
+	 ,(cadr query)
+	 ,(caddr query)
+	 ,@(mapcar #'(lambda (clause)
+		       (cond ((eq (car clause) :union)
+			      (cons :union
+				    (mapcar #'(lambda (group)
+						(mapcar #'modify-triple group))
+					    (cdr clause))))
+			     (t (modify-triple clause))))
+		   (nthcdr 3 query)))))
+
+
+
 
 ;;; +++ could be generalized for other dependent properties
 ;;; OPTIONAL could be optional
