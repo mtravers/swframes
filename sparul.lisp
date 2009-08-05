@@ -168,7 +168,7 @@
 ;;; alternate method -- 
 (defmethod* nuke-everything2 ((sparql sparql-endpoint))
   (assert writeable?)			;+++ OK, this should be done in a class
-  (let ((all (do-sparql *default-frame-source* `(:select (?s ?p ?o) ( :from ,(intern-uri write-graph)) (?s ?p ?o)))))
+  (let ((all (do-sparql *default-frame-source* `(:select (?s ?p ?o) ( :from ,(intern-uri write-1graph)) (?s ?p ?o)))))
     (dolist (binding all)
       (delete-triple sparql (sparql-binding-elt binding "s") (sparql-binding-elt binding "p") (sparql-binding-elt binding "o")))))
 

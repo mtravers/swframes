@@ -1,5 +1,7 @@
 (in-package :swframes)
 
+(export '(dereference))
+
 #|
 Dereferencing is Semweb jargon for looking at a URI, inferring from it a server, and going to that server
 to get some useful information (such as triples it participates in).  This is a highly under-specified and
@@ -107,15 +109,9 @@ http://data.linkedmdb.org/all/director
       (warn "Attempt to dereference ~A got non-XML response" frame)
       nil)
     ;; +++ deal with 404
-    (condition (e)
+    (error (e)
       (warn "Unexpected error ~A while dereferencing ~A" e frame)
       nil)))
-
-(defun foo ()
-  (handler-case 
-      (+ 1 2)
-    (error (e)
-      (print e))))
 
 ;;; can get RSS feeds, ie
 (defun process-rdf-url (url)
@@ -169,7 +165,7 @@ http://data.linkedmdb.org/all/director
                                  )))
                  (when top
                    (push about top-frames)
-;;;                (print about)
+;;;		   (print `(about ,about))
                    )
                  (unless (eq (lxml-tag desc) '|rdf|::|Description|)
                    (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
@@ -201,7 +197,7 @@ http://data.linkedmdb.org/all/director
 				     (cdr (car xml)))
 				(cddr namespaces)))
 		   ((null namespaces))
-                                        ;      (print `(ns ,(car namespaces) ,(cadr namespaces)))
+;;;      (print `(ns ,(car namespaces) ,(cadr namespaces)))
 		 (let* ((splits (utils:string-split (string (car namespaces)) #\:  ))
 			(com (car splits))
 			(ns (cadr splits))

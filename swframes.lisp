@@ -28,7 +28,7 @@ Idle thoughts:
 	  declare-special-slot
 	  add-triple
 	  rename-frame delete-frame write-frame destroy-frame
-	  describe-frame df
+	  describe-frame df dft
 	  sw-register-namespace def-namespace))
 
 (defun frame-name (frame)

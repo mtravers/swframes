@@ -31,6 +31,9 @@
 
 (defvar *sparql-default-timeout* 30)
 
+(defmethod do-sparql ((sparql string) (command t) &key (timeout *sparql-default-timeout*))
+  (do-sparql (make-instance 'sparql-endpoint :uri sparql) command :timeout timeout))
+
 (defmethod do-sparql ((sparql null) (command t) &key (timeout *sparql-default-timeout*))
   (do-sparql *default-sparql-endpoint* command :timeout timeout))
 
@@ -162,14 +165,19 @@
      (string-downcase (string thing)))
     (string (if (or (position #\" thing) (position #\Newline thing))
 		(format nil "'''~A'''" thing)
-		(format nil "\"~A\"" thing))) ;add @en for fun
+		(format nil "\"~A\"" thing))) 
     ;; SPARQL can't handle 3.0D3
     (double-float (utils:fast-string (coerce thing 'single-float)))
-    ;; Newish way to generate language-specific literals (ie Melanoma@en)
+    ;; Newish way to generate language-specific literals (ie Melanoma@en) (Melanoma :en)
+    ;; or types (Melanoma #$xsd:string)
     (list
-     (cond ((eq (car thing) :uri)
+     (cond ((eq (car thing) :uri)      
 	    (format nil "<~A>" (cadr thing)))	    
-	   (t (format nil "~A@~A" (sparql-term (car thing)) (cadr thing)))))
+	   ((symbolp (cadr thing))
+	    (format nil "~A@~A" (sparql-term (car thing)) (cadr thing)))
+	   ((frame-p (cadr thing))
+	    (format nil "~A^^~A" (sparql-term (car thing)) (abbreviate-uri (frame-uri (cadr thing)))))
+	   ))
     (t ; (error "Can't translate ~A into a SPARQL term" thing)
        (utils:fast-string thing)
        )))
@@ -305,7 +313,8 @@
   (fill-frame-sparql frame source)
   (when inverse?
     (fill-frame-inverse-sparql frame source))
-  (rdfs-call-if post-fill frame))
+  (let ((*fill-by-default?* nil))
+    (rdfs-call-if post-fill frame)))
 
 (defmethod fill-frame-sparql ((frame frame) (source sparql-endpoint))
     (let* ((*default-frame-source* source) ;not sure
