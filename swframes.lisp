@@ -20,6 +20,7 @@ Idle thoughts:
 	  %frame-slots %frame-inverse-slots frame-empty?
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse frame-loaded?
+	  %slotv
 	  slotv slotv-inverse
 	  slot-accessor inverse-slot-accessor
 	  svf svif
@@ -180,7 +181,7 @@ Idle thoughts:
 (defmethod set-slotv ((frame frame) (slot frame) value)
   (let ((old (%slotv frame slot)))
     ;; enforce rule that slot values are lists...
-    (unless (listp value)
+    (unless (listp value)		;+++ this is ugly
       (setf value (list value)))
     (setf (gethash slot (frame-slots frame)) value)
     ;; +++ fairly serious change ... verify that this works 
