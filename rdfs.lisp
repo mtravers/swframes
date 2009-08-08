@@ -49,12 +49,14 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 ;;; Put in some checking;  should be under a flag. 
 ;;; Also option for specifying a name or partial name.
+(defvar *fast-instances?* t)
+
 (defun rdfs-make-instance (class &rest slots)
   (flet ((check-class (thing class)
 	   (when class
 	     (assert (rdfs-classp thing class)))))
     (check-class class #$rdfs:Class)
-    (let ((frame (gensym-instance-frame class :fast? t)))
+    (let ((frame (gensym-instance-frame class :fast? *fast-instances?*)))
       (setf (slotv frame #$rdf:type) class)
       (setf (frame-loaded? frame) t)	;if we are consing this from scratch in memory, it is considered loaded
       (do ((rest slots (cddr rest)))
@@ -78,6 +80,18 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	      ,@(if word? `((:filter (:regex ,vvar ,(formatn "\\\\W~A\\\\W" value) "i"))))
 	      )))
 
+(rdfs-def-class #$crx:session ()
+		(#$crx:session/machine))
+
+;;; this does a db write when system is loaded, probably not the right thing, we need an init function.
+(defvar *unique-session* 
+  (let* ((*fast-instances?* nil)
+	 (session
+	  (rdfs-make-instance #$crx:session 
+			      #$crx:session/machine (machine-instance))))
+    (write-frame session)
+    session))
+
 ;;; This has to be relative to a frame source so you can check for taken ids. 
 ;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  Might break if there are multiple.
 (defun gensym-instance-frame (class &key start fast? (source *default-frame-source*))
@@ -92,7 +106,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	 (next (if last
 		   (1+ (coerce-number last))
 		   0))
-	 (uri (string+ (frame-uri class) "/" (fast-string next))))
+	 (uri (string+ (frame-uri class) "/"
+		       (if fast? (string+ (frame-label *unique-session*) "/") "")
+		       (fast-string next))))
     (if (uri-used? source uri)
 	(gensym-instance-frame class :start next :fast? fast?)
 	(progn
