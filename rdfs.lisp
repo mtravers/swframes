@@ -83,14 +83,20 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (rdfs-def-class #$crx:session ()
 		(#$crx:session/machine))
 
-;;; this does a db write when system is loaded, probably not the right thing, we need an init function.
-(defvar *unique-session* 
+(defvar *unique-session* nil)
+
+;;; should get called once for a lisp session
+(defun make-unique-session ()
   (let* ((*fast-instances?* nil)
 	 (session
 	  (rdfs-make-instance #$crx:session 
 			      #$crx:session/machine (machine-instance))))
     (write-frame session)
-    session))
+    (setf *unique-session* session)))
+
+(defun unique-session ()
+  (or *unique-session*
+      (make-unique-session)))
 
 ;;; This has to be relative to a frame source so you can check for taken ids. 
 ;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  Might break if there are multiple.
@@ -107,7 +113,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		   (1+ (coerce-number last))
 		   0))
 	 (uri (string+ (frame-uri class) "/"
-		       (if fast? (string+ (frame-label *unique-session*) "/") "")
+		       (if fast? (string+ (frame-label (unique-sesssion)) "/") "")
 		       (fast-string next))))
     (if (uri-used? source uri)
 	(gensym-instance-frame class :start next :fast? fast?)
