@@ -113,7 +113,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		   (1+ (coerce-number last))
 		   0))
 	 (uri (string+ (frame-uri class) "/"
-		       (if fast? (string+ (frame-label (unique-sesssion)) "/") "")
+		       (if fast? (string+ (frame-label (unique-session)) "/") "")
 		       (fast-string next))))
     (if (uri-used? source uri)
 	(gensym-instance-frame class :start next :fast? fast?)
