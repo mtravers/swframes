@@ -51,13 +51,13 @@
   (flet ((do-it ()
 	   (do-sparql sparql (generate-sparql sparql query) :timeout timeout))
 	 (modify-query (offset)
-	   (setf (third query)
-		 (append  `(:offset ,offset :limit ,chunk-size)
-			  (if (zerop offset)
-			      (third query)
-			      (subseq (third query) 4))))))
+	     (setf (third query)
+		   (append  `(:offset ,offset :limit ,chunk-size)
+			    (if (zerop offset)
+				(third query)
+				(subseq (third query) 4))))))
     ;; if query already has limit or offset, no chunking
-    (if (or (member :offset (third query))
+    (if (or (not (eq (car query) :select))
 	    (member :limit (third query)))
 	(do-it)
 	(progn 
@@ -92,7 +92,7 @@
     (setq query
 	  ;; DELETE and INSERT can take WHERE clauses, not supported here yet
 	  ;; redone as separate methods on endpoints.
-	  (cond
+	  (case	(car form)
 	    #|
 	    ((eq (car form) :insert)
 	    (destructuring-bind ((&key from) &rest clauses) (cdr form)
@@ -111,8 +111,7 @@
 	    do (emit-sparql-clause clause s))
 	    (format s " }"))))
 	    |#
-      ((eq (car form) :select)
-       ;; +++ don't like
+      (:select
        (destructuring-bind (vars (&key limit offset distinct (from read-graph) order) &rest clauses) (cdr form)
 	 (with-output-to-string (s) 
 	     (format s "SELECT ~a ~a ~a~%WHERE { "
@@ -144,7 +143,21 @@
 	     (when offset
 	       (format s "~%OFFSET ~a " offset))
 	     )))
-	  (t (error "Can't handle ~A command yet" (car form)))))
+      (:insert 
+       (destructuring-bind (triple (&key (into write-graph)) &rest clauses) (cdr form)
+	 (with-output-to-string (s) 
+	   (format s
+		   "INSERT INTO GRAPH ~A { ~A ~A ~A }"
+		   (sparql-term (uri into))
+		   (sparql-term (first triple))
+		   (sparql-term (second triple))
+		   (sparql-term (third triple)))
+	   (when clauses
+	     (write-string "WHERE { " s)
+	     (loop for clause in clauses
+		do (emit-sparql-clause clause s))
+	     (write-string " }" s)))))
+      (t (error "Can't handle ~A command yet" (car form)))))
     ;; add prefixes
     (let* ((prefix (with-output-to-string (p)
 		     (loop for ns in *sparql-namespace-uses* 

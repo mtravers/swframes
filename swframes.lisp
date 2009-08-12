@@ -225,6 +225,11 @@ Idle thoughts:
       (car thing)
       thing))
 
+(defun listify (thing)
+  (if (listp thing)
+      thing
+      (list thing)))
+
 (defun slot-accessor (slot &optional fill?)
   #'(lambda (f) 
       (slotv f slot fill?)))
@@ -246,6 +251,9 @@ Idle thoughts:
       (setf result (nunion result (slotv f slot) :test #'equal)))))
 
 (defsetf msv set-msv)
+
+(defmethod set-msv ((frame frame) (slot frame) value)
+  (setf (slotv frame slot) (listify value)))
 
 (defmethod msv-inverse ((frame frame) slot)
   (delistify (slotv-inverse frame slot)))
