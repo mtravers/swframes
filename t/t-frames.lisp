@@ -1,6 +1,10 @@
+
 (in-package :sw)
 
 (use-package :lisp-unit)
+
+(defun gen-test-frame (&optional (root "test"))
+  (uri (formatn "~A~A" root (gensym))))
 
 (define-test intern
     (assert-eq (intern-uri "blither")
@@ -19,8 +23,8 @@
 
 
 (define-test rename
-  (let ((x (uri "test27"))
-	(y (uri "test28")))
+  (let ((x (gen-test-frame))
+	(y  (gen-test-frame)))
     (assert-true (frame-fresh? x nil))
     (awhen (frame-named "test27renamed")
 	   (delete-frame it))
@@ -31,9 +35,9 @@
     ))
 
 (define-test inverses 
-    (let ((x (uri "test88"))
-	  (y (uri "test89"))
-	  (p (uri "hasProp")))
+    (let ((x (gen-test-frame))
+	  (y (gen-test-frame))
+	  (p (gen-test-frame "hasProp")))
       (setf (slotv x p) y)
       (assert-true (member x (slotv-inverse y p)))
       (delete-frame x)
@@ -51,3 +55,24 @@
 
 
 ;;; +++ test dependency delete
+
+
+;;; Slots -- note that this is generally fucked.
+
+(define-test basic-slot
+    (let ((f (gen-test-frame))
+	  (s (gen-test-frame "slot"))
+	  (s2 (gen-test-frame "slot")))
+      (flet ((test-slot (v)
+	       (setf (slotv f s) v)
+	       (assert-equal (slotv f s) v )
+	       (setf (msv f s) v)
+	       (assert-equal (msv f s) v )
+	       ))
+	(test-slot 23)
+	(test-slot "foo")
+	(test-slot '(a b c))
+	(test-slot nil)
+	(test-slot #$foobar))))
+	
+			     

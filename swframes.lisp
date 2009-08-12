@@ -181,7 +181,7 @@ Idle thoughts:
 (defmethod set-slotv ((frame frame) (slot frame) value)
   (let ((old (%slotv frame slot)))
     ;; enforce rule that slot values are lists...
-    (unless (listp value)		;+++ this is ugly
+    (unless (listp value) 
       (setf value (list value)))
     (setf (gethash slot (frame-slots frame)) value)
     ;; +++ fairly serious change ... verify that this works 
@@ -194,12 +194,6 @@ Idle thoughts:
       (when (frame-p added)
 	(pushnew frame (gethash slot (frame-inverse-slots added)))))
     value))
-
-#|
-Test
-(setf (slotv #$blither5 #$relatedTo) #$blather5)
-(describe-frame #$blather5)
-|#
 
 (defmethod %slotv-inverse ((frame frame) (slot frame))
   (and (frame-inverse-slots frame)
@@ -250,6 +244,8 @@ Test
     (dolist (f frames (delistify result))
       ;; warning: depends on nunion only being destructive to its FIRST argument
       (setf result (nunion result (slotv f slot) :test #'equal)))))
+
+(defsetf msv set-msv)
 
 (defmethod msv-inverse ((frame frame) slot)
   (delistify (slotv-inverse frame slot)))
@@ -380,4 +376,21 @@ Tests:
 							      value)))))
 		 (frame-slots frame))
 	nframe)))
+
+;;; find-label: do a breadth first search from a frame until we hit something with a label, and produce a string
+(defun find-label (f)
+  (or (slotv f (intern-uri "http://www.w3.org/2000/01/rdf-schema#label") t)
+      (let ((fringe (list f f))
+	    (done nil))
+	(do ((f (pop fringe) (pop fringe)))
+	    ((null fringe))
+	  (push f done)
+	  (for-frame-slots (f s v)
+			   (dolist (elt v)
+			     (when  (and (frame-p elt) (not (member elt done)))
+			       (print elt)
+			       (aif (slotv f (intern-uri "http://www.w3.org/2000/01/rdf-schema#label") t)
+				    (return-from find-label (format nil "~A of ~A" (frame-label s) it))
+				    (pushnew elt fringe)))))))))
+				  
 
