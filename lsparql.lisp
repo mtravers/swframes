@@ -39,15 +39,15 @@
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *sparql-default-timeout*))
-    (knewos::run-sparql uri command 
-			:make-uri #'(lambda (u) (intern-uri u sparql))
-			;; this suddenly became necessary since I was geting literals back...no idea why 
-			:eager-make-uri? t
-			:timeout timeout
-			))
+  (knewos::run-sparql uri command 
+		      :make-uri #'(lambda (u) (intern-uri u sparql))
+		      ;; this suddenly became necessary since I was geting literals back...no idea why 
+		      :eager-make-uri? t
+		      :timeout timeout
+		      ))
 
 ;;; Handles translation and breaking up query into chunks if result set is too big
-(defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *sparql-default-timeout*) (chunk-size 1000))
+(defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *sparql-default-timeout*) (chunk-size 5000))
   (flet ((do-it ()
 	   (do-sparql sparql (generate-sparql sparql query) :timeout timeout))
 	 (modify-query (offset)
@@ -479,4 +479,8 @@
 		      (add-triple s slot val))))
 	      slots slot-vars
 	  ))))))
+
+(defun augment-query-standard (source query &key (var (car (second query))))
+  (augment-query source query :var var :slots (list #$rdf:type #$rdfs:label)))
+       
     
