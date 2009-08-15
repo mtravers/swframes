@@ -3,14 +3,14 @@
 ;;; should really not be happening
 (defun frames::%make-frame (&rest args)
   (warn "frames::%make-frame called with ~A" args)
-  (make-frame))
+  (%make-frame))
 
 ;; hook into old code, including listener
 (defun frames::frame-fnamed (name &optional force?)
   (if (typep name 'frame) 
       name
       (if force?
-	  (uri name)
+	  (make-frame name)
 	  (frame-named name))))
 
 (defun frames:fname (f)

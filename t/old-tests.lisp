@@ -6,7 +6,7 @@
 t;;; find some trials with interventions
 (do-sparql 
     *linkedct-frame-source*
-  `(:select (?s ?o) (:limit 10) (?s ,(make-frame :uri (expand-uri "linkedct:intervention")) ?o )))
+  `(:select (?s ?o) (:limit 10) (?s ,(%make-frame :uri (expand-uri "linkedct:intervention")) ?o )))
 
 
 ;;; find some drug trials 

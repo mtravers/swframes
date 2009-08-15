@@ -71,10 +71,10 @@
 (defmethod* build-insert ((sparql sparql-endpoint) s p o)
   (format nil
 	  "INSERT INTO GRAPH ~A { ~A ~A ~A }"
-	  (sparql-term (uri write-graph)) (sparql-term s) (sparql-term p) (sparql-term O)))
+	  (sparql-term (make-frame write-graph)) (sparql-term s) (sparql-term p) (sparql-term O)))
 
 (defmethod* build-delete ((sparql sparql-endpoint) s p o)
-  (let ((base (format nil "DELETE FROM GRAPH ~A { ~A ~A ~A }" (sparql-term (uri write-graph)) (sparql-term s) (sparql-term p) (sparql-term O))))
+  (let ((base (format nil "DELETE FROM GRAPH ~A { ~A ~A ~A }" (sparql-term (make-frame write-graph)) (sparql-term s) (sparql-term p) (sparql-term O))))
     (when (or (symbolp s) (symbolp p) (symbolp o) )
       (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))

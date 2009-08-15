@@ -3,10 +3,8 @@
 #|
 An RDF-backed frame system
 
-Idle thoughts:
+Ideas/todos
 - could wire this into CLOS in the manner of ActiveRDF.
-
-
 |#
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

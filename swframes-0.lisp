@@ -4,7 +4,7 @@
 This file has the minimum needed to get the frame system working (esp. the reader)
 |#
 
-(defstruct (frame (:print-function frame-printer))
+(defstruct (frame (:print-function frame-printer) (:constructor %make-frame))
   uri
   (slots (make-hash-table :test #'eq)) ;ht mapping preds to values (poss. multiple)
   (inverse-slots (make-hash-table :test #'eq))
@@ -56,7 +56,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 ;;; of a system, and read back in early.  Ugly..
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (let* ((slot (uri (frames::read-fname stream)))
+  (let* ((slot (make-frame (frames::read-fname stream)))
 	 (symbol (intern (frame-uri slot) :swfuncs)))
     (compile symbol #'(lambda (f) (msv f slot)))
     (eval `(defsetf ,symbol (f) (v) `(set-slotv ,f ,,slot ,v)))
@@ -66,12 +66,12 @@ This file has the minimum needed to get the frame system working (esp. the reade
 ;;; go back to this, which won't work with setf
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (let* ((slot (uri (frames::read-fname stream))))
+  (let* ((slot (make-frame (frames::read-fname stream))))
     `(lambda (f) (msv f ,slot))))
 
 (defun pound-inverse-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (let* ((slot (uri (frames::read-fname stream)))
+  (let* ((slot (make-frame (frames::read-fname stream)))
 	 (symbol (intern (string+ "inverse_" (frame-uri slot)) :swfuncs)))
     (compile symbol #'(lambda (f) (msv-inverse f slot)))
 ; No setf for now
@@ -81,7 +81,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 ;;; See above
 (defun pound-inverse-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (let* ((slot (uri (frames::read-fname stream))))
+  (let* ((slot (make-frame (frames::read-fname stream))))
     `(lambda (f) (msv-inverse f ,slot))))
 
 ;;; use this to temporarily patch all (setf (#^slot ... and similar forms to (setf (msv-hack #$slot ...))
@@ -90,12 +90,19 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defsetf msv-hack (s f) (v) `(set-slotv ,f ,s ,v))
 
-;;; +++ this is misnamed
+;;; +++ remove eventually
 (defun uri (thing)
-  (typecase thing
-    (frame thing)
-    (string (intern-uri (expand-uri thing)))
-    (t (error "Can't turn ~A into a URI" thing))))
+  (warn "URI is obsolete, use make-frame")
+  (make-frame thing))
+
+(defun make-frame (thing &key source)
+  (let ((f (typecase thing
+	     (frame thing)
+	     (string (intern-uri (expand-uri thing)))
+	     (t (error "Can't turn ~A into a URI" thing)))))
+    (when source
+      (setf (frame-source f) source))
+    f))
 
 ;;; Gets redefed later
 (defun expand-uri (string)
@@ -113,10 +120,10 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (setf uri (expand-uri uri))		;+++ decide if this expands or not!
   (or (frame-named uri)
       (intern-frame
-       (make-frame :uri uri 
-		   :source source
-		   :loaded? mark-loaded?
-		   ))))
+       (%make-frame :uri uri 
+		    :source source
+		    :loaded? mark-loaded?
+		    ))))
 
 ;;; here for tracability.
 (defun set-frame-loaded? (frame &optional (loaded? t))

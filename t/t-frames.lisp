@@ -4,7 +4,7 @@
 (use-package :lisp-unit)
 
 (defun gen-test-frame (&optional (root "test"))
-  (uri (formatn "~A~A" root (gensym))))
+  (make-frame (formatn "~A~A" root (gensym)) :source *code-source*))
 
 (define-test intern
     (assert-eq (intern-uri "blither")
@@ -61,13 +61,14 @@
 
 (define-test basic-slot
     (let ((f (gen-test-frame))
-	  (s (gen-test-frame "slot"))
-	  (s2 (gen-test-frame "slot")))
+	  (s (gen-test-frame "slot")))
       (flet ((test-slot (v)
 	       (setf (slotv f s) v)
 	       (assert-equal (slotv f s) v )
 	       (setf (msv f s) v)
 	       (assert-equal (msv f s) v )
+	       (setf (ssv f s) v)
+	       (assert-equal (ssv f s) v )
 	       ))
 	(test-slot 23)
 	(test-slot "foo")

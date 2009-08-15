@@ -84,7 +84,7 @@
     result))
       
 (defun mql-result->frame (id)
-  (let ((f (uri (expand-uri (string+ "fb:" (substitute #\. #\/ (subseq id 1)))))))
+  (let ((f (make-frame (expand-uri (string+ "fb:" (substitute #\. #\/ (subseq id 1)))))))
     (setf (frame-source f) nil)		;+++ or have a MQL-specific source object
     f))
 
