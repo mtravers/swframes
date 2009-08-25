@@ -11,7 +11,7 @@ Ideas/todos
   (defvar *default-frame-source* nil))
 
 ;;; Growing an API here...should clean this up, consolidate some stuff
-(export '(uri
+(export '(;uri obso
 	  *default-frame-source* *mark-new-frames-loaded?* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
 	  most-significant-name 
@@ -34,8 +34,11 @@ Ideas/todos
   (abbreviate-uri (frame-uri frame)))  
 
 ;;; Get the label, optionally filling
+;;; Could logically use all subPropertys of rdfs:label, obtainable through:
+;;; (do-sparql-one-var nil '(:select * nil (?p #$rdfs:subPropertyOf #$rdfs:label)))
 (defun frame-label (frame &optional fill?)
-  (or (best-string (slotv frame (intern-uri "http://www.w3.org/2000/01/rdf-schema#label") fill?))
+  (or (best-string (or (slotv frame #$rdfs:label fill?)
+		       (slotv frame #$skos:prefLabel fill?)))
       (most-significant-name (frame-name frame))
       ))
 
