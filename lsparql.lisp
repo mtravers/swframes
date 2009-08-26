@@ -148,7 +148,7 @@
 	 (with-output-to-string (s) 
 	   (format s
 		   "INSERT INTO GRAPH ~A { ~A ~A ~A }"
-		   (sparql-term (uri into))
+		   (sparql-term (make-frame into))
 		   (sparql-term (first triple))
 		   (sparql-term (second triple))
 		   (sparql-term (third triple)))
