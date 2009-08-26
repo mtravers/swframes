@@ -33,7 +33,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (uri (read-fname stream)))
+  (make-frame (read-fname stream)))
 
 ;;; +++ would be good to allow #$"sdasdad" for hard to parse names
 (defun read-fname (stream)

@@ -12,6 +12,7 @@ Ideas/todos
 
 ;;; Growing an API here...should clean this up, consolidate some stuff
 (export '(;uri obso
+	  make-frame
 	  *default-frame-source* *mark-new-frames-loaded?* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
 	  most-significant-name 
