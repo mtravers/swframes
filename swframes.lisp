@@ -283,9 +283,9 @@ Ideas/todos
 (defun slot-has? (frame slot value)
   (member value (slotv frame slot)))
 
-;;; This is the real underlying primitive.  Never fills
+;;; This is the real underlying primitive.  Never fills.
 ;;; Note the default test is equal.  This could be slow.
-;;; +++ setf %slotv was not primitive, now fixed, but who knows if ths will work now.
+;;; +++ setf %slotv was not primitive, now fixed, but who knows if this will work now.
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
       (when remove-old
 	(remove-triple s p '?o :to-db to-db :test test))
