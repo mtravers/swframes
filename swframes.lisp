@@ -38,8 +38,11 @@ Ideas/todos
 ;;; Could logically use all subPropertys of rdfs:label, obtainable through:
 ;;; (do-sparql-one-var nil '(:select * nil (?p #$rdfs:subPropertyOf #$rdfs:label)))
 (defun frame-label (frame &optional fill?)
-  (or (best-string (or (slotv frame #$rdfs:label fill?)
-		       (slotv frame #$skos:prefLabel fill?)))
+  ;; +++ for some reason #$ doesn't work right here, you end up with not-eq frames with same name
+  (or (best-string (or (slotv frame (make-frame "rdfs:label") fill?) 
+		       (slotv frame (make-frame "skos:prefLabel") fill?)
+		       (slotv frame (make-frame "http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol") fill?)
+		       ))
       (most-significant-name (frame-name frame))
       ))
 
