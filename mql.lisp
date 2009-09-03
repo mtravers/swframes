@@ -88,6 +88,7 @@
     (setf (frame-source f) nil)		;+++ or have a MQL-specific source object
     f))
 
+;;; doesn't work any more.
 (defun mql-term (term)
   (mql-read `(("*" .  ,term))))
 

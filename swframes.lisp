@@ -42,6 +42,8 @@ Ideas/todos
   (or (best-string (or (slotv frame (make-frame "rdfs:label") fill?) 
 		       (slotv frame (make-frame "skos:prefLabel") fill?)
 		       (slotv frame (make-frame "http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol") fill?)
+		       (slotv frame (make-frame "bp:SHORT-NAME") fill?)
+		       (slotv frame (make-frame "bp:NAME") fill?)
 		       ))
       (most-significant-name (frame-name frame))
       ))
