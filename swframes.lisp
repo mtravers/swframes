@@ -248,14 +248,14 @@ Ideas/todos
 ;;; MSV functions deal transparently with multiple values (return a single elt if that's all there is, otherwise a list)
 
 ;;; +++ these should have setfs
-(defmethod msv ((frame frame) slot)
-  (delistify (slotv frame slot)))
+(defmethod msv ((frame frame) slot &optional (fill? *fill-by-default?*))
+  (delistify (slotv frame slot fill?)))
 
-(defmethod msv ((frames list) slot)
+(defmethod msv ((frames list) slot &optional (fill? *fill-by-default?*))
   (let ((result nil))
     (dolist (f frames (delistify result))
       ;; warning: depends on nunion only being destructive to its FIRST argument
-      (setf result (nunion result (slotv f slot) :test #'equal)))))
+      (setf result (nunion result (slotv f slot fill?) :test #'equal)))))
 
 (defsetf msv set-msv)
 
