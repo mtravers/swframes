@@ -4,12 +4,16 @@
   :name "Semantic Web Frame system"
   :author "Mike Travers"
   :serial t
-  :depends-on (:cl-json)		;for MQL only
+  :depends-on
+  (:mtlisp
+   :s-xml
+   :cl-json)
   :components
   (;; setup and utilities
    ;; basics
    (:file "package")
    (:file "utils")
+   (:file "xmlu")
    (:file "swframes-0")
    (:file "swframes")
    (:file "namespace")
@@ -18,16 +22,21 @@
    (:file "rdfs")
    ;; sources
    (:file "dereference")
+   (:file "k-sparql")
    (:file "lsparql")
    (:file "sparul")
    (:file "files")
    (:file "mql")
-;moved   (:file "sw-frame-grid")
    (:file "xml")
-; particulars moved up.
+   (:module "tuples"
+	    :serial t
+	    :components
+	    ((:file "tuples")
+	     (:file "files")
+	     (:file "pickle")
+	     (:file "memory")))
    )
-  :depends-on
-  (:cl-json))
+)
 
 ;;;; eof
 

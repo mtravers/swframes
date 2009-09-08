@@ -112,6 +112,18 @@ Ideas/todos
   (reset-frame frame)
   (unintern-uri (frame-uri frame)))
 
+(defun delete-frame-recursive (frame depth)
+  (unless (zerop depth)
+    (when (frame-fresh? frame nil)	;skip if already deleted
+      (delete-frame frame)
+      (for-frame-slots (frame slot value)
+		       (dolist (elt value)
+			 (when (frame-p elt)
+			   (delete-frame-recursive elt (- depth 1)))))
+      ;; don't do inverses since we don't want to delete classes etc.
+      )))
+    
+
 (defun frames-matching (uri-frag)
   (utils:collecting 
    (for-all-frames (f)
@@ -126,7 +138,7 @@ Ideas/todos
 
 ;;; debugging
 (defun frame-fresh? (frame &optional (error? t))
-  (unless (eq frame (intern-uri (frame-uri frame)))
+  (unless (eq frame (frame-named (frame-uri frame)))
     (if error?
 	(error "~A is stale" frame)
 	(return-from frame-fresh? nil)))
