@@ -79,8 +79,18 @@
 
 ;;; how this works depends on how tuples and frames interact.  
 
+(rdfs-def-class #$crx:tuple ())
+
+(defun tuple->frame (tuple &key base)
+  (let ((f (gensym-instance-frame #$crx:tuple :fast? t :base base)))
+    (tuple-dofields (key val) tuple
+		      (let ((field-uri (formatn "crx:tuplefield/~A" (string key))))
+			(setf (slotv f (intern-uri field-uri)) val)))
+    f))
+
+
 (defmethod* write-tuple ((writer tset-pickler) tuple &optional serial)
-  (let ((frame (utils:forward-package-funcall :nl :tuple->frame tuple))) ;KKK
+  (let ((frame (tuple->frame tuple :base (string+ (frame-uri tset-frame) "/tuple"))))
     (add-triple frame #$crx:slots/tuple-order serial)
     (add-triple tset-frame #$crx:slots/includes-tuple frame :to-db t) ;have to do these one at a time or it times out
     (write-frame frame :sparql sparql :no-delete? t)
@@ -142,9 +152,9 @@
   (reopen-stream tset)
   (unless tset-frame
     (setf tset-frame
-	  (utils:forward-package-funcall :sw :gensym-instance-frame #$crx:tupleset)))
+	  (gensym-instance-frame #$crx:tupleset)))
   (let ((writer (make-instance 'tset-pickler
-			       :sparql (eval (find-symbol "*DEFAULT-FRAME-SOURCE*" :sw))
+			       :sparql *default-frame-source*
 			       :tset-frame tset-frame
 			       :tset tset)))
     (write-tset writer)))
