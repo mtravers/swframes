@@ -24,9 +24,11 @@
 (defun uri-tag (uri)
   (subseq uri (1+ (position #\# uri))))
 
-(defun coerce-number (slotv &key no-error)
+(defun coerce-number (slotv &key no-error (default slotv))
   (typecase slotv
-    (null (error "Cant' coerce nil to a number"))
+    (null (if no-error
+	      default
+	      (error "Can't coerce nil to a number")))
     (list
      (warn "Multiple values ~A" slotv)
      (coerce-number (car slotv)))
@@ -34,7 +36,7 @@
     (string 
      (let ((n (read-from-string slotv)))
        (if no-error
-	   (if (numberp n) n slotv)
+	   (if (numberp n) n default)
 	   (progn
 	     (assert (numberp n))
 	     n))))
