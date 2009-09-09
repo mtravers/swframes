@@ -114,12 +114,13 @@ Ideas/todos
 
 (defun delete-frame-recursive (frame depth)
   (unless (zerop depth)
-    (when (frame-fresh? frame nil)	;skip if already deleted
-      (delete-frame frame)
+    (when (and (frame-fresh? frame nil)	;skip if already deleted
+	       (not (frame-from-code frame))) ;don't delete classes etc.
       (for-frame-slots (frame slot value)
 		       (dolist (elt value)
 			 (when (frame-p elt)
 			   (delete-frame-recursive elt (- depth 1)))))
+      (delete-frame frame)
       ;; don't do inverses since we don't want to delete classes etc.
       )))
     
