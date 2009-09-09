@@ -16,7 +16,7 @@
   (:use :cl :utils :clos*)
   (:nicknames :sw)
   (:import-from :wb "HTML")
-  (:import-from :knewos "RUN-SPARQL")
+;  (:import-from :knewos "RUN-SPARQL")
   ;; exports in the code for now
   )
 

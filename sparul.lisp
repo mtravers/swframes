@@ -172,8 +172,3 @@
     (dolist (binding all)
       (delete-triple sparql (sparql-binding-elt binding "s") (sparql-binding-elt binding "p") (sparql-binding-elt binding "o")))))
 
-
-;;; A piece of knewos that depends on the above code, so can't be in knewos which is loaded first!  We need to collapse this stuff.
-(defmethod* knewos::write-tset :around ((writer knewos::tset-pickler))
-	    (with-sparul-group (*default-frame-source*)
-	      (call-next-method)))
