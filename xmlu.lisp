@@ -1,6 +1,5 @@
 (in-package :sw)
 
-
 #|
 LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dist/pxml.htm
 |#
