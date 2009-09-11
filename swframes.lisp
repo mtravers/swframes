@@ -61,22 +61,24 @@ Ideas/todos
 
 ;;; names should be reversed
 (defun %frame-slots (frame)
-  (wlisp::hash-keys (frame-slots frame)))
+  (and (frame-slots frame)
+       (wlisp::hash-keys (frame-slots frame))))
 
 (defun %frame-inverse-slots (frame)
-  (when (frame-inverse-slots frame)
-    (wlisp::hash-keys (frame-inverse-slots frame))))
+  (and (frame-inverse-slots frame)
+       (wlisp::hash-keys (frame-inverse-slots frame))))
 
 (defmacro for-frame-slots ((frame slot value) &body body)
-  `(maphash #'(lambda (,slot ,value)
-	       ,@body)
-	   (frame-slots ,frame)))
+  `(and (frame-slots ,frame)
+	(maphash #'(lambda (,slot ,value)
+		     ,@body)
+		 (frame-slots ,frame))))
 
 (defmacro for-frame-inverse-slots ((frame slot value) &body body)
-  `(maphash #'(lambda (,slot ,value)
-	       ,@body)
-	   (frame-inverse-slots ,frame)))
-	       
+  `(and (frame-inverse-slots ,frame)
+	(maphash #'(lambda (,slot ,value)
+		     ,@body)
+		 (frame-inverse-slots ,frame))))
 
 (defun reset-frames ()
   (clrhash *uri->frame-ht*))
@@ -91,7 +93,7 @@ Ideas/todos
   (collecting (for-all-frames (f) (utils::collect f))))
 
 (defmethod reset-frame ((frame frame))
-  (clrhash (frame-slots frame))
+  (setf (frame-slots frame) nil)
   (setf (frame-loaded? frame) nil)
   (setf (frame-inverse-slots frame) nil))
 
@@ -102,12 +104,12 @@ Ideas/todos
   (for-frame-slots (frame slot value)
 		   (dolist (elt value)
 		     (when (frame-p elt)
-		       (deletef frame (gethash slot (frame-inverse-slots elt))))))
+		       (deletef frame (gethash slot (frame-inverse-slots elt)))))) ;NNN
 
   (for-frame-inverse-slots (frame slot value)
 			   (dolist (elt value)
 			     (when (frame-p elt)
-			       (deletef frame (gethash slot (frame-slots elt))))))
+			       (deletef frame (gethash slot (frame-slots elt)))))) ;NNN
 
   (reset-frame frame)
   (unintern-uri (frame-uri frame)))
@@ -153,7 +155,8 @@ Ideas/todos
     (setf (frame-loaded? frame) nil)
     ;; reset-frame was here, but moved to sparql.  This all needs rethinking
     (let ((*fill-by-default?* nil)	;prevent recursion
-	  (existing-nslots (hash-table-count (frame-slots frame))))
+;	  (existing-nslots (hash-table-count (frame-slots frame)))
+	  )
       (if source
 	  (progn (fill-frame-from frame source :inverse? inverse?)
 		 ;; if nothing from db, try dereferncing
@@ -182,12 +185,16 @@ Ideas/todos
 (defvar *fill-by-default?* t)
 
 (defmethod %slotv ((frame frame) (slot frame))
-  (gethash slot (frame-slots frame)))  
+  (and (frame-slots frame)
+       (gethash slot (frame-slots frame))))  
 
 (defsetf %slotv %set-slotv)
 
+(defun make-slot-hashtable ()
+  (make-hash-table :test #'eq))
+
 (defmethod %set-slotv ((frame frame) (slot frame) value)
-  (setf (gethash slot (frame-slots frame)) value))  
+  (setf (gethash slot (frame-slots-force frame)) value))  
 
 ;;; optional argument doesn't play well with setf.
 (defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
@@ -196,6 +203,16 @@ Ideas/todos
 
 (defsetf slotv set-slotv)
 
+(defun frame-slots-force (frame)
+  (or (frame-slots frame)
+      (setf (frame-slots frame)
+	    (make-slot-hashtable))))
+
+(defun frame-inverse-slots-force (frame)
+  (or (frame-inverse-slots frame)
+      (setf (frame-inverse-slots frame)
+	    (make-slot-hashtable))))
+
 ;;; note that this and set-slotv-inverse never do fills
 ;;; this can't really do inverses, can it? we'd have to a difference...
 (defmethod set-slotv ((frame frame) (slot frame) value)
@@ -203,16 +220,16 @@ Ideas/todos
     ;; enforce rule that slot values are lists...
     (unless (listp value) 
       (setf value (list value)))
-    (setf (gethash slot (frame-slots frame)) value)
+    (%set-slotv frame slot value)
     ;; +++ fairly serious change ... verify that this works 
     ;; (too slow for long lists)
     (when old
       (dolist (removed (set-difference old value :test #'equal))
 	(when (frame-p removed)
-	  (deletef frame (gethash slot (frame-inverse-slots removed))))))
+	  (deletef frame (gethash slot (frame-inverse-slots-force removed))))))
     (dolist (added (set-difference value old :test #'equal))
       (when (frame-p added)
-	(pushnew frame (gethash slot (frame-inverse-slots added)))))
+	(pushnew frame (gethash slot (frame-inverse-slots-force added)))))
     value))
 
 (defmethod %slotv-inverse ((frame frame) (slot frame))
@@ -228,7 +245,7 @@ Ideas/todos
 
 (defmethod set-slotv-inverse ((frame frame) (slot frame) value)
   (unless (frame-inverse-slots frame)
-    (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
+    (setf (frame-inverse-slots frame) (make-slot-hashtable)))
   (setf (gethash slot (frame-inverse-slots frame)) value))
 
 ;;; convenience, analagous to #^ (which is now implemented)
@@ -341,7 +358,8 @@ Ideas/todos
 (defun describe-frame (frame &optional (fill? nil))
   (when fill? (fill-frame frame :force? t))
   (format t "~&Forward:")
-  (pprint (utils:ht-contents (frame-slots frame)))
+  (when (frame-slots frame)
+    (pprint (utils:ht-contents (frame-slots frame))))
   (when (frame-inverse-slots frame)
     (format t "~&Inverse:")
     (pprint (utils:ht-contents (frame-inverse-slots frame))))

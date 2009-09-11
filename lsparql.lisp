@@ -39,6 +39,7 @@
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *sparql-default-timeout*))
+  (print command)
   (run-sparql uri command 
 		      :make-uri #'(lambda (u) (intern-uri u sparql))
 		      ;; this suddenly became necessary since I was geting literals back...no idea why 

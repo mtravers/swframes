@@ -51,8 +51,8 @@
                       (funcall make-uri (cadr value-elt))
                       (cadr value-elt))))
             (push (list name value) row-result)))
-        (push-end row-result results)))
-    (values results vars)))
+        (push row-result results)))
+    (values (nreverse results) vars)))
 
 ;;; Tuplized version
 (defun run-sparql-tuples (endpoint sparql &key (make-uri #'identity))
