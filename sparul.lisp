@@ -133,6 +133,7 @@
    (for-frame-slots (frame slot value)
                     (when (%slotv slot #$crx:slots/dependent)
                       (dolist (v value)
+			(assert (frame-p v) nil "Non-frame value ~A in slot ~A of ~A" v slot frame)
                         (collect-new v))))))
 
 
