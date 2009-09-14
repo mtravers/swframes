@@ -309,6 +309,9 @@ Ideas/todos
 	(error "Multiple values where one expected"))
     (car v)))
 
+(defmethod set-ssv (frame slot value)
+  (setf (slotv frame slot) (list value)))
+
 (defmethod ssv-inverse ((frame frame) slot)
   (let ((v (slotv-inverse frame slot)))
     (if (> (length v) 1)
