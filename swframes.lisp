@@ -24,7 +24,7 @@ Ideas/todos
 	  slot-accessor inverse-slot-accessor
 	  svf svif
 	  msv msv-inverse msv-hack
-	  ssv ssv-inverse
+	  ssv ssv-inverse ssv-accessor
 	  declare-special-slot
 	  add-triple
 	  rename-frame delete-frame write-frame destroy-frame
@@ -198,8 +198,11 @@ Ideas/todos
 
 ;;; optional argument doesn't play well with setf.
 (defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
-  (if fill? (fill-frame frame))
-  (%slotv frame slot))
+  (if (eq fill? t) (fill-frame frame))
+  (or (%slotv frame slot)
+      (when (eq fill? :if)
+	(fill-frame frame)
+	(%slotv frame slot))))
 
 (defsetf slotv set-slotv)
 
@@ -275,6 +278,10 @@ Ideas/todos
   #'(lambda (f) 
       (slotv-inverse f slot fill?)))
 
+
+
+
+
 ;;; MSV functions deal transparently with multiple values (return a single elt if that's all there is, otherwise a list)
 
 ;;; +++ these should have setfs
@@ -310,13 +317,20 @@ Ideas/todos
     (car v)))
 
 (defmethod set-ssv (frame slot value)
-  (setf (slotv frame slot) (list value)))
+  (setf (%slotv frame slot) (list value))
+  value)
+
+(defsetf ssv set-ssv)
 
 (defmethod ssv-inverse ((frame frame) slot)
   (let ((v (slotv-inverse frame slot)))
     (if (> (length v) 1)
 	(error "Multiple values where one expected"))
     (car v)))
+
+(defun ssv-accessor (slot)
+  #'(lambda (f) 
+      (ssv f slot)))
 
 (defun slot-has? (frame slot value)
   (member value (slotv frame slot)))
