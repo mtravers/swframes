@@ -310,8 +310,8 @@ Ideas/todos
 
 ;;; SSV functions enforce single values (useful for debugging).
 
-(defmethod ssv ((frame frame) slot)
-  (let ((v (slotv frame slot)))
+(defmethod ssv ((frame frame) slot &optional (fill? *fill-by-default?*))
+  (let ((v (slotv frame slot fill?)))
     (if (> (length v) 1)
 	(error "Multiple values where one expected"))
     (car v)))
