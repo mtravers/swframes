@@ -174,6 +174,7 @@
 ;;; see http://www.w3.org/TR/rdf-sparql-query/#QSynLiterals
 (defun sparql-term (thing)
   (typecase thing
+    (null (error "NIL in SPARQL"))
     (frame (format nil "<~A>" (frame-uri thing)))
     (symbol
      (string-downcase (string thing)))
