@@ -423,8 +423,13 @@ Tests:
 	      (utils::collect f)
 	      (return-from frame))))))))
 
+(defun default-uri-generator (frame)
+  (aif (rdfs-classes frame)
+       (gensym-instance-frame (car it))
+       (error "Can't determine class of ~A" frame)))
+
 ;;; +++ it would be better to have info on how to treat slots on the slots themselves, or in classes.
-(defun frame-copy (frame &key shallow-slots omit-slots uri-generator)
+(defun frame-copy (frame &key (shallow-slots (list #$rdf:type)) omit-slots (uri-generator #'default-uri-generator))
   (if (not (frame-p frame))
       frame				;nonframes remain the same (makes recursion easier)
       (let ((nframe (funcall uri-generator frame)))
