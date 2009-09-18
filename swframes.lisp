@@ -38,12 +38,11 @@ Ideas/todos
 ;;; Could logically use all subPropertys of rdfs:label, obtainable through:
 ;;; (do-sparql-one-var nil '(:select * nil (?p #$rdfs:subPropertyOf #$rdfs:label)))
 (defun frame-label (frame &optional fill?)
-  ;; +++ for some reason #$ doesn't work right here, you end up with not-eq frames with same name
-  (or (best-string (or (slotv frame (make-frame "rdfs:label") fill?) 
-		       (slotv frame (make-frame "skos:prefLabel") fill?)
-		       (slotv frame (make-frame "http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol") fill?)
-		       (slotv frame (make-frame "bp:SHORT-NAME") fill?)
-		       (slotv frame (make-frame "bp:NAME") fill?)
+  (or (best-string (or (slotv frame #$rdfs:label fill?) 
+		       (slotv frame #$skos:prefLabel fill?)
+		       (slotv frame #$http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol fill?)
+		       (slotv frame #$bp:SHORT-NAME fill?)
+		       (slotv frame #$bp:NAME fill?)
 		       ))
       (most-significant-name (frame-name frame))
       ))
@@ -356,9 +355,11 @@ Ideas/todos
 
 ;;; see comment on delete-triple
 (defun remove-triple (s p o &key (test #'equal) to-db &aux savedo)
-  (when (var-p o)
-    (setf savedo (%slotv s p) (%slotv s p) nil)
-    (deletef o (%slotv s p) :test test))
+  (if (var-p o)
+      (progn 
+	(setf savedo (%slotv s p) (%slotv s p) nil)
+	(setf (%slotv s p) nil))
+      (deletef o (%slotv s p) :test test))
   (if savedo
       (dolist (o savedo)
 	(when (frame-p o)
@@ -425,23 +426,39 @@ Tests:
 
 (defun default-uri-generator (frame)
   (aif (rdfs-classes frame)
-       (gensym-instance-frame (car it))
-       (error "Can't determine class of ~A" frame)))
+       (gensym-instance-frame (car it) :fast? t)
+       (gen-child-uri frame)))
+
+;;; Another method for generating unique URIs, if no class is found.
+(defun gen-child-uri (frame &optional n)
+  (unless n
+    (setf n (or (ssv frame #$slots/last_child) 0)))
+  (let ((uri (string+ (frame-uri frame) "/" (fast-string n))))
+    (if (uri-used? (or (frame-source frame) *default-frame-source*) uri)
+	(gen-child-uri frame (+ n 1))
+	(progn
+	  (setf (ssv frame #$slots/last_child) n)
+	  (intern-uri uri)))))
 
 ;;; +++ it would be better to have info on how to treat slots on the slots themselves, or in classes.
-(defun frame-copy (frame &key (shallow-slots (list #$rdf:type)) omit-slots (uri-generator #'default-uri-generator))
+(defun frame-copy (frame &key deep-slots omit-slots (uri-generator #'default-uri-generator))
   (if (not (frame-p frame))
       frame				;nonframes remain the same (makes recursion easier)
       (let ((nframe (funcall uri-generator frame)))
 	(setf (frame-loaded? nframe) t)
 	(maphash #'(lambda (slot value)
 		     (cond ((member slot omit-slots))
-			   ((member slot shallow-slots)
-			    (setf (slotv nframe slot) (copy-list value)))
-			   (t
+;			   ((member slot shallow-slots)
+;			    (setf (slotv nframe slot) (copy-list value)))
+			   ((or (member slot deep-slots)
+				(ssv slot (setq xxx #$crx:slots/deep-copy)))
 			    (setf (slotv nframe slot) (mapcar #'(lambda (sf)
-								  (frame-copy sf :shallow-slots shallow-slots :omit-slots omit-slots :uri-generator uri-generator))
-							      value)))))
+								  (frame-copy sf :deep-slots deep-slots :omit-slots omit-slots :uri-generator uri-generator))
+							      value)))
+			   ;;; Shallow copy
+			   (t
+			    (setf (slotv nframe slot) (copy-list value)))
+			   ))
 		 (frame-slots frame))
 	nframe)))
 
@@ -462,3 +479,5 @@ Tests:
 				    (pushnew elt fringe)))))))))
 				  
 
+
+ 

@@ -104,8 +104,9 @@ This file has the minimum needed to get the frame system working (esp. the reade
       (setf (frame-source f) source))
     f))
 
-;;; Gets redefed later
+;;; Gets redefined later
 (defun expand-uri (string)
+  (warn "Expand done before namespaces are in place: " string)
   string)
 
 (defvar *uri->frame-ht* (make-hash-table :test 'equal))
