@@ -23,7 +23,8 @@ Ideas/todos
 	  slotv slotv-inverse
 	  slot-accessor inverse-slot-accessor
 	  svf svif
-	  msv msv-inverse msv-hack
+	  msv msv-inverse 
+;SSS	  msv-hack
 	  ssv ssv-inverse ssv-accessor
 	  declare-special-slot
 	  add-triple
@@ -38,25 +39,17 @@ Ideas/todos
 ;;; Could logically use all subPropertys of rdfs:label, obtainable through:
 ;;; (do-sparql-one-var nil '(:select * nil (?p #$rdfs:subPropertyOf #$rdfs:label)))
 (defun frame-label (frame &optional fill?)
-  (or (best-string (or (slotv frame #$rdfs:label fill?) 
-		       (slotv frame #$skos:prefLabel fill?)
-		       (slotv frame #$http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol fill?)
-		       (slotv frame #$bp:SHORT-NAME fill?)
-		       (slotv frame #$bp:NAME fill?)
-		       ))
+  (or (ssv frame #$rdfs:label fill?) 
+      (ssv frame #$skos:prefLabel fill?)
+      (ssv frame #$http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol fill?)
+      (ssv frame #$bp:SHORT-NAME fill?)
+      (ssv frame #$bp:NAME fill?)
       (most-significant-name (frame-name frame))
       ))
 
 ;;; +++ sometimes you want the part following #
 (defun most-significant-name (string)
   (car (last (utils:string-split string #\/))))
-
-;; try to find the english...this is simplistic and probably implementation dependent
-(defun best-string (list)
-  (or (dolist (elt list)
-	(if (typep elt '(SIMPLE-BASE-STRING 12))
-	    (return elt)))
-      (car list)))
 
 ;;; names should be reversed
 (defun %frame-slots (frame)
@@ -203,6 +196,26 @@ Ideas/todos
 	(fill-frame frame)
 	(%slotv frame slot))))
 
+;;; note that this and set-slotv-inverse never do fills
+;;; this can't really do inverses, can it? we'd have to a difference...
+(defmethod set-slotv ((frame frame) (slot frame) value)
+  (let ((old (%slotv frame slot)))
+    ;; enforce rule that slot values are lists...
+    (unless (listp value) 
+;      (setf value (list value)))
+      (error "Arg to set-slotv must be list: ~A ~A ~A" frame slot value))
+    (%set-slotv frame slot value)
+    ;; +++ fairly serious change ... verify that this works 
+    ;; (too slow for long lists)
+    (when old
+      (dolist (removed (set-difference old value :test #'equal))
+	(when (frame-p removed)
+	  (deletef frame (gethash slot (frame-inverse-slots-force removed))))))
+    (dolist (added (set-difference value old :test #'equal))
+      (when (frame-p added)
+	(pushnew frame (gethash slot (frame-inverse-slots-force added)))))
+    value))
+
 (defsetf slotv set-slotv)
 
 (defun frame-slots-force (frame)
@@ -215,24 +228,7 @@ Ideas/todos
       (setf (frame-inverse-slots frame)
 	    (make-slot-hashtable))))
 
-;;; note that this and set-slotv-inverse never do fills
-;;; this can't really do inverses, can it? we'd have to a difference...
-(defmethod set-slotv ((frame frame) (slot frame) value)
-  (let ((old (%slotv frame slot)))
-    ;; enforce rule that slot values are lists...
-    (unless (listp value) 
-      (setf value (list value)))
-    (%set-slotv frame slot value)
-    ;; +++ fairly serious change ... verify that this works 
-    ;; (too slow for long lists)
-    (when old
-      (dolist (removed (set-difference old value :test #'equal))
-	(when (frame-p removed)
-	  (deletef frame (gethash slot (frame-inverse-slots-force removed))))))
-    (dolist (added (set-difference value old :test #'equal))
-      (when (frame-p added)
-	(pushnew frame (gethash slot (frame-inverse-slots-force added)))))
-    value))
+
 
 (defmethod %slotv-inverse ((frame frame) (slot frame))
   (and (frame-inverse-slots frame)

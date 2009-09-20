@@ -57,13 +57,13 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	     (assert (rdfs-classp thing class)))))
     (check-class class #$rdfs:Class)
     (let ((frame (gensym-instance-frame class :fast? *fast-instances?*)))
-      (setf (slotv frame #$rdf:type) class)
+      (setf (ssv frame #$rdf:type) class)
       (setf (frame-loaded? frame) t)	;if we are consing this from scratch in memory, it is considered loaded
       (do ((rest slots (cddr rest)))
 	  ((null rest) frame)
 	(check-class frame (#^rdfs:domain (car rest))) 
 	(check-class (cadr rest) (#^rdfs:range (car rest))) 
-	(setf (slotv frame (car rest)) 
+	(setf (msv frame (car rest)) 
 	      (cadr rest))))))
 
 (defun rdfs-find (value &key slot class source word?)

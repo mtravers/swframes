@@ -84,11 +84,13 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (let* ((slot (make-frame (frames::read-fname stream))))
     `(lambda (f) (msv-inverse f ,slot))))
 
+#| SSS
 ;;; use this to temporarily patch all (setf (#^slot ... and similar forms to (setf (msv-hack #$slot ...))
 (defmacro msv-hack (slot frame)
   `(msv ,frame ,slot))
 
 (defsetf msv-hack (s f) (v) `(set-slotv ,f ,s ,v))
+|#
 
 ;;; +++ remove eventually
 (defun uri (thing)

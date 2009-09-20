@@ -12,23 +12,25 @@
 ;;; async is NOT WORKING PROPERLY yet, so don't use it!
 (defmacro with-sparul-group ((endpoint &key async?) &body body)
   `(let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
-         (*sparul-group* (or *sparul-group* (list ,endpoint nil)))
-         retval)
-     (unless (eq (car *sparul-group*) ,endpoint)
+	 (*sparul-group* (or *sparul-group* (list ,endpoint nil)))
+	 retval)
+     (unless (equal (car *sparul-group*) ,endpoint)
        ;; +++ was error, temp disabled
-       (warn "Bad nested SPARUL groups: ~A ~A" (car *sparul-group*) ,endpoint))
+       (error "Bad nested SPARUL groups: ~A ~A" (car *sparul-group*) ,endpoint))
      (setf retval (progn ,@body))
-     (when (and (cadr *sparul-group*)
-                (not prior-group))
-       (flet ((do-it ()
-                (do-sparql ,endpoint
-                  (with-output-to-string (out)
-                    (dolist (s (cadr *sparul-group*))
-                      (write-string s out)
-                      (terpri out))))))
-         (if ,async?
-             (in-background-thread (do-it))
-             (do-it))))
+     (let ((clauses (cadr *sparul-group*))) ;make sure this gets captured
+       (when (and clauses
+		  (not prior-group))
+	 (flet ((do-it ()
+		  (print `(clauses ,clauses))
+		  (do-sparql ,endpoint
+		    (with-output-to-string (out)
+		      (dolist (s clauses)
+			(write-string s out)
+			(terpri out))))))
+	   (if ,async?
+	       (in-background-thread (do-it))
+	       (do-it)))))
      retval))
 
 (defmethod do-grouped-sparul ((sparql sparql-endpoint) string)
@@ -123,8 +125,8 @@
 ;;; need to do the inverse on read! See deserialize-value (+++ make more parallel)
 
 (defun declare-special-slot (slot type)
-  (setf (slotv slot #$rdf:type) type
-        (slotv slot #$crx:specialhandling) t))
+  (setf (ssv slot #$rdf:type) type
+        (ssv slot #$crx:specialhandling) t))
 
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
