@@ -50,11 +50,14 @@
 
 (defmethod* write-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)
-  ;; temp expedient +++
-  (if (wb::form-is-not-printable? o)
-      (warn "Can't write ~A ~A ~A to SPARQL, omitting" s p o)
-      (do-grouped-sparul sparql
-        (build-insert sparql s p o))))
+  (aif (%slotv p #$crx:specialhandling)
+       (rdfs-call write-triple-special p s o sparql)
+       ;; normal
+       (%write-triple sparql s p o)))
+
+(defun %write-triple (sparql s p o)
+  (do-grouped-sparul sparql
+    (build-insert sparql s p o)))
 
 ;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod* delete-triple ((sparql sparql-endpoint) s p o)
@@ -87,11 +90,8 @@
       (unless no-delete?
         (delete-triple source frame '?p '?o))
       (dolist (slot (%frame-slots frame))
-        (aif (%slotv slot #$crx:specialhandling)
-             (rdfs-call write-slot slot frame source)
-             ;; normal behavior
-             (dolist (val (slotv frame slot))
-               (write-triple source frame slot val))))
+	(dolist (val (slotv frame slot))
+	  (write-triple source frame slot val)))
       ;; write out dependents
       (dolist (d dependents)
         (write-frame d))
@@ -104,24 +104,22 @@
 (defmethod write-slot ((frame frame) (slot frame) &optional (sparql (frame-source frame)))
   (with-sparul-group (sparql)
     (delete-triple sparql frame slot '?o)
-    (if (%slotv slot #$crx:specialhandling)
-        (rdfs-call write-slot slot frame sparql)
-        ;; normal behavior
-        (dolist (val (slotv frame slot))
-          (write-triple sparql frame slot val)))))
+    (dolist (val (slotv frame slot))
+      (write-triple sparql frame slot val))))
 
 (rdfs-def-class #$crx:slots/specialSlot ())
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 
-(rdfs-defmethod write-slot ((slot #$crx:slots/LispValueSlot) frame sparql)
-                (handler-case
-                    (let ((*print-readably* t))
-                      (dolist (val (slotv frame slot))
-                        (write-triple sparql frame slot (prin1-to-string val))))
-                  (print-not-readable (e)
-                    (declare (ignore e))
-                    (warn "Can't save nonreadable object in ~A/~A" frame slot)
-                    )))
+
+
+(rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
+		(let ((*print-readably* t))
+		  (handler-case
+		      (%write-triple sparql s p (prin1-to-string o))
+		    (print-not-readable (e)
+		      (declare (ignore e))
+		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
+		      ))))
 
 ;;; need to do the inverse on read! See deserialize-value (+++ make more parallel)
 

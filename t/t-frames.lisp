@@ -30,6 +30,7 @@
 
 ;;; Works fine for in-memory
 ;;; write to db tests work IFF you declare slot special.  Maybe that should be the default.
+;;; Should test non-special slots
 (define-test basic-slot
     (let ((f (gen-test-frame))
 	  (s (gen-test-frame "slot")))
@@ -65,6 +66,15 @@
 	;; clean up after ourselves
 	(destroy-frame f)
 	)))
+
+(define-test unwriteable 
+    (let ((f (gen-test-frame))
+	  (s (gen-test-frame "slot")))
+      (setf (slotv f s) (list #'(lambda () (not 'serializable))))
+      (assert-error 'error
+		    (write-frame f))
+      (delete-frame f)
+      (delete-frame s)))
 
 (define-test rename
   (let ((x (gen-test-frame))
