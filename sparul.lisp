@@ -22,7 +22,7 @@
        (when (and clauses
 		  (not prior-group))
 	 (flet ((do-it ()
-		  (print `(clauses ,clauses))
+;		  (print `(clauses ,clauses))
 		  (do-sparql ,endpoint
 		    (with-output-to-string (out)
 		      (dolist (s clauses)
@@ -81,22 +81,23 @@
       (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))
 
-(defmethod write-frame ((frame frame) &key (sparql (frame-source frame)) (async? nil) (no-delete? nil))
+(defmethod write-frame ((frame frame) &key (source (frame-source frame)) (async? nil) (no-delete? nil))
   (let ((dependents (frame-dependents frame)))
-    (with-sparul-group (sparql :async? async?)
+    (with-sparul-group (source :async? async?)
       (unless no-delete?
-        (delete-triple sparql frame '?p '?o))
+        (delete-triple source frame '?p '?o))
       (dolist (slot (%frame-slots frame))
         (aif (%slotv slot #$crx:specialhandling)
-             (rdfs-call write-slot slot frame sparql)
+             (rdfs-call write-slot slot frame source)
              ;; normal behavior
              (dolist (val (slotv frame slot))
-               (write-triple sparql frame slot val))))
+               (write-triple source frame slot val))))
       ;; write out dependents
       (dolist (d dependents)
         (write-frame d))
       ;; if we just wrote this out, then it's up to date!
-      (setf (frame-loaded? frame) t))
+      (setf (frame-loaded? frame) t
+	    (frame-source frame) source))
     frame))
 
 ;;; write out a single slot

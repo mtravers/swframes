@@ -93,7 +93,7 @@
   (let ((frame (tuple->frame tuple :base (string+ (frame-uri tset-frame) "/tuple"))))
     (add-triple frame #$crx:slots/tuple-order serial)
     (add-triple tset-frame #$crx:slots/includes-tuple frame :to-db t) ;have to do these one at a time or it times out
-    (write-frame frame :sparql sparql :no-delete? t)
+    (write-frame frame :source sparql :no-delete? t)
   ))
 
 ;;; make multiple values into single values (needed by display)

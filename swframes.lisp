@@ -95,9 +95,8 @@ Ideas/todos
   ;;; remove references (that we know about)
   (for-frame-slots (frame slot value)
 		   (dolist (elt value)
-		     (when (frame-p elt)
+		     (when (and (frame-p elt) (frame-inverse-slots elt))
 		       (deletef frame (gethash slot (frame-inverse-slots elt)))))) ;NNN
-
   (for-frame-inverse-slots (frame slot value)
 			   (dolist (elt value)
 			     (when (frame-p elt)
@@ -312,7 +311,7 @@ Ideas/todos
     (car v)))
 
 (defmethod set-ssv (frame slot value)
-  (setf (%slotv frame slot) (list value))
+  (setf (slotv frame slot) (list value))
   value)
 
 (defsetf ssv set-ssv)

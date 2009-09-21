@@ -22,6 +22,50 @@
       ))
 
 
+;;; slot equality is set equality
+(defun slotv-equal (a b)
+  (if (and (listp a) (listp b))
+      (set-equal a b)
+      (equal a b)))
+
+;;; Works fine for in-memory
+;;; write to db tests work IFF you declare slot special.  Maybe that should be the default.
+(define-test basic-slot
+    (let ((f (gen-test-frame))
+	  (s (gen-test-frame "slot")))
+      (declare-special-slot s #$crx:slots/LispValueSlot)
+      (labels ((test-slot (v)
+		 (test-slot-1 v nil)
+		 (test-slot-1 v t))
+	       (test-slot-1 (v db)
+		 (if (listp v)
+		     (progn
+		       (setf (slotv f s) v)
+		       (when db (forget))
+		       (assert-true (slotv-equal v (slotv f s) )))
+		     (assert-error 'error (setf (slotv f s) v)))
+		 (setf (msv f s) v)
+		 (when db (forget))
+		 (assert-true (slotv-equal v (msv f s) ))
+		 (setf (ssv f s) v)
+		 (when db (forget))
+		 (assert-true (slotv-equal v (ssv f s) ))
+		 )
+	       (forget ()
+		 (write-frame f :source *default-frame-source*)
+		 (reset-frame f)
+		 (fill-frame f)))
+	(test-slot 23)
+	(test-slot "foo")
+	(test-slot '(a b c))
+	(test-slot t)
+	(test-slot nil)
+	(test-slot #$foobar)
+	(test-slot (list #$foobar #$barfoo))
+	;; clean up after ourselves
+	(destroy-frame f)
+	)))
+
 (define-test rename
   (let ((x (gen-test-frame))
 	(y  (gen-test-frame)))
@@ -38,7 +82,7 @@
     (let ((x (gen-test-frame))
 	  (y (gen-test-frame))
 	  (p (gen-test-frame "hasProp")))
-      (setf (slotv x p) y)
+      (setf (ssv x p) y)
       (assert-true (member x (slotv-inverse y p)))
       (delete-frame x)
       (assert-false (member x (slotv-inverse y p)))
@@ -57,23 +101,8 @@
 ;;; +++ test dependency delete
 
 
-;;; Slots -- note that this is generally fucked.
+;;; Slot accessors
 
-(define-test basic-slot
-    (let ((f (gen-test-frame))
-	  (s (gen-test-frame "slot")))
-      (flet ((test-slot (v)
-	       (setf (slotv f s) v)
-;	       (assert-equal (slotv f s) v )
-	       (setf (msv f s) v)
-	       (assert-equal (msv f s) v )
-	       (setf (ssv f s) v)
-	       (assert-equal (ssv f s) v )
-	       ))
-	(test-slot 23)
-	(test-slot "foo")
-	(test-slot '(a b c))
-	(test-slot nil)
-	(test-slot #$foobar))))
+
 	
 			     
