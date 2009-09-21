@@ -175,7 +175,7 @@ Ideas/todos
   
 (defvar *fill-by-default?* t)
 
-(defmethod %slotv ((frame frame) (slot frame))
+(defun %slotv (frame slot)
   (and (frame-slots frame)
        (gethash slot (frame-slots frame))))  
 
@@ -184,11 +184,11 @@ Ideas/todos
 (defun make-slot-hashtable ()
   (make-hash-table :test #'eq))
 
-(defmethod %set-slotv ((frame frame) (slot frame) value)
+(defun %set-slotv (frame slot value)
   (setf (gethash slot (frame-slots-force frame)) value))  
 
 ;;; optional argument doesn't play well with setf.
-(defmethod slotv ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
+(defun slotv (frame slot &optional (fill? *fill-by-default?*))
   (if (eq fill? t) (fill-frame frame))
   (or (%slotv frame slot)
       (when (eq fill? :if)
@@ -197,7 +197,7 @@ Ideas/todos
 
 ;;; note that this and set-slotv-inverse never do fills
 ;;; this can't really do inverses, can it? we'd have to a difference...
-(defmethod set-slotv ((frame frame) (slot frame) value)
+(defun set-slotv (frame slot value)
   (let ((old (%slotv frame slot)))
     ;; enforce rule that slot values are lists...
     (unless (listp value) 
@@ -227,20 +227,18 @@ Ideas/todos
       (setf (frame-inverse-slots frame)
 	    (make-slot-hashtable))))
 
-
-
-(defmethod %slotv-inverse ((frame frame) (slot frame))
+(defun %slotv-inverse (frame slot)
   (and (frame-inverse-slots frame)
        (gethash slot (frame-inverse-slots frame))))
 
-(defmethod slotv-inverse ((frame frame) (slot frame) &optional (fill? *fill-by-default?*))
+(defun slotv-inverse (frame slot &optional (fill? *fill-by-default?*))
   (if fill? (fill-frame frame))
   (%slotv-inverse frame slot))
 
 (defsetf slotv-inverse set-slotv-inverse)
 (defsetf %slotv-inverse set-slotv-inverse)
 
-(defmethod set-slotv-inverse ((frame frame) (slot frame) value)
+(defun set-slotv-inverse (frame slot value)
   (unless (frame-inverse-slots frame)
     (setf (frame-inverse-slots frame) (make-slot-hashtable)))
   (setf (gethash slot (frame-inverse-slots frame)) value))
@@ -277,46 +275,42 @@ Ideas/todos
 
 
 ;;; MSV functions deal transparently with multiple values (return a single elt if that's all there is, otherwise a list)
-
-;;; +++ these should have setfs
-(defmethod msv ((frame frame) slot &optional (fill? *fill-by-default?*))
-  (delistify (slotv frame slot fill?)))
-
-(defmethod msv ((frames list) slot &optional (fill? *fill-by-default?*))
-  (let ((result nil))
-    (dolist (f frames (delistify result))
-      ;; warning: depends on nunion only being destructive to its FIRST argument
-      (setf result (nunion result (slotv f slot fill?) :test #'equal)))))
+(defun msv (frames slot &optional (fill? *fill-by-default?*))
+  (if (listp frames)
+      (let ((result nil))
+	(dolist (f frames (delistify result))
+	  ;; warning: depends on nunion only being destructive to its FIRST argument
+	  (setf result (nunion result (slotv f slot fill?) :test #'equal))))
+      (delistify (slotv frames slot fill?))))
 
 (defsetf msv set-msv)
 
-(defmethod set-msv ((frame frame) (slot frame) value)
+(defun set-msv (frame slot value)
   (setf (slotv frame slot) (listify value)))
 
-(defmethod msv-inverse ((frame frame) slot)
-  (delistify (slotv-inverse frame slot)))
-
-(defmethod msv-inverse ((frames list) slot)
-  (let ((result nil))
-    (dolist (f frames (delistify result))
-      ;; warning: depends on nunion only being destructive to its FIRST argument
-      (setf result (nunion result (slotv-inverse f slot) :test #'equal)))))
+(defun msv-inverse (frames slot)
+  (if (listp frames)
+      (let ((result nil))
+	(dolist (f frames (delistify result))
+	  ;; warning: depends on nunion only being destructive to its FIRST argument
+	  (setf result (nunion result (slotv-inverse f slot) :test #'equal))))
+      (delistify (slotv-inverse frames slot))))
 
 ;;; SSV functions enforce single values (useful for debugging).
 
-(defmethod ssv ((frame frame) slot &optional (fill? *fill-by-default?*))
+(defun ssv (frame slot &optional (fill? *fill-by-default?*))
   (let ((v (slotv frame slot fill?)))
     (if (> (length v) 1)
 	(error "Multiple values where one expected"))
     (car v)))
 
-(defmethod set-ssv (frame slot value)
+(defun set-ssv (frame slot value)
   (setf (slotv frame slot) (list value))
   value)
 
 (defsetf ssv set-ssv)
 
-(defmethod ssv-inverse ((frame frame) slot)
+(defun ssv-inverse (frame slot)
   (let ((v (slotv-inverse frame slot)))
     (if (> (length v) 1)
 	(error "Multiple values where one expected"))
