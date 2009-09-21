@@ -110,8 +110,6 @@
 (rdfs-def-class #$crx:slots/specialSlot ())
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 
-
-
 (rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
 		(let ((*print-readably* t))
 		  (handler-case
@@ -120,6 +118,10 @@
 		      (declare (ignore e))
 		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
 		      ))))
+
+(rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
+(rdfs-defmethod write-triple-special ((p #$crx:slots/TransientSlot) s o sparql)
+		)
 
 ;;; need to do the inverse on read! See deserialize-value (+++ make more parallel)
 
