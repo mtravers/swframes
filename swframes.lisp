@@ -35,15 +35,18 @@ Ideas/todos
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
 
+(defun ssv-safe (frame slot &optional fill?)
+  (car (slotv frame slot fill?)))
+
 ;;; Get the label, optionally filling
 ;;; Could logically use all subPropertys of rdfs:label, obtainable through:
 ;;; (do-sparql-one-var nil '(:select * nil (?p #$rdfs:subPropertyOf #$rdfs:label)))
 (defun frame-label (frame &optional fill?)
-  (or (ssv frame #$rdfs:label fill?) 
-      (ssv frame #$skos:prefLabel fill?)
-      (ssv frame #$http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol fill?)
-      (ssv frame #$bp:SHORT-NAME fill?)
-      (ssv frame #$bp:NAME fill?)
+  (or (ssv-safe frame #$rdfs:label fill?) 
+      (ssv-safe frame #$skos:prefLabel fill?)
+      (ssv-safe frame #$http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol fill?)
+      (ssv-safe frame #$bp:SHORT-NAME fill?)
+      (ssv-safe frame #$bp:NAME fill?)
       (most-significant-name (frame-name frame))
       ))
 

@@ -99,28 +99,31 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
       (make-unique-session)))
 
 ;;; This has to be relative to a frame source so you can check for taken ids. 
-;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  Might break if there are multiple.
+;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  
+(defvar gensym-lock (mp:make-process-lock))
+
 (defun gensym-instance-frame (class &key start fast? (source *default-frame-source*) base)
   (if (eq (frame-source class) *code-source*)
       (setf (frame-source class) source)
       ;; Here we might want to do an initial write of frame to db
       )
   (unless base (setq base (frame-uri class)))
-  (unless (and fast?
-	      (msv class #$crx:last_used_id))
-    (fill-frame class :force? t :inverse? nil))
-  (let* ((last (or start (msv class #$crx:last_used_id)))
-	 (next (if last
-		   (1+ (coerce-number last))
-		   0))
-	 (uri (string+ base "/"
-		       (if fast? (string+ (frame-label (unique-session)) "/") "")
-		       (fast-string next))))
-    (if (and (not fast?) (uri-used? source uri))
-	(gensym-instance-frame class :start next :fast? fast?)
-	(progn
-	  (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
-	  (intern-uri uri)))))
+  (mp:with-process-lock (gensym-lock)	;+++ I hope this won't slow down the world too much.
+    (unless (and fast?
+		 (msv class #$crx:last_used_id))
+      (fill-frame class :force? t :inverse? nil))
+    (let* ((last (or start (msv class #$crx:last_used_id)))
+	   (next (if last
+		     (1+ (coerce-number last))
+		     0))
+	   (uri (string+ base "/"
+			 (if fast? (string+ (frame-label (unique-session)) "/") "")
+			 (fast-string next))))
+      (if (and (not fast?) (uri-used? source uri))
+	  (gensym-instance-frame class :start next :fast? fast?)
+	  (progn
+	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
+	    (intern-uri uri))))))
 
 (defgeneric uri-used? (source uri))
 
@@ -172,6 +175,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defun rdfs-method (name thing &optional (errorp t))
   ;; this can cause loops so defintely not right
   ;; (fill-frame thing)
+  (assert (frame-p thing))
   (let ((classes (order-classes (rdfs-classes thing)))
 	(methodtable (rdfs-methodtable name)))
     (or (some #'(lambda (class) (gethash class methodtable )) classes)
