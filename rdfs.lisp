@@ -102,7 +102,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 ;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  
 (defvar gensym-lock (mp:make-process-lock))
 
-(defun gensym-instance-frame (class &key start fast? (source *default-frame-source*) base)
+(defun gensym-instance-frame (class &key start (fast? t) (source *default-frame-source*) base)
   (if (eq (frame-source class) *code-source*)
       (setf (frame-source class) source)
       ;; Here we might want to do an initial write of frame to db
