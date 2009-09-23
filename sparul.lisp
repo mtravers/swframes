@@ -123,6 +123,10 @@
 (rdfs-defmethod write-triple-special ((p #$crx:slots/TransientSlot) s o sparql)
 		)
 
+;;; Sometimes these unserializable slots get serialized, so ignore them
+(rdfs-defmethod deserialize-value ((p #$crx:slots/TransientSlot) value)
+		nil)
+
 ;;; need to do the inverse on read! See deserialize-value (+++ make more parallel)
 
 (defun declare-special-slot (slot type)
