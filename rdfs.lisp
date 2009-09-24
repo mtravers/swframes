@@ -189,7 +189,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	  ,@restargs))
 
 (defmacro rdfs-call-if (name firstarg &rest restargs)
-  `(let ((method (rdfs-method ',name ,firstarg nil)))
+  `(let ((method (and ,firstarg (rdfs-method ',name ,firstarg nil))))
      (when method
        (funcall method
 		,firstarg
