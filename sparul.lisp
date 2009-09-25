@@ -111,9 +111,13 @@
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 
 (rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
-		(let ((*print-readably* t))
+		(let ((*print-readably* t)
+		      (oo (typecase o
+			    (fixnum o)
+			    (string o)
+			    (otherwise (prin1-to-string o)))))
 		  (handler-case
-		      (%write-triple sparql s p (prin1-to-string o))
+		      (%write-triple sparql s p oo)
 		    (print-not-readable (e)
 		      (declare (ignore e))
 		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
@@ -132,6 +136,11 @@
 (defun declare-special-slot (slot type)
   (setf (ssv slot #$rdf:type) type
         (ssv slot #$crx:specialhandling) t))
+
+;;; debugging only
+(defun undeclare-special-slot (slot)
+  (setf (slotv slot #$rdf:type) nil
+        (slotv slot #$crx:specialhandling) nil)  )
 
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
