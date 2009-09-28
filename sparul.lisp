@@ -114,7 +114,6 @@
 		(let ((*print-readably* t)
 		      (oo (typecase o
 			    (fixnum o)
-			    (string o)
 			    (otherwise (prin1-to-string o)))))
 		  (handler-case
 		      (%write-triple sparql s p oo)

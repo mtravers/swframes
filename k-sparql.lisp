@@ -42,14 +42,20 @@
           (let* ((name (lxml-attribute binding :|name|))
                  (value-elt (car (lxml-subelements binding t)))
                  (value
-                  (if (or (eq (car value-elt) ':|uri|)
+                  (cond ((or (eq (car value-elt) ':|uri|)
                           ;; virtuoso hands back these as <literals>, but they act like URIs
                           ;; actually, now they are <bnode>s...should handle those specially (optional arg to uri constructor maybe) +++
-                          (utils::string-prefix-equals (cadr value-elt) "nodeID:")
-                          (and eager-make-uri?
-                               (utils::string-prefix-equals (cadr value-elt) "http://")))
-                      (funcall make-uri (cadr value-elt))
-                      (cadr value-elt))))
+			     (utils::string-prefix-equals (cadr value-elt) "nodeID:")
+			     (and eager-make-uri?
+				  (utils::string-prefix-equals (cadr value-elt) "http://")))
+			 (funcall make-uri (cadr value-elt)))
+			((and (eq (lxml-tag value-elt) ':|literal|)
+			      (equal (lxml-attribute value-elt :|datatype|)
+				     "http://www.w3.org/2001/XMLSchema#integer"))
+			 (parse-integer (cadr value-elt)))
+			;; +++ other datatypes?
+			(t
+			 (cadr value-elt)))))
             (push (list name value) row-result)))
         (push row-result results)))
     (values (nreverse results) vars)))

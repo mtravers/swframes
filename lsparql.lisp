@@ -177,10 +177,13 @@
     (null (error "NIL in SPARQL"))
     (frame (format nil "<~A>" (frame-uri thing)))
     (symbol
-     (string-downcase (string thing)))
+     (if (var-p thing)
+	 (string-downcase (string thing))
+	 (error "Can't translate ~A into a SPARQL term" thing)))
     (string (if (or (position #\" thing) (position #\Newline thing))
 		(format nil "'''~A'''" thing)
 		(format nil "\"~A\"" thing))) 
+    (fixnum (utils:fast-string thing))
     ;; SPARQL can't handle 3.0D3
     (double-float (utils:fast-string (coerce thing 'single-float)))
     ;; Newish way to generate language-specific literals (ie Melanoma@en) (Melanoma :en)
@@ -192,9 +195,10 @@
 	    (format nil "~A@~A" (sparql-term (car thing)) (cadr thing)))
 	   ((frame-p (cadr thing))
 	    (format nil "~A^^~A" (sparql-term (car thing)) (abbreviate-uri (frame-uri (cadr thing)))))
+	   (t (error "Can't translate ~A into a SPARQL term" thing))
 	   ))
-    (t ; (error "Can't translate ~A into a SPARQL term" thing)
-       (utils:fast-string thing)
+    (t  (error "Can't translate ~A into a SPARQL term" thing)
+;       (utils:fast-string thing)
        )))
 
 
@@ -348,8 +352,9 @@
       ))
 
 (rdfs-defmethod deserialize-value ((slot #$crx:slots/LispValueSlot) value)
-		(report-and-ignore-errors
-		 (read-from-string value)))
+		(if (stringp value)
+		    (read-from-string value)
+		    value))
 
 ;;; +++ this can time out without the limit, but of course it produces incorrect results.  Maybe ths should only be done on demand.
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))

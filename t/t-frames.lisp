@@ -25,44 +25,66 @@
 ;;; slot equality is set equality
 (defun slotv-equal (a b)
   (if (and (listp a) (listp b))
-      (set-equal a b)
+      (set-equal a b :test #'equal)
       (equal a b)))
 
-;;; Works fine for in-memory
-;;; write to db tests work IFF you declare slot special.  Maybe that should be the default.
-;;; Should test non-special slots
+#|
+Regular slots handle strings, fixnums, and frames
+Lisp slots handle any printable Lisp object, 
+   storing fixnums natively (+++ test for this)
+|#
+
+(defun normal-slot-element? (x)
+  (typecase x
+    (number t)
+    (string t)
+    (frame t)
+    (otherwise nil)))
+
+(defmacro assert-slotv-equal (expected form)
+  `(assert-true (slotv-equal ,expected ,form)))
+
 (define-test basic-slot
     (let ((f (gen-test-frame))
-	  (s (gen-test-frame "slot")))
-      (declare-special-slot s #$crx:slots/LispValueSlot)
-      (labels ((test-slot (v)
-		 (test-slot-1 v nil)
-		 (test-slot-1 v t))
-	       (test-slot-1 (v db)
-		 (if (listp v)
-		     (progn
-		       (setf (slotv f s) v)
-		       (when db (forget))
-		       (assert-true (slotv-equal v (slotv f s) )))
-		     (assert-error 'error (setf (slotv f s) v)))
+	  (s (gen-test-frame "slot"))
+	  (ls (gen-test-frame "lslot")))
+      (declare-special-slot ls #$crx:slots/LispValueSlot)
+      (labels ((test-slot (v normal lisp)
+		 (when normal
+		   (test-slot-1 s v nil)
+		   (test-slot-1 s v t))
+		 (when lisp
+		   (test-slot-1 ls v nil)
+		   (test-slot-1 ls v t)))
+	       (test-slot-1 (s v db)
+		 (print `(test ,v ,s ,db))
+		 (when db (forget))
 		 (setf (msv f s) v)
-		 (when db (forget))
-		 (assert-true (slotv-equal v (msv f s) ))
-		 (setf (ssv f s) v)
-		 (when db (forget))
-		 (assert-true (slotv-equal v (ssv f s) ))
+		 (assert-slotv-equal v (msv f s))
+		 (when (normal-slot-element? v)
+		   (setf (ssv f s) v)
+		   (when db (forget))
+		   (assert-slotv-equal v (ssv f s)))
+		 (when (listp v)
+		   (setf (slotv f s) v)
+		   (when db (forget))
+		   (assert-slotv-equal v (slotv f s)))
+		 (forget)
 		 )
 	       (forget ()
 		 (write-frame f :source *default-frame-source*)
 		 (reset-frame f)
 		 (fill-frame f)))
-	(test-slot 23)
-	(test-slot "foo")
-	(test-slot '(a b c))
-	(test-slot t)
-	(test-slot nil)
-	(test-slot #$foobar)
-	(test-slot (list #$foobar #$barfoo))
+	(test-slot 23 t t)
+	(test-slot "foo" t t)
+	(test-slot #$foobar t t)
+	(test-slot 'a nil t)
+	(test-slot t nil t)
+	(test-slot nil nil t)
+ 	(test-slot (list #$foobar #$barfoo) t t)
+ 	(test-slot '("what" "nonsense") t t)
+ 	(test-slot '("what" #$blither 23) t t)
+ 	(test-slot '(a b c) nil t)
 	;; clean up after ourselves
 	(destroy-frame f)
 	)))
