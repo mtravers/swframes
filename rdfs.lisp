@@ -72,7 +72,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 (defun rdfs-find-sparql (value &key slot class word?)
   (let ((vvar (if word? (gensym "?V"))))
-    `(:select (?s) ()
+    `(:select (?s) (:distinct t)
 	      ,@(unless (eq value :all)
 			`((?s ,(if slot slot '?p) ,(if word? vvar value))))
 	      ,@(if class `((?s #$rdf:type ,class)))
