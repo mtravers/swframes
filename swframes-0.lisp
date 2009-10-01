@@ -129,8 +129,11 @@ This file has the minimum needed to get the frame system working (esp. the reade
 		    ))))
 
 ;;; here for tracability.
-(defun set-frame-loaded? (frame &optional (loaded? t))
-  (setf (frame-loaded? frame) loaded?))
+(defun set-frame-loaded? (frame &optional (loaded? t) source)
+  (setf (frame-loaded? frame) loaded?)
+  (when source
+    (setf (frame-source frame) source))
+  frame)
 
 (defun intern-frame (frame)
   (setf (gethash (frame-uri frame) *uri->frame-ht*) frame))  
@@ -140,6 +143,9 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defun unintern-uri (uri)
   (remhash uri *uri->frame-ht*))
+
+(defun unintern-frame (f)
+  (unintern-uri (frame-uri f)))
 
 (defun rename-frame (f new-name)
   (if (frame-named new-name) 

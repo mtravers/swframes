@@ -41,12 +41,14 @@ Well, this should be NIL and the kludgery handled at the grid level, at least.
 
 ;;; rereads the whole file each time!  Temp +++
 ;;; this is a general method for streams that are stupid...
-;;; +++ end testing
 (defmethod tset-subseq ((tset base-tuple-set) start length)
   (tset-set-position tset start)
   (utils:collecting
    (dotimes (n length)
-     (utils::collect (tset-iterator-next tset)))))
+     (let ((tup (tset-iterator-next tset)))
+       (if tup 
+	   (utils::collect tup)
+	   (return))))))
 
 ;;; Header lines can be zero or >1, but only at most one is processed.
 (defclass* file-tuple-set (stream-tuple-set)
@@ -64,12 +66,12 @@ Well, this should be NIL and the kludgery handled at the grid level, at least.
       (subseq str 1 (1- (length str)))
       str))
 
-(defun coerce-field (value)
+(defun coerce-value (value)
   (typecase value
-    (null (error "Cant' coerce nil to a number"))
+    (null (error "Cant' coerce nil to a value"))
     (list
      (warn "Multiple values ~A" value)
-     (coerce-field (car value)))
+     (coerce-value (car value)))
     (number value)
     (keyword value)
     (string
@@ -80,11 +82,11 @@ Well, this should be NIL and the kludgery handled at the grid level, at least.
            (if (numberp n) n value))))
     (t (error "can't coerce ~A" value))))
 
-(defmethod* parse-line ((tset stream-tuple-set))
+(defmethod* parse-line ((tset stream-tuple-set) &key field-process)
   (mapcar #'(lambda (field)
               (setf field (remove-redundant-quotes field))
-              ;; +++ conditionalize on a flag, we don't always want to do this
-              (setf field (coerce-field field))
+              (when field-process
+		(setf field (funcall field-process field)))
               field)
           (string-split (get-line tset) delimiter)))
 
@@ -103,19 +105,19 @@ Well, this should be NIL and the kludgery handled at the grid level, at least.
 (defmethod* maybe-init-query ((tset stream-tuple-set))
   (let ((headers nil))
     (when (plusp n-header-lines)
-      (setf headers (parse-line tset))
+      (setf headers (parse-line tset :field-process #'coerce-field))
       ;; discard extra lines
       (dotimes (i (1- n-header-lines))
         (parse-line tset)))
     (unless fields
-      (setf fields (mapcar #'regularize-field headers)))))
+      (setf fields (mapcar #'coerce-field headers)))))
 
 (defmethod* read-data-line ((tset stream-tuple-set))
   (catch :eof
     (let ((tuple (make-tuple)))
       (mapc #'(lambda (field val)
                 (setf (tuple-field tuple field) val))
-            fields (parse-line tset))
+            fields (parse-line tset :field-process #'coerce-value))
       tuple)))
 
 ;;; I am my own iterator, for now +++

@@ -75,6 +75,7 @@ Ideas/todos
 		     ,@body)
 		 (frame-inverse-slots ,frame))))
 
+;;; Probably don't want to do this, will lose code frames
 (defun reset-frames ()
   (clrhash *uri->frame-ht*))
 
@@ -83,6 +84,12 @@ Ideas/todos
 		(declare (ignore uri))
 		,@body)
 	    *uri->frame-ht*))
+
+(defun reset-frames ()
+  (for-all-frames (f)
+		  (unless (eq (frame-source f) *code-source*)
+		    (unintern-frame f))))
+		
 
 (defun all-frames ()
   (collecting (for-all-frames (f) (utils::collect f))))

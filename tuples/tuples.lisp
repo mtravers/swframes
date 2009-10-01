@@ -115,7 +115,8 @@ A tuplesource is a tupleset that can produce its tuples one at at time
   (cond ((keywordp field)
          field)
         ((stringp field)
-         (keywordize field))
+	 ;; Beware, the BioLisp keywordize has different behavior
+	 (mt:keywordize (utils::remove-all-whitespace (utils:fast-string field))))
         (t (error "Can't coerce ~A to field name" field))))
 
 (defgeneric tuple-field (tuple field-name))
@@ -235,9 +236,6 @@ A tuplesource is a tupleset that can produce its tuples one at at time
 (defmethod tset-map-tuples ((tset list) proc)
   (dolist (tup tset)
     (funcall proc tup)))
-
-(defun regularize-field (name)
-  (keywordize (utils::remove-all-whitespace (utils:fast-string name))))
 
 (defmacro tset-do-tuples ((var tset) &body body)
   `(tset-map-tuples ,tset #'(lambda (,var) ,@body)))

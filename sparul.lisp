@@ -96,8 +96,7 @@
       (dolist (d dependents)
         (write-frame d))
       ;; if we just wrote this out, then it's up to date!
-      (setf (frame-loaded? frame) t
-	    (frame-source frame) source))
+      (set-frame-loaded? frame t source))
     frame))
 
 ;;; write out a single slot

@@ -81,13 +81,16 @@
 
 (rdfs-def-class #$crx:tuple ())
 
+(def-cached-function tuple-field-slot (key)
+  (let ((slot (intern-uri (formatn "crx:tuplefield/~A" (string key)))))
+    (declare-special-slot slot #$crx:slots/LispValueSlot)
+    slot))
+
 (defun tuple->frame (tuple &key base)
   (let ((f (gensym-instance-frame #$crx:tuple :fast? t :base base)))
     (tuple-dofields (key val) tuple
-		      (let ((field-uri (formatn "crx:tuplefield/~A" (string key))))
-			(setf (slotv f (intern-uri field-uri)) val)))
+		    (setf (ssv f (tuple-field-slot key)) val))
     f))
-
 
 (defmethod* write-tuple ((writer tset-pickler) tuple &optional serial)
   (let ((frame (tuple->frame tuple :base (string+ (frame-uri tset-frame) "/tuple"))))
@@ -143,7 +146,7 @@
 
 
 (defun depickle (frame)
-  (setf (slotv frame #$crx:bioblog/tupleset)
+  (setf (ssv frame #$crx:bioblog/tupleset)
 	(make-instance 'pickled-tset :frame frame)))
 
 ; (knewos::depickle #$crx:bioblog/GridContent/115)
