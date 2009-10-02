@@ -33,7 +33,6 @@ Here we'll keep track of some of the available data sources:
 Many linked data sets here:
 http://esw.w3.org/topic/TaskForces/CommunityProjects/LinkingOpenData/DataSets
 
-
 http://www.rdfabout.com/rdf/usgov/sec/id/cik0001308161
 - Returns XML prefaced by two garbage chars (fixed by improving adjust-sparql-string)
 - Has some blank nodes, so deal with them now.
@@ -174,7 +173,7 @@ http://data.linkedmdb.org/all/director
                    (do ((rest (lxml-attributes elt) (cddr rest)))
                        ((null rest))
                      (when (string-prefix-equals (symbol-name (car rest)) "xmlns:")
-                       (sw-register-namespace (cadr (utils:string-split (symbol-name (car rest)) #\:  ))
+                       (register-namespace (cadr (utils:string-split (symbol-name (car rest)) #\:  ))
                                               (cadr rest))))
                    (let ((property (symbol->frame (lxml-tag elt)))
                          )
@@ -204,9 +203,9 @@ http://data.linkedmdb.org/all/director
 			(full (cadr namespaces)))
 		   (cond ((equal com "xmlns")
 			  (if (null ns)
-			      ;(sw-register-namespace "NS-0" full)
+			      ;(register-namespace "NS-0" full)
 			      nil	;+++ prob need to do something here!
-			      (sw-register-namespace ns full)))
+			      (register-namespace ns full)))
 			 ((equal com "base")
 			  (setq base full))
 			 (t (error "Don't know what to do with ~A" (car namespaces))))))))

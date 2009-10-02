@@ -11,8 +11,7 @@ Ideas/todos
   (defvar *default-frame-source* nil))
 
 ;;; Growing an API here...should clean this up, consolidate some stuff
-(export '(;uri obso
-	  make-frame
+(export '(make-frame
 	  *default-frame-source* *mark-new-frames-loaded?* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
 	  most-significant-name 
@@ -211,7 +210,6 @@ Ideas/todos
   (let ((old (%slotv frame slot)))
     ;; enforce rule that slot values are lists...
     (unless (listp value) 
-;      (setf value (list value)))
       (error "Arg to set-slotv must be list: ~A ~A ~A" frame slot value))
     (%set-slotv frame slot value)
     ;; +++ fairly serious change ... verify that this works 

@@ -26,26 +26,34 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 |#
 
-(defmacro rdfs-def-class (name superclasses &body slots)
+(defmacro rdfs-def-class (class superclasses &body slots)
   (let ((clauses nil))
-    (flet ((a! (s p o)
-	     (push `(add-triple ,s ,p ,o) clauses)
+    (labels ((a! (s p o)
 	     (push `(frame-from-code ,s) clauses)
 	     (push `(frame-from-code ,p) clauses)
 	     (when (frame-p o)
 	       (push `(sw::frame-from-code ,o) clauses))
-	     ))
-      (a! name  #$rdf:type #$rdfs:Class)
+	     (push `(add-triple ,s ,p ,o) clauses)
+	     )
+	     (a!x (s p o)
+	       (let ((old (ssv s p nil)))
+		 (cond ((eq old o))
+		       ((null old)
+			(a! s p o))
+		       (t (error "~A already has ~A ~A, can't set to ~A" s p old o))))))
+      (a! class  #$rdf:type #$rdfs:Class)
       (mapc #'(lambda (superclass)
-		(a! name #$rdfs:subClassOf superclass))
+		(a! class #$rdfs:subClassOf superclass))
 	    superclasses)
       (mapc #'(lambda (slotdef)
 		(let ((slot (car slotdef)))
 		  (a! slot #$rdf:type #$rdfs:Property)
-		  (a! slot #$rdf:domain name)))
+		  (a!x slot #$rdf:domain class)
+		  (awhen (member :range (cdr slotdef))
+			 (a!x slot #$rdf:range (cadr it)))))
 	    slots)
       `(progn ,@clauses
-	      ,name))))
+	      ,class))))
 
 ;;; Put in some checking;  should be under a flag. 
 ;;; Also option for specifying a name or partial name.
@@ -140,7 +148,6 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 (defun rdfs-subclasses (class)
   (slotv-inverse class #$rdfs:subClassOf))
-
 
 ;;; Method system.  Need to think about this, RDF things can be multiply typed and there is no ordering.  
 ;;; Alternative is to map rdf to CLOS classes which have a more well-behaved orderng.

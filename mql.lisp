@@ -157,10 +157,7 @@
 
 
 ;;; Turns a Freebase ID into a frame name (ie, duplicating what they do to go to RDF)
-(sw-register-namespace "fb" "http://rdf.freebase.com/ns/")
-
-
-
+(def-namespace "fb" "http://rdf.freebase.com/ns/")
 
 ;;;; Bio specific
 (defun mql-gene (gene-id)

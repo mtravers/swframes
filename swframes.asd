@@ -16,6 +16,7 @@
    (:file "xmlu")
    (:file "swframes-0")
    (:file "namespace")
+   (:file "standard-namespaces")
    (:file "swframes")
    (:file "compat")
    (:file "source")

@@ -1,0 +1,124 @@
+@frames
+A FRAME is a representation of a Semantic Web URI and its immediate RDF relations.  For an introduction to RDF, see here.  SWFRAMES is essentially providing a Lisp front-end to RDF.
+
+Frames are entered in Lisp via the #$ macro uri.
+
+Aside from the URI which defines their identity, frames have a SOURCE which can be
+- a SPARQL server
+- code (file or REPL loop)
+- dereferencing
+
+(intern-uri uri &optional (source *default-frame-source*) mark-loaded?))
+
+#$
+#^
+#v
+
+@namespaces
+
+A namespace is an abbreviation for URIs.  IE, the namespace "rdfs" is short for "http://www.w3.org/2000/01/rdf-schema#".  This means that
+  #$rdfs:label
+and 
+  #$http://www.w3.org/2000/01/rdf-schema#label
+refer to the same URI and thus the same frame.
+
+Namespaces are defined by RDF and other related web standards.  See http://www.w3.org/TR/1999/REC-xml-names-19990114/
+
+(register-namespace abbrev full &optional force?)
+(unregister-namespace abbrev)
+
+(def-namespace abbrev full)
+
+(expand-uri uri)
+(abbreviate-uri uri)
+
+
+
+@slots
+Frames have SLOTS which are also identifed by frames. 
+
+The value of a slot is always an unordered list, where each element is defined in principle as the object of an RDF triple:
+  <frame> <slot> <value>
+
+Values can be strings, integers, or frames (but see @(special slots)).
+
+(SLOTV frame slot)
+(SSV frame slot)
+(MSV frame slot)
+SETF of above
+
+Slotv sets the value of the slot (so the value is always a list).
+
+SSV is a convenience slots that are meant to take a single value.  
+
+MSV attempts to be smart...use with caution
+
+
++++
+(ADD-TRIPLE frame slot value)
+(REMOVE-TRIPLE frame slot value)
+
+
+@(special slots)
+
+(declare-special-slot <slot> <class>)
+
+#$crx:slots/LispValueSlot
+#$crx:slots/TransientSlot
+
+
+@sources and persistence
+
+write-frame
+write-slot
+with-sparul-group
+
+
+@SPARQL
+
+SPARQL is a query language over RDF databases (ref).
+
+(do-sparql source query)
+
+SWFRAMES supplies a Lisp syntax for SPARQL queries.  
+(:select <vars> <options> <clauses>*)
+
+Where:
+ <vars> is a list of query variables (?foo, etc) or :all, or :count.
+
+Options
+:limit
+:distinct
+:from
+:offset
+:order
+
+Clauses can be:
+A triple 
+  (subject predicate object)
+Where subject and predicate are frames or sparql variables.
+Object is frame, sparql variable, or a literal (string or number)
+ +++ language qualifiers
+
+Or
+(:filter ...)
+(:union ...)
+
+
+Dereferencing
+
+Dereferencing (also known as "linked data") means treating an RDF URI as if it were a URL, with a server on the end.  When you dereference a URI, the server returns a chunk of RDF or other semantic web representation that reflects the contents of the URI.  This is an alternative to SPARQL endpoints and other methods of retrieving RDF information.
+
+See:
+http://www4.wiwiss.fu-berlin.de/bizer/pub/LinkedDataTutorial/
+
++++ see dereference.lisp, there is doc there.
+
+
+RDFS
+
+
+RDF Schema is a lightweight schema standard layered on top of RDF.  It provides means to define classes and relationships, but is lighter-weight and less restrictive (and less powerful) than OWL.  See +++
+
+SWFRAMES provides some tools for managing rdfs classes and relationships.
+
