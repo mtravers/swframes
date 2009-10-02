@@ -47,3 +47,17 @@
   `(acl-compat.mp:process-run-function
     (string (gensym "THREAD"))
     #'(lambda () ,@body)))
+
+;;; Until we figure out something better.
+(defmacro doc (&rest string-designators)
+  `(bio::one-string-nl ,@string-designators))
+
+;;; Based on bio::one-string-nli
+(defmacro doc (&rest string-designators)
+  "Inserts newlines after every argument except the last, and calls ONE-STRING"
+  (let ((nl (string #\Newline)))
+    `(bio::one-string
+      ,@(loop for strings on string-designators 
+              as s = (first strings)
+              nconc 
+             (if (cdr strings) (list s nl) (list s))))))

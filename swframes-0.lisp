@@ -31,9 +31,12 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader )
 (set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
 
+(defun make-reader-frame (s)
+  (make-frame s :source *code-source*))
+
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (make-frame (read-fname stream)))
+  (make-reader-frame (read-fname stream)))
 
 ;;; +++ would be good to allow #$"sdasdad" for hard to parse names
 (defun read-fname (stream)
@@ -50,6 +53,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defpackage :swfuncs)
 
+#|
 ;;; New, works with setf without a lot of hair.   But it means we have to type #'#^ to use it as a functional argument...ugh.
 ;;; Whups -- fun defined at read time, won't necessarily be available later. Damn! 
 ;;; Poss solution -- put all def'd symbols in a special variable somewhere, which gets written to a fasl as the last step of compilation
@@ -62,49 +66,43 @@ This file has the minimum needed to get the frame system working (esp. the reade
     (eval `(defsetf ,symbol (f) (v) `(set-slotv ,f ,,slot ,v)))
     symbol
     ))
+|#
 
 ;;; go back to this, which won't work with setf
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (let* ((slot (make-frame (frames::read-fname stream))))
+  (let* ((slot (make-reader-frame (read-fname stream))))
     `(lambda (f) (msv f ,slot))))
 
+#|
 (defun pound-inverse-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (let* ((slot (make-frame (frames::read-fname stream)))
+  (let* ((slot (make-reader-frame (read-fname stream)))
 	 (symbol (intern (string+ "inverse_" (frame-uri slot)) :swfuncs)))
     (compile symbol #'(lambda (f) (msv-inverse f slot)))
 ; No setf for now
 ;    (eval `(defsetf ,symbol (f) (v) `(set-slotv-inverse ,f ,,slot ,v)))
     symbol))
+|#
 
 ;;; See above
 (defun pound-inverse-frame-reader (stream char arg)
   (declare (ignore char arg))
-  (let* ((slot (make-frame (frames::read-fname stream))))
+  (let* ((slot (make-reader-frame (read-fname stream))))
     `(lambda (f) (msv-inverse f ,slot))))
 
-#| SSS
-;;; use this to temporarily patch all (setf (#^slot ... and similar forms to (setf (msv-hack #$slot ...))
-(defmacro msv-hack (slot frame)
-  `(msv ,frame ,slot))
-
-(defsetf msv-hack (s f) (v) `(set-slotv ,f ,s ,v))
-|#
-
-;;; +++ remove eventually
-(defun uri (thing)
-  (warn "URI is obsolete, use make-frame")
-  (make-frame thing))
-
 (defun make-frame (thing &key source)
-  (let ((f (typecase thing
-	     (frame thing)
-	     (string (intern-uri (expand-uri thing)))
-	     (t (error "Can't turn ~A into a URI" thing)))))
-    (when source
-      (setf (frame-source f) source))
-    f))
+  #.(doc
+     "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
+     "SOURCE specifies a source, argument is ignored if frame already exists.")
+  (typecase thing
+    (frame thing)
+    (string
+     (let ((f (intern-uri (expand-uri thing))))
+       (when source
+	 (setf (frame-source f) source))
+       f))
+    (t (error "Can't turn ~A into a URI" thing))))
 
 ;;; Gets redefined later
 (defun expand-uri (string)
@@ -115,6 +113,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defvar *default-frame-source* nil)	;Bind this for frame creation 
 
+;;; +++ isn't this the same more or less as make-frame?
 ;;; mark-loaded? arg is not presently used.
 (defun intern-uri (uri &optional (source *default-frame-source*) mark-loaded?)
   (if (frame-p uri) (return-from intern-uri uri))
@@ -147,6 +146,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (unintern-uri (frame-uri f)))
 
 (defun rename-frame (f new-name)
+  "Rename frame to a new URI"
   (if (frame-named new-name) 
       (error "There is already a frame named ~A" new-name))
   (unintern-uri (frame-uri f))

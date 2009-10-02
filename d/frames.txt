@@ -1,9 +1,14 @@
 @frames
+
 A FRAME is a representation of a Semantic Web URI and its immediate RDF relations.  For an introduction to RDF, see here.  SWFRAMES is essentially providing a Lisp front-end to RDF.
 
-Frames are entered in Lisp via the #$ macro uri.
+Frames have SLOTS which are also identifed by frames and contain values.
 
-Aside from the URI which defines their identity, frames have a SOURCE which can be
+Frames are entered in Lisp via the #$ reader-macro, ie #$rdfs:label
+
+Aside from the URI which defines their identity, frames have 
+SLOTS
+a  SOURCE which can be
 - a SPARQL server
 - code (file or REPL loop)
 - dereferencing
@@ -14,7 +19,9 @@ Aside from the URI which defines their identity, frames have a SOURCE which can 
 #^
 #v
 
-(describe-frame frame 
+(describe-frame frame)
+(df frame)
+(dft frame)
 
 @namespaces
 
@@ -46,14 +53,17 @@ Values can be strings, integers, or frames (but see @(special slots)).
 
 (SLOTV frame slot)
 (SSV frame slot)
-(MSV frame slot)
+(MSV frames slot)
 SETF of above
+inverses of above
 
 Slotv sets the value of the slot (so the value is always a list).
 
 SSV is a convenience slots that are meant to take a single value.  
 
 MSV attempts to be smart...use with caution
+
+SLOT-ACCESSOR
 
 
 +++

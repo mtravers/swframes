@@ -2,15 +2,11 @@
 
 #|
 An RDF-backed frame system
-
-Ideas/todos
-- could wire this into CLOS in the manner of ActiveRDF.
 |#
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *default-frame-source* nil))
 
-;;; Growing an API here...should clean this up, consolidate some stuff
 (export '(make-frame
 	  *default-frame-source* *mark-new-frames-loaded?* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
@@ -21,33 +17,32 @@ Ideas/todos
 	  %slotv
 	  slotv slotv-inverse
 	  slot-accessor inverse-slot-accessor
-	  svf svif
 	  msv msv-inverse 
-;SSS	  msv-hack
 	  ssv ssv-inverse ssv-accessor
 	  declare-special-slot
-	  add-triple
+	  add-triple remove-triple
 	  rename-frame delete-frame write-frame destroy-frame with-sparul-group
 	  describe-frame df dft
 	  register-namespace def-namespace))
 
 (defun frame-name (frame)
+  "Returns the URI of a frame, possibly abbreviated"
   (abbreviate-uri (frame-uri frame)))  
-
-(defun ssv-safe (frame slot &optional fill?)
-  (car (slotv frame slot fill?)))
 
 ;;; Get the label, optionally filling
 ;;; Could logically use all subPropertys of rdfs:label, obtainable through:
 ;;; (do-sparql-one-var nil '(:select * nil (?p #$rdfs:subPropertyOf #$rdfs:label)))
 (defun frame-label (frame &optional fill?)
-  (or (ssv-safe frame #$rdfs:label fill?) 
-      (ssv-safe frame #$skos:prefLabel fill?)
-      (ssv-safe frame #$http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol fill?)
-      (ssv-safe frame #$bp:SHORT-NAME fill?)
-      (ssv-safe frame #$bp:NAME fill?)
-      (most-significant-name (frame-name frame))
-      ))
+  "Returns the preferred human-readable label of a frame"
+  (labels ((ssv-safe (frame slot)
+	     (car (slotv frame slot fill?))))
+    (or (ssv-safe frame #$rdfs:label) 
+	(ssv-safe frame #$skos:prefLabel)
+	(ssv-safe frame #$http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol)
+	(ssv-safe frame #$bp:SHORT-NAME)
+	(ssv-safe frame #$bp:NAME)
+	(most-significant-name (frame-name frame))
+	)))
 
 ;;; +++ sometimes you want the part following #
 (defun most-significant-name (string)
@@ -79,6 +74,7 @@ Ideas/todos
   (clrhash *uri->frame-ht*))
 
 (defmacro for-all-frames ((var) &body body)
+  "Map BODY over all known frames"
   `(maphash #'(lambda (uri ,var)
 		(declare (ignore uri))
 		,@body)
@@ -88,19 +84,21 @@ Ideas/todos
   (for-all-frames (f)
 		  (unless (eq (frame-source f) *code-source*)
 		    (unintern-frame f))))
-		
 
 (defun all-frames ()
+  "Returns list of all known frames"
   (collecting (for-all-frames (f) (utils::collect f))))
 
 (defmethod reset-frame ((frame frame))
+  "Clears frame slot and load information"
   (setf (frame-slots frame) nil)
   (setf (frame-loaded? frame) nil)
   (setf (frame-inverse-slots frame) nil))
 
-;;; Does not remove all references to frame (it could, I suppose, if we were rigorous about inverses III)
-;;; Does not delete from db
 (defmethod delete-frame ((frame frame))
+  #.(doc
+     "Delete frame from memory.  Attempts to remove all references from other frames, but this is not guaranteed."
+     "Does not delete from database (see DESTROY-FRAME)")
   ;;; remove references (that we know about)
   (for-frame-slots (frame slot value)
 		   (dolist (elt value)
@@ -115,6 +113,9 @@ Ideas/todos
   (unintern-uri (frame-uri frame)))
 
 (defun delete-frame-recursive (frame depth)
+  #.(doc
+     "Deletes FRAME and those frames it references, up to depth DEPTH"
+     "Does not delete frames defined in code")
   (unless (zerop depth)
     (when (and (frame-fresh? frame nil)	;skip if already deleted
 	       (not (frame-from-code frame))) ;don't delete classes etc.
@@ -125,7 +126,6 @@ Ideas/todos
       (delete-frame frame)
       ;; don't do inverses since we don't want to delete classes etc.
       )))
-    
 
 (defun frames-matching (uri-frag)
   (utils:collecting 
@@ -133,14 +133,13 @@ Ideas/todos
 		   (if (search uri-frag (frame-uri f))
 		       (utils::collect f)))))
 
-
 (defun delete-frames-matching (uri-frag)
   (for-all-frames (f)
 		  (if (search uri-frag (frame-uri f))
 		      (delete-frame f))))
 
-;;; debugging
 (defun frame-fresh? (frame &optional (error? t))
+  "Tests to make sure frame is not stale (out of sync with interned version). Mostly for debugging"
   (unless (eq frame (frame-named (frame-uri frame)))
     (if error?
 	(error "~A is stale" frame)
@@ -151,6 +150,9 @@ Ideas/todos
   (fill-frame frame))
 
 (defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
+  #.(doc
+     "Ensure that the contents of FRAME (its slots and inverse-slots) are up to date as defined by SOURCE."
+     "Does nothing if FRAME is already marked as loaded, unless FORCE? is true.")
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
     ;; reset-frame was here, but moved to sparql.  This all needs rethinking
@@ -167,7 +169,6 @@ Ideas/todos
 	  (progn ; utils:report-and-ignore-errors	;+++
 	   (dereference frame)))
       (set-frame-loaded? frame))))
-
 
 
 ;;; Called by rdfs-defmethod and other things to mark that a frame is defined from code, and not
@@ -198,6 +199,7 @@ Ideas/todos
 
 ;;; optional argument doesn't play well with setf.
 (defun slotv (frame slot &optional (fill? *fill-by-default?*))
+  "Returns the value of SLOT in FRAME (will always be a list)"
   (if (eq fill? t) (fill-frame frame))
   (or (%slotv frame slot)
       (when (eq fill? :if)
@@ -258,14 +260,6 @@ Ideas/todos
     (setf (frame-inverse-slots frame) (make-slot-hashtable)))
   (setf (gethash slot (frame-inverse-slots frame)) value))
 
-;;; convenience, analagous to #^ (which is now implemented)
-(defun svf (slot)
-  #'(lambda (x) (slotv x slot)))
-
-(defun svif (slot)
-  #'(lambda (x) (slotv-inverse x slot)))
-
-;;; Experimenting with an extention of slot semantics (in use by #^ now)
 (defun delistify (thing)
   (if (and (listp thing)
 	   (= 1 (length thing)))
@@ -278,19 +272,20 @@ Ideas/todos
       (list thing)))
 
 (defun slot-accessor (slot &optional fill?)
+  "Returns a one-argument function that accepts a frame and returns the contents of SLOT on that frame."
   #'(lambda (f) 
       (slotv f slot fill?)))
 
 (defun inverse-slot-accessor (slot &optional fill?)
+  "Returns a one-argument function that accepts a frame and returns the value of the inverse of SLOT on that frame."
   #'(lambda (f) 
       (slotv-inverse f slot fill?)))
 
-
-
-
-
-;;; MSV functions deal transparently with multiple values (return a single elt if that's all there is, otherwise a list)
 (defun msv (frames slot &optional (fill? *fill-by-default?*))
+  #.(doc
+     "Set values, possibly multiple, on SLOT of FRAMES."
+     "MSV deals transparently with multiple values (that is, it returns a single element if that's all there is, otherwise a list)"
+     "It also accepts lists of FRAMES, in which case the results of the individual slot values are unioned together.")
   (if (listp frames)
       (let ((result nil))
 	(dolist (f frames (delistify result))
@@ -300,8 +295,9 @@ Ideas/todos
 
 (defsetf msv set-msv)
 
-(defun set-msv (frame slot value)
-  (setf (slotv frame slot) (listify value)))
+(defun set-msv (frames slot value)
+  (dolist (frame (listify frames))
+    (setf (slotv frame slot) (listify value))))
 
 (defun msv-inverse (frames slot)
   (if (listp frames)
@@ -311,9 +307,10 @@ Ideas/todos
 	  (setf result (nunion result (slotv-inverse f slot) :test #'equal))))
       (delistify (slotv-inverse frames slot))))
 
-;;; SSV functions enforce single values (useful for debugging).
+;;; SSV functions enforce single values 
 
 (defun ssv (frame slot &optional (fill? *fill-by-default?*))
+  "Returns the value of SLOT in FRAME, which must be a single element (or missing) or an error is signalled."
   (let ((v (slotv frame slot fill?)))
     (if (> (length v) 1)
 	(error "Multiple values where one expected"))
@@ -338,24 +335,23 @@ Ideas/todos
 (defun slot-has? (frame slot value)
   (member value (slotv frame slot)))
 
-;;; This is the real underlying primitive.  Never fills.
 ;;; Note the default test is equal.  This could be slow.
 ;;; +++ setf %slotv was not primitive, now fixed, but who knows if this will work now.
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
-      (when remove-old
-	(remove-triple s p '?o :to-db to-db :test test))
-      (if (frame-p o) (frame-fresh? o))
-      (pushnew o (%slotv s p) :test test)
-      ;; PPP this can be a performance bottleneck for things like types that can have thousands of members.  
-      ;; Need to use hashtables or some structure with better performance 
-      (when (frame-p o)
-	(pushnew s (%slotv-inverse o p) :test #'eq))
-      (when to-db
-	(let ((source (if (typep to-db 'frame-source)
-			  to-db
-			  (frame-source s))))
-	  (write-triple source s p o)))
-      nil)
+  (when remove-old
+    (remove-triple s p '?o :to-db to-db :test test))
+  (if (frame-p o) (frame-fresh? o))
+  (pushnew o (%slotv s p) :test test)
+  ;; PPP this can be a performance bottleneck for things like types that can have thousands of members.  
+  ;; Need to use hashtables or some structure with better performance 
+  (when (frame-p o)
+    (pushnew s (%slotv-inverse o p) :test #'eq))
+  (when to-db
+    (let ((source (if (typep to-db 'frame-source)
+		      to-db
+		      (frame-source s))))
+      (write-triple source s p o)))
+  nil)
 
 ;;; see comment on delete-triple
 (defun remove-triple (s p o &key (test #'equal) to-db &aux savedo)
@@ -378,6 +374,7 @@ Ideas/todos
 
 ;;; query (sexp sparql syntax from lsw) 
 (defun describe-frame (frame &optional (fill? nil))
+  "Describe the contents of FRAME, optionally filling"
   (when fill? (fill-frame frame :force? t))
   (format t "~&Forward:")
   (when (frame-slots frame)
@@ -387,29 +384,12 @@ Ideas/todos
     (pprint (utils:ht-contents (frame-inverse-slots frame))))
   frame )
 
-(defun df (frame &optional (fill? nil)) (describe-frame frame fill?))
-(defun dft (frame) (df frame t))
-
-#|
-Tests:
-(setq f1 (make-frame 
-	   :source "http://data.linkedct.org/sparql" 
-	   :uri "http://data.linkedct.org/resource/trials/NCT00696657"))
-
-(fill-sframe f1)
-(setq f2 (car (slotv f1 (intern-uri "http://data.linkedct.org/resource/linkedct/location")))
-(fill-sframe f2)
-
-
-(defvar *bio2df-server* (make-sparql-source "http://lod.openlinksw.com/sparql"))
-
-(describe-sframe (intern-uri "http://data.linkedct.org/resource/trials/NCT00123435"))
-
-;;; Test inverse
-(add-triple #$a #$has #$b)
-(assert (member #$b (slotv-inverse #$b #$has)))
-
-|#
+(defun df (frame &optional (fill? nil))
+  "Describe the contents of FRAME"
+  (describe-frame frame fill?))
+(defun dft (frame)
+  "Describe the contents of FRAME, filling it first."
+  (df frame t))
 
 (defun name-eq (s1 s2)
   (equal (symbol-name s1) (symbol-name s2)))

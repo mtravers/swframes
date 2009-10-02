@@ -31,6 +31,35 @@
 
 (defvar *sparql-default-timeout* 30)
 
+(defgeneric do-sparql (source command &key timeout)
+  (:documentation #.(doc "Perform a SPARQL command"
+"SOURCE is a SPARQL-ENDPOINT."
+""
+"COMMAND can be a string in SPARQL syntax, or a sexp in the followng syntax)"
+""
+"(:select <vars> <options> <clauses>*)"
+""
+"Where:"
+" <vars> is a list of query variables (?foo, etc) or :all, or :count."
+""
+"<options> is a key/val list:"
+":limit n"
+":distinct <boolean>"
+":from:  A frame specifying a named graph"
+":offset n "
+":order  value can be a single variable (?var) a 2-list (:desc/:asc ?var), or a list of such elements"
+""
+"Clauses can be:"
+"A triple "
+"  (subject predicate object)"
+"Where subject and predicate are frames or sparql variables"
+"Object is frame, sparql variable, or a literal (string or number)"
+""
+"Or"
+"(:filter ...)"
+"(:union ...)"
+)))
+
 (defmethod do-sparql ((sparql string) (command t) &key (timeout *sparql-default-timeout*))
   (do-sparql (make-instance 'sparql-endpoint :uri sparql) command :timeout timeout))
 

@@ -89,7 +89,8 @@ http://data.linkedmdb.org/all/director
   (when (or force? (not (frame-dereferenced? frame)))
     (when (string-prefix-equals (frame-uri frame) "http")
       (dereference-1 frame)
-      (setf (frame-dereferenced? frame) t))))
+      (setf (frame-dereferenced? frame) t)))
+  frame)
 
 (defmethod dereference-1 ((frame frame))
   (handler-case 
@@ -98,7 +99,7 @@ http://data.linkedmdb.org/all/director
 	  (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
 	    (utils:get-url (frame-uri frame) :accept "application/rdf+xml"))
 	#+:CCL (declare (ccl::ignore-if-unused response-headers uri))
-;;;    (print `(response-code ,response-code response-headers ,response-headers ,uri))
+;;;	(print `(response-code ,response-code response-headers ,response-headers ,uri))
 	(unless (= response-code 200)
 	  (error "Failed to dereference ~A, response code ~A" frame response-code))
 	(let ((xml (parse-xml body)))

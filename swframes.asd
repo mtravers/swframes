@@ -14,12 +14,12 @@
    (:file "package")
    (:file "utils")
    (:file "xmlu")
+   (:file "source")
    (:file "swframes-0")
    (:file "namespace")
    (:file "standard-namespaces")
    (:file "swframes")
    (:file "compat")
-   (:file "source")
    (:file "rdfs")
    ;; sources
    (:file "dereference")

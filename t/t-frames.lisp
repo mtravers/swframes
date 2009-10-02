@@ -133,8 +133,27 @@ Lisp slots handle any printable Lisp object,
 ;;; +++ test dependency delete
 
 
-;;; Slot accessors
-
-
-	
 			     
+#|
+Old stuff
+
+Tests:
+(setq f1 (make-frame 
+	   :source "http://data.linkedct.org/sparql" 
+	   :uri "http://data.linkedct.org/resource/trials/NCT00696657"))
+
+(fill-sframe f1)
+(setq f2 (car (slotv f1 (intern-uri "http://data.linkedct.org/resource/linkedct/location")))
+(fill-sframe f2)
+
+
+(defvar *bio2df-server* (make-sparql-source "http://lod.openlinksw.com/sparql"))
+
+(describe-sframe (intern-uri "http://data.linkedct.org/resource/trials/NCT00123435"))
+
+;;; Test inverse
+(add-triple #$a #$has #$b)
+(assert (member #$b (slotv-inverse #$b #$has)))
+
+|#
+

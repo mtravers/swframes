@@ -3,8 +3,6 @@
 #|
 A frame source is a sparql endpoint or other source of frames and content.
 
-Concept still developing.  
-
 Dereferencing is a "frame source" of sorts...
 
 |#
@@ -22,23 +20,9 @@ Dereferencing is a "frame source" of sorts...
 (defgeneric writeable? (frame-source))
 
 ;;; Generate a guaranteed unique new URI
-;;;
+;;; +++ this should be developed out
 (defgeneric gensym-uri (frame-source &optional prefix))
   
-;;; our local, writeable frame repository
-(defvar *local-source*) 		;+++ unify with *collabrx-source*
-
-#|  This has to come later
-(setq *local-source*
-      (make-instance 'sparql-endpoint
-		     :uri "http://virtuoso.collabrx.com/sparql/"
-		     :base-uri "http://collabrx.com/rdf/"
-		     ))      
-
-
-|#
-
-
 (defmacro with-frame-source ((source) &body body)
   `(let ((*default-frame-source* ,source))
      ,@body))
@@ -50,6 +34,8 @@ Dereferencing is a "frame source" of sorts...
 
 (defvar *code-source* (make-instance 'code-source))
 
-(defmethod fill-frame-from ((frame frame) (source code-source) &key inverse?)
+
+;;; class FRAME not defined yet.
+(defmethod fill-frame-from (frame (source code-source) &key inverse?)
   (declare (ignore frame source inverse?))
   )

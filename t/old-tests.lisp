@@ -137,7 +137,7 @@ WHERE {
 I'm always doing this, so
 
 (lambda (trial)
-  (mapcar (svf #$db:linkedct/intervention_name)
+  (mapcar (slot-accessor #$db:linkedct/intervention_name)
 	  (slotv trial #$db:linkedct/intervention)))
 
 
