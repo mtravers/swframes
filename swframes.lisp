@@ -29,7 +29,7 @@ Ideas/todos
 	  add-triple
 	  rename-frame delete-frame write-frame destroy-frame
 	  describe-frame df dft
-	  sw-register-namespace def-namespace))
+	  register-namespace def-namespace))
 
 (defun frame-name (frame)
   (abbreviate-uri (frame-uri frame)))  
