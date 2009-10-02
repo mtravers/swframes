@@ -6,9 +6,6 @@
 (defvar *sparul-group* nil)
 (defvar *sparul-group-limit* 1000)      ;max # of groups (virtuoso has a 10000 LINE limit, this is groups)
 
-(export 'with-sparul-group)
-
-
 ;;; async is NOT WORKING PROPERLY yet, so don't use it!
 (defmacro with-sparul-group ((endpoint &key async?) &body body)
   `(let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound

@@ -40,17 +40,24 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		 (cond ((eq old o))
 		       ((null old)
 			(a! s p o))
-		       (t (error "~A already has ~A ~A, can't set to ~A" s p old o))))))
+		       (t (error "~A already has ~A ~A, can't set to ~A" s p old o)))))
+	     ;; +++ experimental feature, not in use yet
+	     (gen-slot-name (class slot)
+	       (intern-uri (string+ (frame-uri class) "/s/" (string-downcase (fast-string slot))))) 
+	     )
       (a! class  #$rdf:type #$rdfs:Class)
       (mapc #'(lambda (superclass)
 		(a! class #$rdfs:subClassOf superclass))
 	    superclasses)
       (mapc #'(lambda (slotdef)
+		(unless (listp slotdef) (setf slotdef (list slotdef)))
 		(let ((slot (car slotdef)))
+		  (unless (frame-p slot)
+		    (setf slot (gen-slot-name class slot)))
 		  (a! slot #$rdf:type #$rdfs:Property)
-		  (a!x slot #$rdf:domain class)
+		  (a!x slot #$rdfs:domain class)
 		  (awhen (member :range (cdr slotdef))
-			 (a!x slot #$rdf:range (cadr it)))))
+			 (a!x slot #$rdfs:range (cadr it)))))
 	    slots)
       `(progn ,@clauses
 	      ,class))))
@@ -138,13 +145,19 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defun rdfs-classp (frame class)
   (if (frame-p frame)
       (or (eq class #$rdfs:Resource)	;special handling, everything is a Resource (???)
-	   (slot-has? frame #$rdf:type class)
-	   (some #'(lambda (subclass)
-		     (rdfs-classp frame subclass))
-		 (rdfs-subclasses class)))
+	  (slot-has? frame #$rdf:type class)
+	  (some #'(lambda (subclass)
+		    (rdfs-classp frame subclass))
+		(rdfs-subclasses class)))
       ;;non-frame
       (eq class #$rdfs:Literal)		;+++ are their subtypes of this?
       ))
+
+#|  alternate
+(defun rdfs-class-p (thing class)
+  (and (frame-p thing)
+       (member class (rdfs-classes thing))))
+|#
 
 (defun rdfs-subclasses (class)
   (slotv-inverse class #$rdfs:subClassOf))
@@ -201,3 +214,4 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
        (funcall method
 		,firstarg
 		,@restargs))))
+

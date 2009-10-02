@@ -27,7 +27,7 @@ Ideas/todos
 	  ssv ssv-inverse ssv-accessor
 	  declare-special-slot
 	  add-triple
-	  rename-frame delete-frame write-frame destroy-frame
+	  rename-frame delete-frame write-frame destroy-frame with-sparul-group
 	  describe-frame df dft
 	  register-namespace def-namespace))
 
@@ -204,9 +204,16 @@ Ideas/todos
 	(fill-frame frame)
 	(%slotv frame slot))))
 
+(defvar *check-slot-domains?* nil)
+
 ;;; note that this and set-slotv-inverse never do fills
 ;;; this can't really do inverses, can it? we'd have to a difference...
 (defun set-slotv (frame slot value)
+  (when *check-slot-domains?*
+    (awhen (ssv slot #$rdfs:domain)
+	   (check-class-membership frame it))
+    (awhen (ssv slot #$rdfs:range)
+	   (check-class-membership frame it)))
   (let ((old (%slotv frame slot)))
     ;; enforce rule that slot values are lists...
     (unless (listp value) 

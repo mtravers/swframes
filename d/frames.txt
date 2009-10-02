@@ -14,6 +14,8 @@ Aside from the URI which defines their identity, frames have a SOURCE which can 
 #^
 #v
 
+(describe-frame frame 
+
 @namespaces
 
 A namespace is an abbreviation for URIs.  IE, the namespace "rdfs" is short for "http://www.w3.org/2000/01/rdf-schema#".  This means that
@@ -64,14 +66,27 @@ MSV attempts to be smart...use with caution
 (declare-special-slot <slot> <class>)
 
 #$crx:slots/LispValueSlot
+  Slots of this class can hold any printable Lisp object.
+
 #$crx:slots/TransientSlot
+  Slots of this class never write their values to the database.
 
 
 @sources and persistence
 
-write-frame
+(write-frame frame &key source async no-delete?)
+  Writes the frame to source (defaults to (frame-source frame)). 
+  Unless no-delete? is t, all triples with frame as subject are deleted and new ones written.
+
+
 write-slot
-with-sparul-group
+
+(with-sparul-group ((endpoint &key async?) &body body)) (macro)
+  Causes all writes to endpoint within the dynamic scope to be delayed until the form is exited (or in other words, it saves all SPARQL insert/delete commands and does them at the end).
+
+It is 
+
+
 
 
 @SPARQL
@@ -121,4 +136,9 @@ RDFS
 RDF Schema is a lightweight schema standard layered on top of RDF.  It provides means to define classes and relationships, but is lighter-weight and less restrictive (and less powerful) than OWL.  See +++
 
 SWFRAMES provides some tools for managing rdfs classes and relationships.
+
+rdfs-def-class
+rdfs-make-instance
+rdfs-defmethod
+rdfs-find
 
