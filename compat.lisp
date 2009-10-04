@@ -55,7 +55,7 @@
         )
   )
 
-(defun frames::def-indexed-slot (&rest intore)
+(defun frames::def-indexed-slot (&rest ignore)
   )
 
 (defun frames::describe-frame (f)

@@ -44,12 +44,12 @@ t;;; find some trials with interventions
 
 (defun synonyms-for-drug2 (drugname)
   (let ((synonyms
-	 (mt:collecting
+	 (collecting
 	   (dolist (trial-res (trials-for-drug drugname))
 	     (let ((intervention (sparql-binding-elt trial-res "intervention")))
 	       (fill-frame intervention) ;should get done automagically
 	       (dolist (syn (slotv intervention (intern-uri "http://www.w3.org/2002/07/owl#sameAs")))
-		 (mt::collect-new syn)))))))
+		 (collect-new syn)))))))
     (let ((result nil))
       (dolist (syn synonyms)
 	(let ((intervention2 (mapcar #'cadar (sparql-query `(:select (?other) () (?other ,(intern-uri "http://www.w3.org/2002/07/owl#sameAs") ,syn)))))) 

@@ -116,7 +116,7 @@ A tuplesource is a tupleset that can produce its tuples one at at time
          field)
         ((stringp field)
 	 ;; Beware, the BioLisp keywordize has different behavior
-	 (mt:keywordize (utils::remove-all-whitespace (utils:fast-string field))))
+	 (keywordize (utils::remove-all-whitespace (utils:fast-string field))))
         (t (error "Can't coerce ~A to field name" field))))
 
 (defgeneric tuple-field (tuple field-name))
@@ -150,11 +150,11 @@ A tuplesource is a tupleset that can produce its tuples one at at time
   (setq field (coerce-field field))
   (if (null new-value)
       (tuple-remove-field tuple field)
-      (mt::aif (assoc field tuple)
-               (rplacd mt::it new-value)
-               (rplacd tuple
-                       (cons (cons field new-value)
-                             (cdr tuple))))))
+      (aif (assoc field tuple)
+	   (rplacd it new-value)
+	   (rplacd tuple
+		   (cons (cons field new-value)
+			 (cdr tuple))))))
 
 (defgeneric tuple-remove-field (tuple field))
 
@@ -175,7 +175,7 @@ A tuplesource is a tupleset that can produce its tuples one at at time
        ,@(collecting
           (do ((rest field-values (cddr rest)))
               ((null rest))
-            (mt::collect `(setf (tuple-field ,tuple ,(car rest)) ,(cadr rest))))))))
+            (collect `(setf (tuple-field ,tuple ,(car rest)) ,(cadr rest))))))))
 
 
 ;;; tuples are equal if all fields are EQUAL, other than :tuple-id
@@ -241,8 +241,8 @@ A tuplesource is a tupleset that can produce its tuples one at at time
   `(tset-map-tuples ,tset #'(lambda (,var) ,@body)))
 
 (defmethod tset-tuple-list ((tuple-set base-tuple-set))
-  (mt::collecting
-    (tset-map-tuples tuple-set #'mt::collect)))
+  (collecting
+    (tset-map-tuples tuple-set #'collect)))
 
 (defmethod tset-copy ((from tuple-set) &optional (to (make-instance 'in-memory-tuple-set)))
   (tset-do-tuples (tup from)
@@ -259,9 +259,9 @@ A tuplesource is a tupleset that can produce its tuples one at at time
 
 ;;; collect all field values as a list
 (defmethod* tset-extract-field ((tset tuple-set) field)
-  (mt:collecting
+  (collecting
    (tset-do-tuples (tup tset)
-                   (mt:collect (tuple-field tup field)))))
+                   (collect (tuple-field tup field)))))
 
 ;;; ----
 ;;; ----------------------------------------------------------------

@@ -58,6 +58,11 @@
 "Or"
 "(:filter ...)"
 "(:union ...)"
+
+"The value returned from a :SELECT is a list of binding sets; each set is of the form ((?var1 value1) (?var2 value2) ...)"
+
+":insert and :delete operations..."
+
 )))
 
 (defmethod do-sparql ((sparql string) (command t) &key (timeout *sparql-default-timeout*))
@@ -104,8 +109,9 @@
 	      (modify-query offset)))))))
 	   
 
-;;; Return a simple list of results.  Query should either have one open variable or you can specify one with the optional argument
+
 (defmethod do-sparql-one-var ((sparql t) query &optional var)
+  "Return a simple list of results.  Query should either have one variable returned; or you can specify one with the optional VAR argument."
   (multiple-value-bind (res vars)
       (do-sparql sparql query)
     (extract-sparql-binding res (or var (car vars)))))

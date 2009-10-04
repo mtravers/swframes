@@ -4,6 +4,7 @@
 (defparameter *sw-namespaces* nil)
 
 (defun register-namespace (abbrev full &optional force?)
+  "Register ABBREV as a namespace definition for"
   (aif (member abbrev *sw-namespaces* :key #'car :test #'string-equal)
        (unless (equal (cadr (car it)) full)
 	 (if force?
@@ -16,12 +17,13 @@
 (defun unregister-namespace (abbrev)
   (deletef abbrev *sw-namespaces* :test #'equal :key #'car))
 
-;;; Use this in code
 (defmacro def-namespace (abbrev full)
+  "A version of register-namespace for use in code files; does an eval-when so frame names will be read correctly."
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (register-namespace ,abbrev ,full)))
 
 (defun abbreviate-uri (uri)
+  "Given a full URI as a string, attempt to abbreviate it using known namespaces."
   (dolist (namespace *sw-namespaces*)
     (let ((full (cadr namespace)))
       (when (and (not (eq full :uri-scheme))
@@ -32,7 +34,8 @@
 					    )))))
   (values uri nil))
 
-(defun expand-uri (uri &optional no-error)
+(defun expand-uri (uri &optional no-error?)
+  "Given an abbreviated URI as a string, expand it using known namespaces.  An error is signalled if the namespace is unknown unless NO-ERROR? is true."
   (let* ((colonpos (position #\: uri))
 	 (prefix (and colonpos
 		     (subseq uri 0 colonpos)))
@@ -46,13 +49,12 @@
       ((null prefix)
        uri)
       ((null namespace)
-       (if no-error
+       (if no-error?
 	   uri
 	   (error "Unknown namespace ~A" prefix)))
       ((eq namespace :uri-scheme)
        uri)
       (t (string+ namespace (subseq uri (1+ colonpos)))))))
-
 
 (defun namespace-lookup (namespace)
   (find namespace *sw-namespaces* :key #'car :test #'string-equal))

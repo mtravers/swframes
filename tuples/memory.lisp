@@ -74,10 +74,10 @@
 	(lookup-tuples-slow tset #'(lambda (tup) (equal (tuple-field tup field) value))))))
 
 (defmethod* lookup-tuples-slow ((tset in-memory-tuple-set) predicate)
-  (mt:collecting
+  (collecting
    (dolist (tup tuples)
      (when (funcall predicate tup)
-       (mt:collect tup)))))
+       (collect tup)))))
 
 (defun file-to-memory-tset (file)
   (let ((ots (make-instance 'file-tuple-set :file file))

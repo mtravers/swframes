@@ -101,9 +101,9 @@
 
 ;;; make multiple values into single values (needed by display)
 (defun frame->tuple (frame)
-  (mt::collecting 
+  (collecting 
    (maphash #'(lambda (key value)
-		(mt::collect (cons key (car value))))
+		(collect (cons key (car value))))
 	    (frame-slots frame)
 	    )))
     

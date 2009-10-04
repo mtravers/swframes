@@ -8,7 +8,7 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
   (if (listp lxml)
       ;; sometimes whitespace text chunks get inserted
       (if elts-only
-	  (mt:filter #'consp (cdr lxml))
+	  (filter #'consp (cdr lxml))
 	  (cdr lxml))
       nil))
 
@@ -16,7 +16,7 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
   (if (listp lxml)
       ;; sometimes whitespace text chunks get inserted
       (if elts-only
-          (mt:filter #'consp (cdr lxml))
+          (filter #'consp (cdr lxml))
           (cdr lxml))
       nil))
 
@@ -94,16 +94,16 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
   (car (lxml-find-elements-with-attribute xml tag attribute value)))
 
 (defun lxml-find-elements-with-attribute (xml tag attribute value)
-  (mt:filter #'(lambda (elt)
-                 (equal value
-                        (lxml-attribute elt attribute)))
-             (lxml-find-elements-with-tag xml tag)))
+  (filter #'(lambda (elt)
+	      (equal value
+		     (lxml-attribute elt attribute)))
+	  (lxml-find-elements-with-tag xml tag)))
 
 (defun xml-clean (xml)
   (cond ((null xml) nil)
         ((listp xml)
-         (mt:filter-out #'null
-                        (mapcar #'xml-clean xml)))
+         (filter-out #'null
+		     (mapcar #'xml-clean xml)))
         ((stringp xml)
          (let ((trimmed (string-trim-whitespace xml)))
            (if (equal trimmed "")

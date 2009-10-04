@@ -16,6 +16,7 @@
 
 #+SBCL
 (asdf:operate 'asdf:load-op :aserve)
+
 #-SBCL
 (asdf:operate 'asdf:load-op :s-xml)
 
@@ -29,7 +30,7 @@
 
 ;;; Load MT utils
 
-(require "mtlisp"
+'(require "mtlisp"
 	 (make-pathname :directory (append (pathname-directory *load-pathname*) '("mt-lisp-utils"))
 			:defaults "mtlisp.asd"))
 

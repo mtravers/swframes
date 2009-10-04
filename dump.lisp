@@ -64,13 +64,13 @@ Note: should have something to bulk-erase earlier triples.
 ;;; given a set of frames, finds references to frames outside the set
 ;;; for now, does not process predicates or inverse links (+++ add those as options)
 (defun frameset-external-refs (frames)
-  (mt:collecting
+  (collecting
     (dolist (f frames)
       (for-frame-slots (f slot value)
 		       (dolist (elt value)
 			 (if (and (frame-p elt)
 				  (not (member elt frames)))
-			     (mt::collect-new elt)))))))
+			     (collect-new elt)))))))
 			      
 				   
 			      

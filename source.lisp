@@ -12,6 +12,7 @@ Dereferencing is a "frame source" of sorts...
 (defclass frame-source ()
   ()
 ;  (:abstract t)
+  (:documentation "A CLOS object that represents a source of frame information; possibly writeable as well")
   )
 
 (defclass frame-generation-mixin (frame-source)
@@ -33,7 +34,6 @@ Dereferencing is a "frame source" of sorts...
   ())
 
 (defvar *code-source* (make-instance 'code-source))
-
 
 ;;; class FRAME not defined yet.
 (defmethod fill-frame-from (frame (source code-source) &key inverse?)

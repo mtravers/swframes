@@ -8,10 +8,10 @@ An RDF-backed frame system
   (defvar *default-frame-source* nil))
 
 (export '(make-frame
-	  *default-frame-source* *mark-new-frames-loaded?* *fill-by-default?*
+	  *default-frame-source* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
 	  most-significant-name 
-	  %frame-slots %frame-inverse-slots frame-empty?
+	  %frame-slots %frame-inverse-slots
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse frame-loaded?
 	  %slotv
@@ -23,7 +23,7 @@ An RDF-backed frame system
 	  add-triple remove-triple
 	  rename-frame delete-frame write-frame destroy-frame with-sparul-group
 	  describe-frame df dft
-	  register-namespace def-namespace))
+	  register-namespace def-namespace expand-uri abbreviate-uri))
 
 (defun frame-name (frame)
   "Returns the URI of a frame, possibly abbreviated"
@@ -50,20 +50,25 @@ An RDF-backed frame system
 
 ;;; names should be reversed
 (defun %frame-slots (frame)
+  "Return a list of known slots for this frame"
   (and (frame-slots frame)
        (wlisp::hash-keys (frame-slots frame))))
 
 (defun %frame-inverse-slots (frame)
+  "Return a list of known inverse slots for this frame"
   (and (frame-inverse-slots frame)
        (wlisp::hash-keys (frame-inverse-slots frame))))
 
 (defmacro for-frame-slots ((frame slot value) &body body)
+  "Iterate BODY over all slots of a frame, successively binding SLOT and VALUE vars"
   `(and (frame-slots ,frame)
 	(maphash #'(lambda (,slot ,value)
+		     #+CCL (declare (ccl::ignore-if-unused ,slot ,value))
 		     ,@body)
 		 (frame-slots ,frame))))
 
 (defmacro for-frame-inverse-slots ((frame slot value) &body body)
+  "Iterate BODY over all inverse slots of a frame, successively binding SLOT and VALUE vars"
   `(and (frame-inverse-slots ,frame)
 	(maphash #'(lambda (,slot ,value)
 		     ,@body)
@@ -179,10 +184,6 @@ An RDF-backed frame system
 	(frame-source f)
 	*code-source*))
 
-(defun frame-empty? (frame)
-  (and (null (%frame-slots frame))
-       (null (%frame-inverse-slots frame))))
-  
 (defvar *fill-by-default?* t)
 
 (defun %slotv (frame slot)
@@ -462,6 +463,21 @@ An RDF-backed frame system
 				    (return-from find-label (format nil "~A of ~A" (frame-label s) it))
 				    (pushnew elt fringe)))))))))
 				  
-
-
  
+(defun coerce-number (slotv &key no-error (default slotv))
+  (typecase slotv
+    (null (if no-error
+	      default
+	      (error "Can't coerce nil to a number")))
+    (list
+     (warn "Multiple values ~A" slotv)
+     (coerce-number (car slotv)))
+    (number slotv)
+    (string 
+     (let ((n (read-from-string slotv)))
+       (if no-error
+	   (if (numberp n) n default)
+	   (progn
+	     (assert (numberp n))
+	     n))))
+    (t (error "can't coerce ~A to a number" slotv))))

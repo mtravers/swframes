@@ -2,6 +2,12 @@
 
 (export '(dereference))
 
+;;; try to standardize the call to this, since there are a few random things we need to do often.
+(defun parse-xml (source)
+  (let* (; (s-xml::*ignore-namespaces* t)
+	 (ccl:*make-package-use-defaults* nil)) ;fixes a nasty bug where tags lose their namespaces if their symbol is defined in CL!
+    (s-xml:parse-xml-string (adjust-sparql-string source))))
+
 #|
 Dereferencing is Semweb jargon for looking at a URI, inferring from it a server, and going to that server
 to get some useful information (such as triples it participates in).  This is a highly under-specified and
@@ -86,6 +92,11 @@ http://data.linkedmdb.org/all/director
 ;;; An incomplete parser of RDF/XML
 
 (defmethod dereference ((frame frame) &optional force?)
+  #.(doc
+     "Dereference FRAME if it hasn't been done already or if FORCE? is set"
+     "Dereferencing (also known as \"linked data\") is Semweb jargon for taking a URI, treating at as a URL, and going to the server"
+     "to get some useful information (such as the triples it participates in)."
+     "See http://www4.wiwiss.fu-berlin.de/bizer/pub/LinkedDataTutorial/ for more information")
   (when (or force? (not (frame-dereferenced? frame)))
     (when (string-prefix-equals (frame-uri frame) "http")
       (dereference-1 frame)
@@ -106,6 +117,7 @@ http://data.linkedmdb.org/all/director
 	  (process-rdf-xml xml)))
     ;; +++ actually could parse rdf out of html if we were ambitious
     (s-xml:xml-parser-error (e)
+      (declare (ignore e))
       (warn "Attempt to dereference ~A got non-XML response" frame)
       nil)
     ;; +++ deal with 404

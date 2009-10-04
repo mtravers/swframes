@@ -18,10 +18,10 @@
 (defmethod xml-dump ((frame frame))
   (fill-frame frame)
   `(:|frame-xml|
-     ,@(mt:collecting
+     ,@(collecting
 	(maphash #'(lambda (key val)
 		     (if (listp val) (setq val (car val))) ;+++ not dealing with multiple value properly yet
-		     (mt:collect
+		     (collect
 			 `(:|property|
 			    (:|predicate| ,(frame-uri key))
 			    (:|predicateLabel| ,(frame-label key))

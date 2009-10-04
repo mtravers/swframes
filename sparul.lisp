@@ -8,6 +8,7 @@
 
 ;;; async is NOT WORKING PROPERLY yet, so don't use it!
 (defmacro with-sparul-group ((endpoint &key async?) &body body)
+  "Causes all writes to endpoint within the dynamic scope to be delayed until the form is exited (or in other words, it saves all SPARQL insert/delete commands and does them at the end)."
   `(let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
 	 (*sparul-group* (or *sparul-group* (list ,endpoint nil)))
 	 retval)
@@ -82,6 +83,10 @@
     base))
 
 (defmethod write-frame ((frame frame) &key (source (frame-source frame)) (async? nil) (no-delete? nil))
+  #.(doc
+     "Write FRAME to SOURCE"
+     "ASYNC? causes the write to be done in a separate thread"
+     "NO-DELETE? causes the previous contents in the database to not be retained.")
   (let ((dependents (frame-dependents frame)))
     (with-sparul-group (source :async? async?)
       (unless no-delete?
@@ -104,6 +109,24 @@
       (write-triple sparql frame slot val))))
 
 (rdfs-def-class #$crx:slots/specialSlot ())
+
+;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
+
+(defun declare-special-slot (slot type)
+  #.(doc 
+     "Declares SLOT to have special behavior defined by TYPE.  Current TYPEs are:"
+     "#$crx:slots/LispValueSlot:"
+     "   Slots of this class can hold any printable Lisp object."
+     "#$crx:slots/TransientSlot:"
+     "  Slots of this class never write their values to the database.")
+  (setf (ssv slot #$rdf:type) type
+        (ssv slot #$crx:specialhandling) t))
+
+;;; debugging only
+(defun undeclare-special-slot (slot)
+  (setf (slotv slot #$rdf:type) nil
+        (slotv slot #$crx:specialhandling) nil)  )
+
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 
 (rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
@@ -126,18 +149,6 @@
 (rdfs-defmethod deserialize-value ((p #$crx:slots/TransientSlot) value)
 		nil)
 
-;;; need to do the inverse on read! See deserialize-value (+++ make more parallel)
-
-(defun declare-special-slot (slot type)
-  (setf (ssv slot #$rdf:type) type
-        (ssv slot #$crx:specialhandling) t))
-
-;;; debugging only
-(defun undeclare-special-slot (slot)
-  (setf (slotv slot #$rdf:type) nil
-        (slotv slot #$crx:specialhandling) nil)  )
-
-;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
 (defun frame-dependents (frame)
   (collecting
@@ -146,7 +157,6 @@
                       (dolist (v value)
 			(assert (frame-p v) nil "Non-frame value ~A in slot ~A of ~A" v slot frame)
                         (collect-new v))))))
-
 
 ;;; Nuke frame from db
 (defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))

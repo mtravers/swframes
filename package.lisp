@@ -1,22 +1,20 @@
 (in-package :cl-user)
 
 ;;; Clean these up so we can use-package :swframes
-(unexport '(FRAMES:DESCRIBE-FRAME
-	    FRAMES:RENAME-FRAME
-	    FRAMES:DF
-	    FRAMES:SLOTV
-	    FRAMES:FOR-ALL-FRAMES)
+(unexport '(frames:describe-frame
+	    frames:rename-frame
+	    frames:df
+	    frames:slotv
+	    frames:for-all-frames)
 	  :biolisp)
 
-(unexport '(WEBLISTENER:PARSE-XML) 
+(unexport '(weblistener:parse-xml) 
 	  :biolisp)
-
 
 (defpackage :swframes
-  (:use :cl :utils :clos*)
+  (:use :cl :mt :clos*)			; :utils
   (:nicknames :sw)
   (:import-from :wb "HTML")
-;  (:import-from :knewos "RUN-SPARQL")
-  ;; exports in the code for now
+  ;; exports are in the code
   )
 

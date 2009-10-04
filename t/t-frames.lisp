@@ -121,7 +121,7 @@ Lisp slots handle any printable Lisp object,
       ))
 
 (define-test namespaces
-    (sw-register-namespace "test" "http://collabrx.com/test")
+    (register-namespace "test" "http://collabrx.com/test")
   (assert-equal "http://collabrx.com/testfoo"
 		(expand-uri "test:foo"))
   (assert-eq (intern-uri "test:foo")

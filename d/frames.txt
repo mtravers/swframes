@@ -19,9 +19,6 @@ a  SOURCE which can be
 #^
 #v
 
-(describe-frame frame)
-(df frame)
-(dft frame)
 
 @namespaces
 
@@ -37,9 +34,6 @@ Namespaces are defined by RDF and other related web standards.  See http://www.w
 (unregister-namespace abbrev)
 
 (def-namespace abbrev full)
-
-(expand-uri uri)
-(abbreviate-uri uri)
 
 
 
@@ -73,30 +67,9 @@ SLOT-ACCESSOR
 
 @(special slots)
 
-(declare-special-slot <slot> <class>)
-
-#$crx:slots/LispValueSlot
-  Slots of this class can hold any printable Lisp object.
-
-#$crx:slots/TransientSlot
-  Slots of this class never write their values to the database.
 
 
 @sources and persistence
-
-(write-frame frame &key source async no-delete?)
-  Writes the frame to source (defaults to (frame-source frame)). 
-  Unless no-delete? is t, all triples with frame as subject are deleted and new ones written.
-
-
-write-slot
-
-(with-sparul-group ((endpoint &key async?) &body body)) (macro)
-  Causes all writes to endpoint within the dynamic scope to be delayed until the form is exited (or in other words, it saves all SPARQL insert/delete commands and does them at the end).
-
-It is 
-
-
 
 
 @SPARQL
@@ -129,15 +102,6 @@ Or
 (:filter ...)
 (:union ...)
 
-
-Dereferencing
-
-Dereferencing (also known as "linked data") means treating an RDF URI as if it were a URL, with a server on the end.  When you dereference a URI, the server returns a chunk of RDF or other semantic web representation that reflects the contents of the URI.  This is an alternative to SPARQL endpoints and other methods of retrieving RDF information.
-
-See:
-http://www4.wiwiss.fu-berlin.de/bizer/pub/LinkedDataTutorial/
-
-+++ see dereference.lisp, there is doc there.
 
 
 RDFS

@@ -26,7 +26,7 @@ But this is OK..
 ;;; Try to understand their weird encoding...
 (defun json->lisp (s)
   (json:decode-json-from-string
-   (mt:string-replace 
-    (mt:string-replace s "'" "\"")
+   (string-replace 
+    (string-replace s "'" "\"")
     "None" "null")))
 

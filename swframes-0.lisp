@@ -18,7 +18,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defvar *print-frame-labels* nil)
 
 (defun frame-printer (frame stream ignore)
-  (mt:report-and-ignore-errors
+  (report-and-ignore-errors
    (if *print-frame-labels*
        (format stream "[~A]" (frame-label frame t))
        (format stream "#$~A" (frame-name frame)))))
