@@ -82,7 +82,7 @@
 (rdfs-def-class #$crx:tuple ())
 
 (def-cached-function tuple-field-slot (key)
-  (let ((slot (intern-uri (formatn "crx:tuplefield/~A" (string key)))))
+  (let ((slot (intern-uri (format nil "crx:tuplefield/~A" (string key)))))
     (declare-special-slot slot #$crx:slots/LispValueSlot)
     slot))
 
@@ -126,11 +126,10 @@
 (defmethod* tset-count ((ts pickled-tset))
   (or count
       (setf count
-	    (coerce-number
-	     (cadr (caar  
-		    (do-sparql nil
-		      `(:select ("count(*)") () 
-				(,frame #$crx:slots/includes-tuple ?s)))))))))
+	    (cadr (caar  
+		   (do-sparql nil
+		     `(:select ("count(*)") () 
+			       (,frame #$crx:slots/includes-tuple ?s))))))))
 
 (defmethod* tset-subseq ((tset pickled-tset) start length)
   (let ((tuple-frames 

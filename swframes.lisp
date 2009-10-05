@@ -464,20 +464,3 @@ An RDF-backed frame system
 				    (pushnew elt fringe)))))))))
 				  
  
-(defun coerce-number (slotv &key no-error (default slotv))
-  (typecase slotv
-    (null (if no-error
-	      default
-	      (error "Can't coerce nil to a number")))
-    (list
-     (warn "Multiple values ~A" slotv)
-     (coerce-number (car slotv)))
-    (number slotv)
-    (string 
-     (let ((n (read-from-string slotv)))
-       (if no-error
-	   (if (numberp n) n default)
-	   (progn
-	     (assert (numberp n))
-	     n))))
-    (t (error "can't coerce ~A to a number" slotv))))

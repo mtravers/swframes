@@ -422,7 +422,7 @@
     (flet ((process-triple (triple)
 	     (when (stringp (third triple))	;+++ doesn't play with ("foo" :en) clauses
 	       (let ((var (gensym "?v")))
-		 (push `(:filter (:regex ,var ,(formatn "^~A$" (third triple)) "i")) new-clauses)
+		 (push `(:filter (:regex ,var ,(format nil "^~A$" (third triple)) "i")) new-clauses)
 		 (setf (third triple) var)
 		 ))))	     
       (dolist (clause (nthcdr 3 query))

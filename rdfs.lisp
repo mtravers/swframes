@@ -99,7 +99,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 			`((?s ,(if slot slot '?p) ,(if word? vvar value))))
 	      ,@(if class `((?s #$rdf:type ,class)))
 	      ;; UGH quoting, but I think this is right...
-	      ,@(if word? `((:filter (:regex ,vvar ,(formatn "\\\\W~A\\\\W" value) "i"))))
+	      ,@(if word? `((:filter (:regex ,vvar ,(format nil "\\\\W~A\\\\W" value) "i"))))
 	      )))
 
 (rdfs-def-class #$crx:session ()
