@@ -43,11 +43,11 @@ Well, this should be NIL and the kludgery handled at the grid level, at least.
 ;;; this is a general method for streams that are stupid...
 (defmethod tset-subseq ((tset base-tuple-set) start length)
   (tset-set-position tset start)
-  (utils:collecting
+  (collecting
    (dotimes (n length)
      (let ((tup (tset-iterator-next tset)))
        (if tup 
-	   (utils::collect tup)
+	   (collect tup)
 	   (return))))))
 
 ;;; Header lines can be zero or >1, but only at most one is processed.

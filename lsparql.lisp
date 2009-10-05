@@ -466,12 +466,12 @@
   ;; this defaulting of vars is almost never the right thing.  Also, won't deal with :optional and other constructs
   (unless vars
     (setq vars
-	  (utils:collecting 
+	  (collecting 
 	   (dolist (clause (nthcdr 3 query))
 	     (when (var-p (third clause))
-	       (utils::collect-new (third clause)))
+	       (collect-new (third clause)))
 	     (when (var-p (first clause))
-	       (utils::collect-new (first clause)))
+	       (collect-new (first clause)))
 	     ))))
   (setq query (copy-tree query))
   (dolist (var vars)
@@ -511,10 +511,10 @@
       (push-end slot-var (second query))))
   (setf slot-vars (nreverse slot-vars))
   (let ((res (do-sparql source query)))
-    (utils:collecting 
+    (collecting 
      (dolist (bind res)
        (let ((s (sparql-binding-elt bind var)))
-	 (util:collect-new s)
+	 (collect-new s)
 	 (mapc #'(lambda (slot slot-var)
 		   (let ((val (sparql-binding-elt bind slot-var)))
 		    (when val

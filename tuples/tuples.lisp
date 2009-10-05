@@ -116,7 +116,7 @@ A tuplesource is a tupleset that can produce its tuples one at at time
          field)
         ((stringp field)
 	 ;; Beware, the BioLisp keywordize has different behavior
-	 (keywordize (utils::remove-all-whitespace (utils:fast-string field))))
+	 (keywordize (utils:remove-all-whitespace (utils:fast-string field))))
         (t (error "Can't coerce ~A to field name" field))))
 
 (defgeneric tuple-field (tuple field-name))

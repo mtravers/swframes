@@ -92,7 +92,7 @@ An RDF-backed frame system
 
 (defun all-frames ()
   "Returns list of all known frames"
-  (collecting (for-all-frames (f) (utils::collect f))))
+  (collecting (for-all-frames (f) (collect f))))
 
 (defmethod reset-frame ((frame frame))
   "Clears frame slot and load information"
@@ -133,10 +133,10 @@ An RDF-backed frame system
       )))
 
 (defun frames-matching (uri-frag)
-  (utils:collecting 
+  (collecting 
    (for-all-frames (f)
 		   (if (search uri-frag (frame-uri f))
-		       (utils::collect f)))))
+		       (collect f)))))
 
 (defun delete-frames-matching (uri-frag)
   (for-all-frames (f)
@@ -168,7 +168,7 @@ An RDF-backed frame system
 	  (progn (fill-frame-from frame source :inverse? inverse?)
 		 ;; if nothing from db, try dereferncing
 		 (unless (frame-loaded? frame)
-		   (utils:report-and-ignore-errors	;+++
+		   (report-and-ignore-errors	;+++
 		    (setf (frame-source frame) nil)
 		    (dereference frame))))
 	  (progn ; utils:report-and-ignore-errors	;+++
@@ -402,11 +402,11 @@ An RDF-backed frame system
       (block frame
 	(if slot
 	    (when (member v (slotv f slot) :test #'equal)
-	      (utils::collect f)
+	      (collect f)
 	      (return-from frame))
 	  (dolist (slot (%frame-slots f))
 	    (when (member v (slotv f slot) :test #'equal)
-	      (utils::collect f)
+	      (collect f)
 	      (return-from frame))))))))
 
 (defun default-uri-generator (frame)

@@ -45,9 +45,9 @@
                   (cond ((or (eq (car value-elt) ':|uri|)
                           ;; virtuoso hands back these as <literals>, but they act like URIs
                           ;; actually, now they are <bnode>s...should handle those specially (optional arg to uri constructor maybe) +++
-			     (utils::string-prefix-equals (cadr value-elt) "nodeID:")
+			     (string-prefix-equals (cadr value-elt) "nodeID:")
 			     (and eager-make-uri?
-				  (utils::string-prefix-equals (cadr value-elt) "http://")))
+				  (string-prefix-equals (cadr value-elt) "http://")))
 			 (funcall make-uri (cadr value-elt)))
 			((and (eq (lxml-tag value-elt) ':|literal|)
 			      (equal (lxml-attribute value-elt :|datatype|)

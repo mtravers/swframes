@@ -79,7 +79,7 @@
 (defmethod* build-delete ((sparql sparql-endpoint) s p o)
   (let ((base (format nil "DELETE FROM GRAPH ~A { ~A ~A ~A }" (sparql-term (make-frame write-graph)) (sparql-term s) (sparql-term p) (sparql-term O))))
     (when (or (symbolp s) (symbolp p) (symbolp o) )
-      (pushstring base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
+      (push-string base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))
 
 (defmethod write-frame ((frame frame) &key (source (frame-source frame)) (async? nil) (no-delete? nil))

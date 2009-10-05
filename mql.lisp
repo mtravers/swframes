@@ -28,7 +28,7 @@
 					;     (net.aserve.client::do-http-request url)
 	   (get-via-curl url)
 	   ))
-    (unless (equal "/api/status/ok" (utils::assocdr :code response))
+    (unless (equal "/api/status/ok" (utils:assocdr :code response))
       (error "MQL error ~A" response))
     (when *mql-debug*
       (terpri)

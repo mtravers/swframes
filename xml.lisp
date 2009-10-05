@@ -32,7 +32,7 @@
 (defun stringy (val)
   (typecase val
     (frame (frame-label val))
-    (t (utils:fast-string val))))
+    (t (fast-string val))))
 
 (net.aserve:publish :path "frame.xml"
 		    :function 'frame-xml)
