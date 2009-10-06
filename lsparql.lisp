@@ -2,6 +2,8 @@
 
 (export '(sparql-endpoint make-sparql-source
 	  do-sparql do-sparql-one-var
+	  bulk-load-query augment-query
+ 	  case-insensitize case-insensitize-2 
 	  post-fill *default-sparql-endpoint*))
 
 (defvar *default-sparql-endpoint* nil)
@@ -107,8 +109,6 @@
 	      (setf vars ivars result iresult)
 	      (setf concat (nconc concat result))
 	      (modify-query offset)))))))
-	   
-
 
 (defmethod do-sparql-one-var ((sparql t) query &optional var)
   "Return a simple list of results.  Query should either have one variable returned; or you can specify one with the optional VAR argument."
@@ -413,11 +413,11 @@
   (and (symbolp thing)
        (char= #\? (char (string thing) 0))))
 
-;;; convert all string literal objects into case-insensitive regex searches.
 ;;; +++ not working in all cases, see drugs-for-genes1
 ;;; +++ also too slow
 (defun case-insensitize (query)
-  (setq query (copy-tree query))
+  "Given a SPARLQ query, convert all string literal objects into case-insensitive regex searches."
+  (Setq query (copy-tree query))
   (let ((new-clauses nil))
     (flet ((process-triple (triple)
 	     (when (stringp (third triple))	;+++ doesn't play with ("foo" :en) clauses
@@ -434,8 +434,10 @@
     (setf (nthcdr 3 query) (append (nthcdr 3 query) new-clauses)))
   query)
 
-;;; alternate, less powerful but faster
 (defun case-insensitize-2 (query)
+  #.(doc 
+     "Alternate, much faster version of CASE-INSENSITIZE, does not handle all cases though,"
+     "Works by searching for upcased, downcased, and capitalized forms of all string literals.")
   (setq query (copy-tree query))
     (flet ((modify-triple (triple)
 	     (if (stringp (third triple))	;+++ doesn't play with ("foo" :en) clauses
@@ -457,9 +459,6 @@
 			     (t (modify-triple clause))))
 		   (nthcdr 3 query)))))
 
-
-
-
 ;;; +++ could be generalized for other dependent properties
 ;;; OPTIONAL could be optional
 (defun include-labels (vars query)
@@ -480,9 +479,11 @@
       (push-end `(:optional (,var #$rdfs:label ,label-var)) query)))
   query)
 
-;;; Given a SPARQL query and a var, extend the query to load all slots of var and mark frames as loaded.
 (defun bulk-load-query (source query &key (var (car (second query))))
-  (setq query (copy-tree query))
+  #.(doc
+     "Given a SPARQL query and a VAR extend the query to load all slots of frames that match VAR, and mark them as loaded."
+     "This function actually peforms the query and returns the list of frames matching VAR")
+  (setq query (copy-tree query))	;we mutate query, so copy it first
   (push-end `(,var ?bl_p ?bl_o) query)
   (push-end '?bl_p (second query))
   (push-end '?bl_o (second query))
@@ -501,8 +502,8 @@
 	    (setf (frame-source o) source))
 	  )))))
 
-;;; Add some slots to a one-var query (like bulk-load but selective rather than every thing)
 (defun augment-query (source query &key (var (car (second query))) slots &aux slot-vars)
+  "Add some slots to a one-variable query (like bulk-load-query but selective rather than loading everything)"
   (setq query (copy-tree query))
   (dolist (slot slots)
     (let ((slot-var (intern (format nil "?SLOT~D" (position slot slots)))))
