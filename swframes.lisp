@@ -46,7 +46,7 @@ An RDF-backed frame system
 
 ;;; +++ sometimes you want the part following #
 (defun most-significant-name (string)
-  (car (last (utils:string-split string #\/))))
+  (car (last (string-split string #\/))))
 
 ;;; names should be reversed
 (defun %frame-slots (frame)

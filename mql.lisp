@@ -33,7 +33,7 @@
     (when *mql-debug*
       (terpri)
       (print response))
-    (utils::assocdr :result response)))
+    (utils:assocdr :result response)))
 
 (defun mql-read-raw (q &optional credentials)
   (let* ((args (net.aserve:uriencode-string q))
@@ -117,7 +117,7 @@
 ;			  ("/base/bioventurist/product/developed_by"  . (:empty-dict)))))
 		  ;; Aigh, bad car
 		  (dev (mapunion #'(lambda (result)
-				     (utils::assocdr (keywordize property) result))
+				     (utils:assocdr (keywordize property) result))
 				 mql
 				 :test #'equal))
 		  )
@@ -162,7 +162,7 @@
 ;;;; Bio specific
 (defun mql-gene (gene-id)
   (let* ((raw (mql-read `(("/biology/gene/symbol" . ,gene-id) (:id  . nil))))
-	 (id (assocdr :id (car raw)))
+	 (id (utils:assocdr :id (car raw)))
 	 (frame (and id (mql-result->frame id))))
     (when frame
       (fill-frame frame)			;optional
