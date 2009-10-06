@@ -28,12 +28,6 @@
 		     :defaults "sbcl-patch.lisp"))
 
 
-;;; Load MT utils
-
-'(require "mtlisp"
-	 (make-pathname :directory (append (pathname-directory *load-pathname*) '("mt-lisp-utils"))
-			:defaults "mtlisp.asd"))
-
 ;;; Load SWFRAMES
 
 (load (make-pathname :directory (pathname-directory *load-pathname*)

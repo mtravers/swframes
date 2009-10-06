@@ -5,7 +5,8 @@
 
 ;;; Plumbing
 
-(require :cl-json)
+;;; done via asdf
+;(require :cl-json)
 
 (defvar *freebase-host* "www.freebase.com") ; The Metaweb host
 (defvar *freebase-readservice* "/api/service/mqlread")   ; Path to mqlread service

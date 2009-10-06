@@ -29,14 +29,7 @@
    (:file "files")
    (:file "mql")
    (:file "xml")
-   (:module "tuples"
-	    :serial t
-	    :components
-	    ((:file "tuples")
-	     (:file "tuple-sparql")
-	     (:file "files")
-	     (:file "pickle")
-	     (:file "memory")))
+
    )
 )
 
