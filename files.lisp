@@ -21,7 +21,7 @@
 (defun owl-file-to-virtuoso (file graph)
   (let ((frames (parse-owl-file file))
 	(writer (make-instance 'sparql-endpoint
-			       :uri (sparql-endpoint-uri *collabrx-sparql*)
+			       :url (sparql-endpoint-uri *collabrx-sparql*)
 			       :writeable? t
 			       :write-graph graph)))
     (dolist (f frames)

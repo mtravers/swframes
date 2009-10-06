@@ -21,6 +21,7 @@
    (:file "swframes")
    (:file "compat")
    (:file "rdfs")
+   (:file "dump")
    ;; sources
    (:file "dereference")
    (:file "k-sparql")

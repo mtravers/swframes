@@ -5,7 +5,7 @@
 ;;; This source won't work with POST, only GET.   It's also apparently different from the Uniprot RDF downloads
 ;;; see run-sparql-0
 (setq ep 
-      (make-instance 'sparql-endpoint :uri "http://labs.intellidimension.com/uniprot/sparql"))
+      (make-instance 'sparql-endpoint :url "http://labs.intellidimension.com/uniprot/sparql"))
 
 (sanity-check ep)
 

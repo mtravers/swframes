@@ -1,5 +1,8 @@
 (in-package :sw)
 
+(export '(dump-frames
+	  nt-writer))
+
 ;;; Not a source really, a sink.  Maybe need to refine these classes (and/or integrate with tuplesets) +++
 (defclass bulk-out (frame-source)
   ())
@@ -9,6 +12,7 @@
   (:initable-instance-variables file))
 
 (defmethod* dump-frames ((source file-bulk-out) frames)
+  "Write out a set of frames to the SOURCE (actually a sink)."
   (with-open-file (s file :direction :output :if-exists :supersede)
     (setf stream s)
     (dolist (f frames)
@@ -19,8 +23,9 @@
 		   (dolist (elt value)
 		     (write-triple source frame slot elt))))
 
-;;; NTriples writer (not to be confused with n3)
-(defclass nt-writer (file-bulk-out) ())
+;;; NTriples writer 
+(defclass* nt-writer (file-bulk-out) ()
+	   (:documentation "Source (sink) for writing out frames in Ntriples format (not to be confused with n3)"))
 
 (defmethod* write-triple ((out nt-writer) s p o)
   (terpri stream)

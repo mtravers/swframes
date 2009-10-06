@@ -88,9 +88,11 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	(setf (msv frame (car rest)) 
 	      (cadr rest))))))
 
-(defun rdfs-find (value &key slot class source word?)
-  (do-sparql-one-var source
-    (rdfs-find-sparql value :slot slot :class class :word? word?)))
+(defun rdfs-find (value &key slot class source word? fill?)
+  (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word?)))
+    (if fill?
+	(bulk-load-query source sparql)
+	(do-sparql-one-var source sparql))))
 
 (defun rdfs-find-sparql (value &key slot class word?)
   (let ((vvar (if word? (gensym "?V"))))

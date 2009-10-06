@@ -10,24 +10,24 @@
 (defvar *sparql-namespace-uses*)
 
 ;;; might want to register these somewhere
-(defun make-sparql-source (uri &key writeable?)
+(defun make-sparql-source (url &key writeable?)
   (make-instance 'sparql-endpoint
-		 :uri uri
+		 :url url
 		 :writeable? writeable?))
 
 (defclass* sparql-endpoint (frame-source)
-  (uri
+  (url
    (writeable? nil)
    (read-graph nil)			;if set, SEXP queries are limited to that graph 
    (write-graph nil))
   :initable-instance-variables
-  (:readable-instance-variables uri read-graph write-graph)
+  (:readable-instance-variables url read-graph write-graph)
   )
 
 (defmethod* print-object ((sparql sparql-endpoint) stream)
   (format stream "#<~A ~A ~A ~A>" 
 	  (type-of sparql)
-	  uri
+	  url
 	  (if writeable? "[w]" "[nw]")
 	  (if read-graph (format nil "[rg: ~A]" read-graph))))
 
@@ -68,7 +68,7 @@
 )))
 
 (defmethod do-sparql ((sparql string) (command t) &key (timeout *sparql-default-timeout*))
-  (do-sparql (make-instance 'sparql-endpoint :uri sparql) command :timeout timeout))
+  (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout))
 
 (defmethod do-sparql ((sparql null) (command t) &key (timeout *sparql-default-timeout*))
   (do-sparql *default-sparql-endpoint* command :timeout timeout))
@@ -76,7 +76,7 @@
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *sparql-default-timeout*))
 ;  (print command)
-  (run-sparql uri command 
+  (run-sparql url command 
 		      :make-uri #'(lambda (u) (intern-uri u sparql))
 		      ;; this suddenly became necessary since I was geting literals back...no idea why 
 		      :eager-make-uri? t
