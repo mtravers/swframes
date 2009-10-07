@@ -75,10 +75,6 @@ An RDF-backed frame system
 		     ,@body)
 		 (frame-inverse-slots ,frame))))
 
-;;; Probably don't want to do this, will lose code frames
-(defun reset-frames ()
-  (clrhash *uri->frame-ht*))
-
 (defmacro for-all-frames ((var) &body body)
   "Map BODY over all known frames"
   `(maphash #'(lambda (uri ,var)
@@ -167,10 +163,8 @@ An RDF-backed frame system
 (defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
-    ;; reset-frame was here, but moved to sparql.  This all needs rethinking
-    (let ((*fill-by-default?* nil)	;prevent recursion
-;	  (existing-nslots (hash-table-count (frame-slots frame)))
-	  )
+    ;; reset-frame was here, but moved to sparql.  This all needs rethinking +++
+    (let ((*fill-by-default?* nil))	;prevent recursion
       (if source
 	  (progn (fill-frame-from frame source :inverse? inverse?)
 		 ;; if nothing from db, try dereferncing
@@ -178,8 +172,7 @@ An RDF-backed frame system
 		   (report-and-ignore-errors	;+++
 		    (setf (frame-source frame) nil)
 		    (dereference frame))))
-	  (progn ; utils:report-and-ignore-errors	;+++
-	   (dereference frame)))
+	  (dereference frame))		;+++
       (set-frame-loaded? frame))))
 
 
