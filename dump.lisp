@@ -7,6 +7,7 @@
 (defclass bulk-out (frame-source)
   ())
 
+;;; +++ for some reason the clos* stuff isn't working.
 (defclass* file-bulk-out (bulk-out)
   (file stream)
   (:initable-instance-variables file))

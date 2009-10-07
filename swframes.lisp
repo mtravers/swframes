@@ -45,7 +45,6 @@ An RDF-backed frame system
 	(most-significant-name (frame-name frame))
 	)))
 
-;;; +++ sometimes you want the part following #
 (defun most-significant-name (string)
   (car (last (string-split string #\/))))
 
@@ -163,15 +162,14 @@ An RDF-backed frame system
 (defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
-    ;; reset-frame was here, but moved to sparql.  This all needs rethinking +++
     (let ((*fill-by-default?* nil))	;prevent recursion
       (if source
 	  (progn (fill-frame-from frame source :inverse? inverse?)
 		 ;; if nothing from db, try dereferncing
 		 (unless (frame-loaded? frame)
-		   (report-and-ignore-errors	;+++
+		   (progn		;was report-and-ignore-errors
 		    (setf (frame-source frame) nil)
-		    (dereference frame force?))))
+		    (dereference frame force?)))) ;+++
 	  (dereference frame force?))		;+++
       (set-frame-loaded? frame))))
 
@@ -222,8 +220,7 @@ An RDF-backed frame system
     (unless (listp value) 
       (error "Arg to set-slotv must be list: ~A ~A ~A" frame slot value))
     (%set-slotv frame slot value)
-    ;; +++ fairly serious change ... verify that this works 
-    ;; (too slow for long lists)
+    ;; (too slow for long lists) PPP
     (when old
       (dolist (removed (set-difference old value :test #'equal))
 	(when (frame-p removed)
@@ -336,8 +333,6 @@ An RDF-backed frame system
 (defun slot-has? (frame slot value)
   (member value (slotv frame slot)))
 
-;;; Note the default test is equal.  This could be slow.
-;;; +++ setf %slotv was not primitive, now fixed, but who knows if this will work now.
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
   (when remove-old
     (remove-triple s p '?o :to-db to-db :test test))

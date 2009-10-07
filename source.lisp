@@ -37,11 +37,11 @@ Dereferencing is a "frame source" of sorts...
   )
 
 #|
-;;; Not used (but probably should be)
+;;; Not used (but probably should be +++) 
+
 (defclass frame-generation-mixin (frame-source)
   ((uri-base :initarg :uri-base :initform nil)))
 
 ;;; Generate a guaranteed unique new URI
-;;; +++ this should be developed out
 (defgeneric gensym-uri (frame-source &optional prefix))
 |#

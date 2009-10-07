@@ -116,7 +116,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
      "SOURCE specifies a source, argument is ignored if frame already exists.")
   (if (frame-p uri) (return-from intern-uri uri))
   (assert (stringp uri))
-  (setf uri (expand-uri uri))		;+++ decide if this expands or not!
+  (setf uri (expand-uri uri))	
   (or (frame-named uri)
       (intern-frame
        (%make-frame :uri uri 

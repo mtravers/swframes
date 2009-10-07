@@ -52,9 +52,10 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
         (t (car elt))))
 
 (defun lxml-tag-p (tag elt)
-  (if (listp (car elt))
-      (eq tag (caar elt))
-      (eq tag (car elt))))
+  (or (eq tag elt)
+      (if (listp (car elt))
+	  (eq tag (caar elt))
+	  (eq tag (car elt)))))
 
 ;;; these are from LSW, I think.
 (defun lxml-find-element-with-tag (element tag &rest more-tags)

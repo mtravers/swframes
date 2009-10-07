@@ -4,7 +4,7 @@
 (use-package :lisp-unit)
 
 (defun gen-test-frame (&optional (root "test"))
-  (make-frame (formatn "~A~A" root (gensym)) :source *code-source*))
+  (make-frame (format nil "~A~A" root (gensym)) :source *code-source*))
 
 (define-test intern
     (assert-eq (intern-uri "blither")
@@ -25,7 +25,7 @@
 ;;; slot equality is set equality
 (defun slotv-equal (a b)
   (if (and (listp a) (listp b))
-      (set-equal a b :test #'equal)
+      (set-equal a b #'equal)
       (equal a b)))
 
 #|
@@ -57,7 +57,7 @@ Lisp slots handle any printable Lisp object,
 		   (test-slot-1 ls v nil)
 		   (test-slot-1 ls v t)))
 	       (test-slot-1 (s v db)
-		 (print `(test ,v ,s ,db))
+;		 (print `(test ,v ,s ,db))
 		 (when db (forget))
 		 (setf (msv f s) v)
 		 (assert-slotv-equal v (msv f s))

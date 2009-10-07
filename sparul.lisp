@@ -13,7 +13,6 @@
 	 (*sparul-group* (or *sparul-group* (list ,endpoint nil)))
 	 retval)
      (unless (equal (car *sparul-group*) ,endpoint)
-       ;; +++ was error, temp disabled
        (error "Bad nested SPARUL groups: ~A ~A" (car *sparul-group*) ,endpoint))
      (setf retval (progn ,@body))
      (let ((clauses (cadr *sparul-group*))) ;make sure this gets captured
@@ -63,7 +62,7 @@
   (do-grouped-sparul sparql
     (build-delete sparql s p o)))
 
-;;; default these (+++ bad idea probably, and needs a better variable at least)
+;;; default these
 (defmethod write-triple ((sparql null) s p o)
   (write-triple *default-frame-source* s p o))
 
@@ -178,26 +177,16 @@
       (destroy-frame d))
     ))
 
-;;; OOPS -- if you accidently destroy a frame but have a df of it somewhere, this can recreate it!
-(defun recreate-frame (frame forward backward)
-  (with-sparul-group (nil)
-    (dolist (f forward)
-      (dolist (v (cadr f))
-        (add-triple frame (car f) v :to-db t)))
-    (dolist (i backward)
-      (dolist (v (cadr i))
-        (add-triple v (car i) frame :to-db t)))))
-
 ;;; Delete EVERYTHING in this graph.
-;;; Times out on our Virtuoso instance, no idea why.
+;;; Times out on our Virtuoso instance.
 (defmethod* nuke-everything ((sparql sparql-endpoint))
-  (assert writeable?)                   ;+++ OK, this should be done in a class
+  (assert writeable?) 
   (do-sparql sparql
     (build-delete sparql '?s '?p '?o)))
 
 ;;; alternate method --
 (defmethod* nuke-everything2 ((sparql sparql-endpoint))
-  (assert writeable?)                   ;+++ OK, this should be done in a class
+  (assert writeable?)
   (let ((all (do-sparql *default-frame-source* `(:select (?s ?p ?o) ( :from ,(intern-uri write-1graph)) (?s ?p ?o)))))
     (dolist (binding all)
       (delete-triple sparql (sparql-binding-elt binding "s") (sparql-binding-elt binding "p") (sparql-binding-elt binding "o")))))
