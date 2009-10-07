@@ -82,11 +82,14 @@
       (push-string base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
     base))
 
+(defgeneric write-frame (frame &key source async? no-delete?)
+  (:documentation
+   #.(doc
+      "Write FRAME to SOURCE"
+      "ASYNC? causes the write to be done in a separate thread"
+      "NO-DELETE? causes the previous contents in the database to be retained (not recommended).")))
+
 (defmethod write-frame ((frame frame) &key (source (frame-source frame)) (async? nil) (no-delete? nil))
-  #.(doc
-     "Write FRAME to SOURCE"
-     "ASYNC? causes the write to be done in a separate thread"
-     "NO-DELETE? causes the previous contents in the database to not be retained.")
   (let ((dependents (frame-dependents frame)))
     (with-sparul-group (source :async? async?)
       (unless no-delete?
@@ -158,6 +161,11 @@
 			(assert (frame-p v) nil "Non-frame value ~A in slot ~A of ~A" v slot frame)
                         (collect-new v))))))
 
+(defgeneric destroy-frame (frame &optional source)
+  (:documentation
+   #.(doc
+      "Deletes frame from database, then calls DELETE-FRAME to remove from memory.")))
+
 ;;; Nuke frame from db
 (defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))
   (let ((dependents (frame-dependents frame)))
@@ -166,7 +174,7 @@
       (delete-triple sparql '?s '?p frame))
     ;; also do locally
     (delete-frame frame)
-    (dolist (d dependents)
+    (dolist (d dependents)		;+++ this should probably done at delete-frame level.
       (destroy-frame d))
     ))
 

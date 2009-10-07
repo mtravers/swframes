@@ -20,6 +20,7 @@ An RDF-backed frame system
 	  msv msv-inverse 
 	  ssv ssv-inverse ssv-accessor
 	  declare-special-slot
+	  for-frame-slots for-frame-inverse-slots
 	  add-triple remove-triple
 	  rename-frame delete-frame write-frame destroy-frame with-sparul-group
 	  describe-frame df dft
@@ -100,10 +101,12 @@ An RDF-backed frame system
   (setf (frame-loaded? frame) nil)
   (setf (frame-inverse-slots frame) nil))
 
+(defgeneric delete-frame (frame) 
+  (:documentation   #.(doc
+     "Delete FRAME from memory.  Attempts to remove all references from other frames, but this is not guaranteed."
+     "Does not delete from database (see DESTROY-FRAME)")))
+
 (defmethod delete-frame ((frame frame))
-  #.(doc
-     "Delete frame from memory.  Attempts to remove all references from other frames, but this is not guaranteed."
-     "Does not delete from database (see DESTROY-FRAME)")
   ;;; remove references (that we know about)
   (for-frame-slots (frame slot value)
 		   (dolist (elt value)
@@ -154,10 +157,14 @@ An RDF-backed frame system
 (defmethod fill-frame-inverse ((frame frame))
   (fill-frame frame))
 
+(defgeneric fill-frame (frame &key force? source inverse?)
+  (:documentation
+   #.(doc
+      "Ensure that the contents of FRAME (its slots and inverse-slots) are up to date as defined by SOURCE."
+      "Does nothing if FRAME is already marked as loaded, unless FORCE? is true."
+      "INVERSE? loads inverse-slots, default is T")))
+
 (defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
-  #.(doc
-     "Ensure that the contents of FRAME (its slots and inverse-slots) are up to date as defined by SOURCE."
-     "Does nothing if FRAME is already marked as loaded, unless FORCE? is true.")
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
     ;; reset-frame was here, but moved to sparql.  This all needs rethinking
@@ -184,7 +191,7 @@ An RDF-backed frame system
 	(frame-source f)
 	*code-source*))
 
-(defvar *fill-by-default?* t)
+(defvar *fill-by-default?* t "True if slot functions do a fill by default.  Initally T, can be dynamically bound")
 
 (defun %slotv (frame slot)
   (and (frame-slots frame)

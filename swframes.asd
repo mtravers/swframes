@@ -1,7 +1,8 @@
 (in-package :asdf)
 
 (defsystem :swframes
-  :name "Semantic Web Frame system"
+  :name "swframes"
+  :description "Semantic Web frame system, with SPARQL and RDFS support"
   :author "Mike Travers"
   :serial t
   :depends-on
@@ -29,8 +30,6 @@
    (:file "sparul")
    (:file "files")
    (:file "mql")
-   (:file "xml")
-
    )
 )
 

@@ -3,8 +3,6 @@
 ;;; Freebase doesn't do SPARQL, so here's a start at an MQL interface
 ;;; based on metaweb.py (/Volumes/revenant/a/projects/freebase/metaweb.py)
 
-;;; Plumbing
-
 ;;; done via asdf
 ;(require :cl-json)
 
@@ -79,9 +77,9 @@
       (setf result 
 	    (append result
 		    (ignore-errors 	;+++ some types give errors, just ignore
-		    (mql-read `((:id . ,id)
-				(:type . ,type)
-				("*" . (:empty-dict)))))))) ; or ("*" . nil) to get values only
+		      (mql-read `((:id . ,id)
+				  (:type . ,type)
+				  ("*" . (:empty-dict)))))))) ; or ("*" . nil) to get values only
     result))
       
 (defun mql-result->frame (id)
@@ -156,7 +154,6 @@
 
 ;;; RDF/Frame support
 
-
 ;;; Turns a Freebase ID into a frame name (ie, duplicating what they do to go to RDF)
 (def-namespace "fb" "http://rdf.freebase.com/ns/")
 
@@ -179,16 +176,9 @@
 #|
 for demo:
 
-
 (mapcar #'(lambda (res) 
 	    (sw::mql-result->frame (cdr (assoc :id res))))
 	(sw::mql-name-lookup (#^drugbank:drugbank/genericName it)))
-
-
-
-
-
-
 
 |#
 

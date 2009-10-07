@@ -6,11 +6,11 @@
  	  case-insensitize case-insensitize-2 
 	  post-fill *default-sparql-endpoint*))
 
-(defvar *default-sparql-endpoint* nil)
-(defvar *sparql-namespace-uses*)
+(defvar *default-sparql-endpoint* nil "The SPARQL-ENDPOINT used by default if none is specified.")
 
 ;;; might want to register these somewhere
 (defun make-sparql-source (url &key writeable?)
+  "Make a SPARQL endpoint for a given URL"
   (make-instance 'sparql-endpoint
 		 :url url
 		 :writeable? writeable?))
@@ -22,6 +22,7 @@
    (write-graph nil))
   :initable-instance-variables
   (:readable-instance-variables url read-graph write-graph)
+  (:documentation "A FRAME-SOURCE that represents a SPARQL endpoint, optionally with given named graphs for reading and writing.")
   )
 
 (defmethod* print-object ((sparql sparql-endpoint) stream)
@@ -110,8 +111,11 @@
 	      (setf concat (nconc concat result))
 	      (modify-query offset)))))))
 
+(defgeneric do-sparql-one-var (sparql query &optional var)
+  (:documentation 
+   "Perform a SPARQL query and return a simple list of frames.  Query should either have one variable returned; or you can specify one with the optional VAR argument."))
+
 (defmethod do-sparql-one-var ((sparql t) query &optional var)
-  "Return a simple list of results.  Query should either have one variable returned; or you can specify one with the optional VAR argument."
   (multiple-value-bind (res vars)
       (do-sparql sparql query)
     (extract-sparql-binding res (or var (car vars)))))
@@ -119,6 +123,8 @@
 ;;; +++ to be replaced with something better.  Virtuoso indicates bnodes in the XML returned now.
 (defun bnode? (frame)
   (string-prefix-equals (frame-uri frame) "nodeID://"))
+
+(defvar *sparql-namespace-uses*)
 
 ;;; :order value can be a single element, a 2-list (:desc/:asc ?elt), or a list of such elements
 (defmethod* generate-sparql ((sparql sparql-endpoint) form)

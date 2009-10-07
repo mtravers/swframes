@@ -12,19 +12,15 @@ Dereferencing is a "frame source" of sorts...
 (defclass frame-source ()
   ()
 ;  (:abstract t)
-  (:documentation "A CLOS object that represents a source of frame information; possibly writeable as well")
+  (:documentation "A CLOS object that represents a source of frame information; possibly writeable as well.  This is an abstract class")
   )
 
-(defclass frame-generation-mixin (frame-source)
-  ((uri-base :initarg :uri-base :initform nil)))
 
-(defgeneric writeable? (frame-source))
-
-;;; Generate a guaranteed unique new URI
-;;; +++ this should be developed out
-(defgeneric gensym-uri (frame-source &optional prefix))
+(defgeneric writeable? (frame-source)
+  (:documentation "True if the source is capable of being written to."))
   
 (defmacro with-frame-source ((source) &body body)
+  "Execute BODY with *default-frame-source* set to SOURCE"
   `(let ((*default-frame-source* ,source))
      ,@body))
 	 
@@ -39,3 +35,13 @@ Dereferencing is a "frame source" of sorts...
 (defmethod fill-frame-from (frame (source code-source) &key inverse?)
   (declare (ignore frame source inverse?))
   )
+
+#|
+;;; Not used (but probably should be)
+(defclass frame-generation-mixin (frame-source)
+  ((uri-base :initarg :uri-base :initform nil)))
+
+;;; Generate a guaranteed unique new URI
+;;; +++ this should be developed out
+(defgeneric gensym-uri (frame-source &optional prefix))
+|#

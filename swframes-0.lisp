@@ -15,6 +15,15 @@ This file has the minimum needed to get the frame system working (esp. the reade
   dereferenced? 
   )
 
+(setf (documentation #'frame-loaded? 'function)
+      "T if frame has been completely loaded from it's source")
+
+(setf (documentation #'frame-source 'function)
+      "An object that represents the source of this frame's contents (ie, a SPARQL-ENDPOINT)")
+
+(setf (documentation #'frame-uri 'function)
+      "The URI of the frame as a string")
+
 (defvar *print-frame-labels* nil)
 
 (defun frame-printer (frame stream ignore)
@@ -57,7 +66,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 ;;; New, works with setf without a lot of hair.   But it means we have to type #'#^ to use it as a functional argument...ugh.
 ;;; Whups -- fun defined at read time, won't necessarily be available later. Damn! 
 ;;; Poss solution -- put all def'd symbols in a special variable somewhere, which gets written to a fasl as the last step of compilation
-;;; of a system, and read back in early.  Ugly..
+;;; of a system, and read back in early.  Ugly...
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let* ((slot (make-frame (frames::read-fname stream)))
@@ -91,31 +100,20 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (let* ((slot (make-reader-frame (read-fname stream))))
     `(lambda (f) (msv-inverse f ,slot))))
 
-(defun make-frame (thing &key source)
+(defvar *default-frame-source* nil "A FRAME-SOURCE used by default when frames are created.  Can by dynamically bound.")
+
+(defun make-frame (thing &key (source *default-frame-source*))
+  #.(doc
+     "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
+     "SOURCE specifies a source, argument is ignored if frame already exists."
+     "Synonymous (more or less) with INTERN-URI")
+  (intern-uri thing source))
+
+;;; mark-loaded? arg is not presently used.
+(defun intern-uri (uri &optional (source *default-frame-source*) mark-loaded?)
   #.(doc
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists.")
-  (typecase thing
-    (frame thing)
-    (string
-     (let ((f (intern-uri (expand-uri thing))))
-       (when source
-	 (setf (frame-source f) source))
-       f))
-    (t (error "Can't turn ~A into a URI" thing))))
-
-;;; Gets redefined later
-(defun expand-uri (string)
-  (warn "Expand done before namespaces are in place: " string)
-  string)
-
-(defvar *uri->frame-ht* (make-hash-table :test 'equal))
-
-(defvar *default-frame-source* nil)	;Bind this for frame creation 
-
-;;; +++ isn't this the same more or less as make-frame?
-;;; mark-loaded? arg is not presently used.
-(defun intern-uri (uri &optional (source *default-frame-source*) mark-loaded?)
   (if (frame-p uri) (return-from intern-uri uri))
   (assert (stringp uri))
   (setf uri (expand-uri uri))		;+++ decide if this expands or not!
@@ -125,6 +123,13 @@ This file has the minimum needed to get the frame system working (esp. the reade
 		    :source source
 		    :loaded? mark-loaded?
 		    ))))
+
+;;; Gets redefined later
+(defun expand-uri (string)
+  (warn "Expand done before namespaces are in place: " string)
+  string)
+
+(defvar *uri->frame-ht* (make-hash-table :test 'equal))
 
 ;;; here for tracability.
 (defun set-frame-loaded? (frame &optional (loaded? t) source)
@@ -137,6 +142,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (setf (gethash (frame-uri frame) *uri->frame-ht*) frame))  
 
 (defun frame-named (uri)
+  "The frame named URI or nil if none is known.  Inverse of FRAME-URI"
   (gethash uri *uri->frame-ht*))
 
 (defun unintern-uri (uri)

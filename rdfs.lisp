@@ -27,6 +27,15 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 |#
 
 (defmacro rdfs-def-class (class superclasses &body slots)
+  #.(doc
+     "Define an RDFS class.  CLASS is a frame SUPERCLASSES is a list of frames."
+     "SLOTS is a list of slot defining forms, which are of the form:"
+     "  (SLOT :option value ...)"
+     "where slot is a frame, options are:"
+     "  :class: indicates a class for the slot (see declare-special-slot) "
+     "  :range: the range of the slot (domain is CLASS) "
+     "  :dependent: indicates that values in the slot are dependent objects (ie, they are deleted if the main instance is) "
+     "  :deep-copy ")
   (let ((clauses nil))
     (labels ((a! (s p o)
 	     (push `(frame-from-code ,s) clauses)
@@ -74,6 +83,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defvar *fast-instances?* t)
 
 (defun rdfs-make-instance (class &rest slots)
+  "Make an instance of CLASS.  Slots are alternating frame/values.  The URI is generated automatically."
   (flet ((check-class (thing class)
 	   (when class
 	     (assert (rdfs-classp thing class)))))
@@ -89,6 +99,11 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	      (cadr rest))))))
 
 (defun rdfs-find (value &key slot class source word? fill?)
+  #.(doc
+     "Find instances of CLASS that have VALUE on SLOT."
+     "VALUE can be :all, in which case all instances of CLASS are returned"
+     "If SLOT is nil, VALUE can be on any slot of instance. "
+     "If WORD? is true, does a text search of VALUE as a word contained in the actual slot value")
   (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word?)))
     (if fill?
 	(bulk-load-query source sparql)
@@ -181,6 +196,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	    (make-hash-table :test #'eq))))
 
 (defmacro rdfs-defmethod (name args &body body)
+  "Define a method that dispatches on the RDFS class of the first element of ARGS. Synatx is similar to CLOS defmethod."
   (let ((realargs (cons (car (car args)) (cdr args)))
 	(class (cadr (car args))))
     `(setf (gethash ,class (rdfs-methodtable ',name))
@@ -193,6 +209,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 ;;; no ordering, blah
 ;;; this version fills which can cause loops, bleah
 (defun rdfs-classes (thing)
+  "Returns all classes of THING."
   ;; try to avoid filling
   (or (transitive-closure (slotv thing #$rdf:type nil) (slot-accessor  #$rdfs:subClassOf nil))
       (transitive-closure (#^rdf:type thing) #'(lambda (x) (slotv x #$rdfs:subClassOf)))))
@@ -200,10 +217,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defun order-classes (classes)
   (sort classes #'(lambda (c1 c2) (member c2 (slotv c1 #$rdfs:subClassOf)))))
 
-;;; this is way wrong, but will do for now
 (defun rdfs-method (name thing &optional (errorp t))
-  ;; this can cause loops so defintely not right
-  ;; (fill-frame thing)
   (assert (frame-p thing))
   (let ((classes (order-classes (rdfs-classes thing)))
 	(methodtable (rdfs-methodtable name)))
@@ -213,11 +227,13 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	    nil))))
 
 (defmacro rdfs-call (name firstarg &rest restargs)
+  "Do a RDFS-dispatched method call.  Will find the most specific method of multiple are defined."
   `(funcall (rdfs-method ',name ,firstarg)
 	  ,firstarg
 	  ,@restargs))
 
 (defmacro rdfs-call-if (name firstarg &rest restargs)
+  "Call a method on FIRSTARG if it is defined, otherwise do nothing."
   `(let ((method (and ,firstarg (rdfs-method ',name ,firstarg nil))))
      (when method
        (funcall method

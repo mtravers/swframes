@@ -1,6 +1,6 @@
 (in-package :sw)
 
-(defun nt-dump-test
+(define-test nt-dump-test
     (let* ((file "/tmp/users.nt")
 	   (users (rdfs-find :all :class #$crx:bioblog/User :fill? t))
 	   (writer (make-instance 'nt-writer :file file)))

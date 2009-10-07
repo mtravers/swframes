@@ -3,6 +3,8 @@
   (if (member :ccl *features*)
       (pushnew :mcl *features*)))
 
+(defvar *swframes-directory* (pathname-directory *load-pathname*))
+
 ;;; Set up ASDF libraries
 (require :asdf)
 
@@ -36,5 +38,5 @@
 (asdf:operate 'asdf:load-op :swframes)
 
 (pushnew :sw *features*)
-
   
+

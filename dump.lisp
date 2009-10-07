@@ -11,8 +11,10 @@
   (file stream)
   (:initable-instance-variables file))
 
+(defgeneric dump-frames (source frames)
+  (:documentation "Write out a set of frames to the SOURCE (actually a sink)."))
+
 (defmethod* dump-frames ((source file-bulk-out) frames)
-  "Write out a set of frames to the SOURCE (actually a sink)."
   (with-open-file (s file :direction :output :if-exists :supersede)
     (setf stream s)
     (dolist (f frames)
