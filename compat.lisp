@@ -1,17 +1,23 @@
 (in-package :swframes)
 
-;;; should really not be happening
+#|
+The code here attempts to match the API of the older frame system.  As you might expect, it sort of works but there
+are many rough edges.
+
+If you patch the web code by hand (see the end of this file) it works well enough for the old BioBike frame browser
+to run
+
+|#
+
 (defun frames::%make-frame (&rest args)
   (warn "frames::%make-frame called with ~A" args)
   (%make-frame))
 
 ;; hook into old code, including listener
 (defun frames::frame-fnamed (name &optional force?)
-  (if (typep name 'frame) 
-      name
-      (if force?
-	  (make-frame name)
-	  (frame-named name))))
+  (if force?
+      (make-frame name)
+      (frame-named (expand-uri name))))
 
 (defun frames:fname (f)
   (frame-label f))
@@ -21,6 +27,10 @@
 
 (defun frames::set-slotv (frame slot value)
   (set-slotv frame slot value))
+
+(defun frames::%frame-slots (frame)
+  (awhen (frame-slots frame)
+	 (ht-contents it)))
 
 (defun frames::frame-slots-of (frame)
   (%frame-slots frame))
@@ -68,3 +78,14 @@
   (declare (ignore test))
   (add-triple frame slot elt))
 
+(defun frames::frame-name (frame)
+  (frame-name frame))
+
+#|
+In Webdefs/webframes-display.lisp
+
+Change methods that refer to class %frame to sw:frame (emit-value, wob-html, wob-url)
+
+Add call to fill-frame in wob-html
+
+|#

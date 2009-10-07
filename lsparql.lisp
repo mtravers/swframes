@@ -72,6 +72,8 @@
   (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout))
 
 (defmethod do-sparql ((sparql null) (command t) &key (timeout *sparql-default-timeout*))
+  (unless *default-sparql-endpoint*
+    (error "No default SPARQL endpoint defined"))
   (do-sparql *default-sparql-endpoint* command :timeout timeout))
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
