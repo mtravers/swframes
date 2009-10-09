@@ -7,14 +7,14 @@
   (unless timeout (setf timeout 10000))
   (multiple-value-bind (body response headers)
       (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" endpoint))
-	(utils:get-url endpoint
-		       ;; some sparql servers only accept GET, we should parameterize this (+++)
-		       :method :post
+	(get-url endpoint
+		 ;; some sparql servers only accept GET, we should parameterize this (+++)
+		 :method :post
 					;       :accept '("application/rdf+xml")
-		       :query `(("query" . ,sparql)
+		 :query `(("query" . ,sparql)
                                         ; more efficient probably, but requires a JSON parser
                                         ;            ("format" . "json")
-				)))
+			  )))
     (declare (ignore headers))
     (unless (= response 200)
       (error (format nil "SPARQL Error ~A: ~A" response body)))

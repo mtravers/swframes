@@ -6,7 +6,7 @@
   :author "Mike Travers"
   :serial t
   :depends-on
-  (:mtlisp
+  (:mtlisp :3utils
    :s-xml
    :cl-json)
   :components

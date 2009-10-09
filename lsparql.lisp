@@ -226,9 +226,9 @@
     (string (if (or (position #\" thing) (position #\Newline thing))
 		(format nil "'''~A'''" thing)
 		(format nil "\"~A\"" thing))) 
-    (fixnum (utils:fast-string thing))
+    (fixnum (fast-string thing))
     ;; SPARQL can't handle 3.0D3
-    (double-float (utils:fast-string (coerce thing 'single-float)))
+    (double-float (fast-string (coerce thing 'single-float)))
     ;; Newish way to generate language-specific literals (ie Melanoma@en) (Melanoma :en)
     ;; or types (Melanoma #$xsd:string)
     (list
@@ -241,7 +241,7 @@
 	   (t (error "Can't translate ~A into a SPARQL term" thing))
 	   ))
     (t  (error "Can't translate ~A into a SPARQL term" thing)
-;       (utils:fast-string thing)
+;       (fast-string thing)
        )))
 
 

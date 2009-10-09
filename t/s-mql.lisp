@@ -18,7 +18,7 @@ Tests and experimentation
                       'release_date': null,
                       'sort': 'release_date' }]}]}")
 
-(mql-read-raw (utils:string-replace album-query-env "'" "\""))
+(mql-read-raw (string-replace album-query-env "'" "\""))
 
 ;;; NOTE: need to have null
 

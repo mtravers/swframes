@@ -431,7 +431,7 @@ An RDF-backed frame system
 ;			   ((member slot shallow-slots)
 ;			    (setf (slotv nframe slot) (copy-list value)))
 			   ((or (member slot deep-slots)
-				(ssv slot (setq xxx #$crx:slots/deep-copy)))
+				(ssv slot #$crx:slots/deep-copy))
 			    (setf (slotv nframe slot) (mapcar #'(lambda (sf)
 								  (frame-copy sf :deep-slots deep-slots :omit-slots omit-slots :uri-generator uri-generator))
 							      value)))

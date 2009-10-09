@@ -2,7 +2,7 @@
 
 (defun d-then-e (s)
   (let* ((decoded (json->lisp s))
-	 (encoded     (utils:string-replace  (lisp->json decoded) "\"" "'")))
+	 (encoded (string-replace  (lisp->json decoded) "\"" "'")))
     (print decoded)
     (unless (equal s encoded)
       (print `(differs ,s ,encoded)))))

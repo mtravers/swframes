@@ -4,7 +4,7 @@
 	  nt-writer))
 
 ;;; Not a source really, a sink.  Maybe need to refine these classes (and/or integrate with tuplesets) +++
-(defclass bulk-out (frame-source)
+(defclass* bulk-out (frame-source)
   ())
 
 ;;; +++ for some reason the clos* stuff isn't working.
@@ -45,7 +45,7 @@
 
 ;;; +++ prob inadequate -- should check for printability.
 (defmethod* write-entity ((out nt-writer) (thing t))
-  (prin1 (utils:fast-string thing) stream))
+  (prin1 (fast-string thing) stream))
 
 
 #|
