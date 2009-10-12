@@ -4,7 +4,9 @@
 	  do-sparql do-sparql-one-var
 	  bulk-load-query augment-query
  	  case-insensitize case-insensitize-2 
-	  post-fill *default-sparql-endpoint*))
+	  post-fill
+	  *default-sparql-endpoint*
+	  *default-sparql-timeout*))
 
 (defvar *default-sparql-endpoint* nil "The SPARQL-ENDPOINT used by default if none is specified.")
 
@@ -32,7 +34,7 @@
 	  (if writeable? "[w]" "[nw]")
 	  (if read-graph (format nil "[rg: ~A]" read-graph))))
 
-(defvar *sparql-default-timeout* 30)
+(defvar *default-sparql-timeout* 30)
 
 (defgeneric do-sparql (source command &key timeout)
   (:documentation #.(doc "Perform a SPARQL command"
@@ -68,16 +70,16 @@
 
 )))
 
-(defmethod do-sparql ((sparql string) (command t) &key (timeout *sparql-default-timeout*))
+(defmethod do-sparql ((sparql string) (command t) &key (timeout *default-sparql-timeout*))
   (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout))
 
-(defmethod do-sparql ((sparql null) (command t) &key (timeout *sparql-default-timeout*))
+(defmethod do-sparql ((sparql null) (command t) &key (timeout *default-sparql-timeout*))
   (unless *default-sparql-endpoint*
     (error "No default SPARQL endpoint defined"))
   (do-sparql *default-sparql-endpoint* command :timeout timeout))
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
-(defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *sparql-default-timeout*))
+(defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))
 ;  (print command)
   (run-sparql url command 
 		      :make-uri #'(lambda (u) (intern-uri u sparql))
@@ -87,7 +89,7 @@
 		      ))
 
 ;;; Handles translation and breaking up query into chunks if result set is too big
-(defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *sparql-default-timeout*) (chunk-size 5000))
+(defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *default-sparql-timeout*) (chunk-size 5000))
   (flet ((do-it ()
 	   (do-sparql sparql (generate-sparql sparql query) :timeout timeout))
 	 (modify-query (offset)
