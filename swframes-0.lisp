@@ -118,19 +118,13 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (if (frame-p uri) (return-from intern-uri uri))
   (assert (stringp uri))
   (setf uri (expand-uri uri))	
+  (assert (> (length uri) 0))
   (or (frame-named uri)
       (intern-frame
        (%make-frame :uri uri 
 		    :source source
 		    :loaded? mark-loaded?
 		    ))))
-
-;;; Gets redefined later
-#| I don't think this is necessary any more
-(defun expand-uri (string)
-  (warn "Expand done before namespaces are in place: " string)
-  string)
-|#
 
 (defvar *uri->frame-ht* (make-hash-table :test 'equal))
 

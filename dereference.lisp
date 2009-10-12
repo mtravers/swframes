@@ -189,7 +189,7 @@ http://data.linkedmdb.org/all/director
                    ;; stupid dbpedia defines namespaces in the element they it is used in!
                    (do ((rest (lxml-attributes elt) (cddr rest)))
                        ((null rest))
-                     (when (string-prefix-equals (symbol-name (car rest)) "xmlns:")
+                     (when (string-prefix-equals (symbol-name (car rest)) "xmlns")
                        (register-namespace (cadr (string-split (symbol-name (car rest)) #\:  ))
                                               (cadr rest))))
                    (let ((property (symbol->frame (lxml-tag elt)))
@@ -219,10 +219,7 @@ http://data.linkedmdb.org/all/director
 			(ns (cadr splits))
 			(full (cadr namespaces)))
 		   (cond ((equal com "xmlns")
-			  (if (null ns)
-			      ;(register-namespace "NS-0" full)
-			      nil	;+++ prob need to do something here!
-			      (register-namespace ns full)))
+			  (register-namespace ns full))
 			 ((equal com "base")
 			  (setq base full))
 			 (t (error "Don't know what to do with ~A" (car namespaces))))))))

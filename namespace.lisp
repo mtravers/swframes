@@ -29,33 +29,42 @@
       (when (and (not (eq full :uri-scheme))
 		 (>= (length uri) (length full))
 		 (string= uri full :end1 (length full)))
-	(return-from abbreviate-uri (values (format nil "~A:~A" (car namespace) (subseq uri (length full)))
+	(return-from abbreviate-uri (values (if (car namespace)
+						(format nil "~A:~A" (car namespace) (subseq uri (length full)))
+						(subseq uri (length full)))
 					    (car namespace)
 					    )))))
   (values uri nil))
 
-;;; Redefines version in swframes-0
+
+;;; takes care of a corner case that arises in practice, not sure if 
+(defun namespace-splice (prefix suffix)
+  (if (and (> (length suffix) 0)
+	   (char= #\# (char suffix 0))
+	   (char= #\# (char prefix (1- (length prefix)))))
+      (string+ prefix (subseq suffix 1))
+      (string+ prefix suffix)))
+
 (defun expand-uri (uri &optional no-error?)
   "Given an abbreviated URI as a string, expand it using known namespaces.  An error is signalled if the namespace is unknown unless NO-ERROR? is true."
   (let* ((colonpos (position #\: uri))
 	 (prefix (and colonpos
-		     (subseq uri 0 colonpos)))
-	 (namespace (and prefix (namespace-expand prefix))))
+		      (subseq uri 0 colonpos)))
+	 (namespace (namespace-expand prefix))
+	 (suffix (if prefix (subseq uri (1+ colonpos)) uri)))
     (cond 
-      ((zerop (length uri))
-       "")
+      #|
       ;; special case for parsing BioPax
       ((char= (char uri 0) #\#)
        (string+ (namespace-expand "NS-0") (subseq uri 1)))
-      ((null prefix)
-       uri)
+      |#
       ((null namespace)
        (if no-error?
 	   uri
 	   (error "Unknown namespace ~A" prefix)))
       ((eq namespace :uri-scheme)
        uri)
-      (t (string+ namespace (subseq uri (1+ colonpos)))))))
+      (t (namespace-splice namespace suffix)))))
 
 (defun namespace-lookup (namespace)
   (find namespace *sw-namespaces* :key #'car :test #'string-equal))

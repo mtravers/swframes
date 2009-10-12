@@ -1,12 +1,18 @@
 (in-package :sw)
 
+(defvar *sw-test-data-dir*
+   (make-pathname :directory (append (pathname-directory *load-pathname*) '("data"))))
+
+(define-test parse-owl-file
+    (let ((frames (parse-owl-file (merge-pathnames "swan.owl" *sw-test-data-dir*))))
+      (assert-true (frame-p (car frames)))
+      (assert-true (typep (frame-source (car frames)) 'file-frame-source)) 
+      ))
+
 #|
 Tests (+++ turn these into actual unit tests)
 
-Small
-(parse-owl-file "/misc/kbs/swan.owl")
 
-Big
 Fails because of !!!entitites  Need to extend parser, blah
 (parse-owl-file "/misc/downloads/so.owl")
 
