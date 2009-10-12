@@ -212,9 +212,9 @@ An RDF-backed frame system
 (defun set-slotv (frame slot value)
   (when *check-slot-domains?*
     (awhen (ssv slot #$rdfs:domain)
-	   (check-class-membership frame it))
+	   (assert (rdfs-classp frame it)))
     (awhen (ssv slot #$rdfs:range)
-	   (check-class-membership frame it)))
+	   (assert (rdfs-classp frame it))))
   (let ((old (%slotv frame slot)))
     ;; enforce rule that slot values are lists...
     (unless (listp value) 

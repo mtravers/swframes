@@ -27,6 +27,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (defvar *print-frame-labels* nil)
 
 (defun frame-printer (frame stream ignore)
+  (declare (ignore ignore))
   (report-and-ignore-errors
    (if *print-frame-labels*
        (format stream "[~A]" (frame-label frame t))
@@ -125,9 +126,11 @@ This file has the minimum needed to get the frame system working (esp. the reade
 		    ))))
 
 ;;; Gets redefined later
+#| I don't think this is necessary any more
 (defun expand-uri (string)
   (warn "Expand done before namespaces are in place: " string)
   string)
+|#
 
 (defvar *uri->frame-ht* (make-hash-table :test 'equal))
 

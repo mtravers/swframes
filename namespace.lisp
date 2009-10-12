@@ -34,6 +34,7 @@
 					    )))))
   (values uri nil))
 
+;;; Redefines version in swframes-0
 (defun expand-uri (uri &optional no-error?)
   "Given an abbreviated URI as a string, expand it using known namespaces.  An error is signalled if the namespace is unknown unless NO-ERROR? is true."
   (let* ((colonpos (position #\: uri))

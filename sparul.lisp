@@ -145,6 +145,7 @@
 
 (rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
 (rdfs-defmethod write-triple-special ((p #$crx:slots/TransientSlot) s o sparql)
+		(declare (ignore s o sparql))
 		)
 
 ;;; Sometimes these unserializable slots get serialized, so ignore them
@@ -187,7 +188,7 @@
 ;;; alternate method --
 (defmethod* nuke-everything2 ((sparql sparql-endpoint))
   (assert writeable?)
-  (let ((all (do-sparql *default-frame-source* `(:select (?s ?p ?o) ( :from ,(intern-uri write-1graph)) (?s ?p ?o)))))
+  (let ((all (do-sparql *default-frame-source* `(:select (?s ?p ?o) ( :from ,(intern-uri write-graph)) (?s ?p ?o)))))
     (dolist (binding all)
       (delete-triple sparql (sparql-binding-elt binding "s") (sparql-binding-elt binding "p") (sparql-binding-elt binding "o")))))
 

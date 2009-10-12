@@ -44,13 +44,6 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
          (caar elt))
         (t (car elt))))
 
-(defun lxml-tag (elt)
-  (cond ((symbolp elt)
-         elt)
-        ((listp (car elt))
-         (caar elt))
-        (t (car elt))))
-
 (defun lxml-tag-p (tag elt)
   (or (eq tag elt)
       (if (listp (car elt))
