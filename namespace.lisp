@@ -85,5 +85,5 @@
 (register-namespace "nodeID" :uri-scheme) ;+++ temp: for Virtuoso blank nodes
 
 ;;; Generate headers for SPARQL (not currently used)
-(defun sparql-namespace-prefix (&optional abbrevs)
+(defun sparql-namespace-prefix ()
   (format nil "~:{~%PREFIX ~A: <~A>~}" *sw-namespaces*))

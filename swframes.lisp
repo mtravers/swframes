@@ -159,6 +159,8 @@ An RDF-backed frame system
       "Does nothing if FRAME is already marked as loaded, unless FORCE? is true."
       "INVERSE? loads inverse-slots, default is T")))
 
+(defvar *fill-by-default?* t "True if slot functions do a fill by default.  Initally T, can be dynamically bound")
+
 (defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
@@ -181,8 +183,6 @@ An RDF-backed frame system
 	t
 	(frame-source f)
 	*code-source*))
-
-(defvar *fill-by-default?* t "True if slot functions do a fill by default.  Initally T, can be dynamically bound")
 
 (defun %slotv (frame slot)
   (and (frame-slots frame)

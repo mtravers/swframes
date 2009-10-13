@@ -150,6 +150,7 @@
 
 ;;; Sometimes these unserializable slots get serialized, so ignore them
 (rdfs-defmethod deserialize-value ((p #$crx:slots/TransientSlot) value)
+		(declare (ignore value))
 		nil)
 
 
