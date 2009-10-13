@@ -6,10 +6,6 @@
 
 #|
 Notes:
-- range
-  - need to avoid property name collisions 
-- what to do with these triples?  Write them out?
-  - current solution: mark the URIs using frame-from-code
 
 Defclass
 - Might want to use a short name for slots and have uri generated with a template.
@@ -20,7 +16,7 @@ Make-instance
    - bad thought -- names could be uniquified on writing (ie, a frame keeps identity but changes its name) 
      - would screw interactive use
 
-Todo:
+Todo (+++):
 
 rdfs-lists (important...to translate from/to frame rep, slots need to have a property that says if the value is a list (as opposed to just a collection of elements))
 

@@ -3,7 +3,7 @@
 
 (use-package :lisp-unit)
 
-(defun gen-test-frame (&optional (root "test"))
+(defun gen-test-frame (&optional (root "crx:test"))
   (make-frame (format nil "~A~A" root (gensym)) :source *code-source*))
 
 (define-test intern
@@ -11,10 +11,10 @@
 	       (intern-uri "blither")))
 
 (define-test frame-reader
-    (let ((f1 (read-from-string "#$frame0"))
-	  (f2 (read-from-string "#$frame0"))
-	  (fun1 (read-from-string "#^frame0"))
-	  (inv1 (read-from-string "#vframe0")))
+    (let ((f1 (read-from-string "#$crx:frame0"))
+	  (f2 (read-from-string "#$crx:frame0"))
+	  (fun1 (read-from-string "#^crx:frame0"))
+	  (inv1 (read-from-string "#vcrx:frame0")))
       (assert-true (frame-p f1))
       (assert-eq f1 f2)
       (assert-false (eq f1 fun1))
@@ -81,9 +81,9 @@ Lisp slots handle any printable Lisp object,
 	(test-slot 'a nil t)
 	(test-slot t nil t)
 	(test-slot nil nil t)
- 	(test-slot (list #$foobar #$barfoo) t t)
+ 	(test-slot (list #$crx:foobar #$crx:barfoo) t t)
  	(test-slot '("what" "nonsense") t t)
- 	(test-slot '("what" #$blither 23) t t)
+ 	(test-slot '("what" #$crx:blither 23) t t)
  	(test-slot '(a b c) nil t)
 	;; clean up after ourselves
 	(destroy-frame f)
@@ -152,8 +152,8 @@ Tests:
 (describe-sframe (intern-uri "http://data.linkedct.org/resource/trials/NCT00123435"))
 
 ;;; Test inverse
-(add-triple #$a #$has #$b)
-(assert (member #$b (slotv-inverse #$b #$has)))
+(add-triple #$crx:a #$crx:has #$crx:b)
+(assert (member #$crx:b (slotv-inverse #$crx:b #$crx:has)))
 
 |#
 

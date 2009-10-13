@@ -412,12 +412,12 @@ An RDF-backed frame system
 ;;; Another method for generating unique URIs, if no class is found.
 (defun gen-child-uri (frame &optional n)
   (unless n
-    (setf n (or (ssv frame #$slots/last_child) 0)))
+    (setf n (or (ssv frame #$crx:slots/last_child) 0)))
   (let ((uri (string+ (frame-uri frame) "/" (fast-string n))))
     (if (uri-used? (or (frame-source frame) *default-frame-source*) uri)
 	(gen-child-uri frame (+ n 1))
 	(progn
-	  (setf (ssv frame #$slots/last_child) n)
+	  (setf (ssv frame #$crx:slots/last_child) n)
 	  (intern-uri uri)))))
 
 ;;; +++ it would be better to have info on how to treat slots on the slots themselves, or in classes.
