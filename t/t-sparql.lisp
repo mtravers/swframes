@@ -3,6 +3,22 @@
 (define-test sparql-sanity
     (assert-true (sanity-check *default-sparql-endpoint*)))
 
+(defvar *dbpedia* (make-instance 'sparql-endpoint :url "http://dbpedia.org/sparql"))
+
+(define-test sparql-syntax
+    (assert-true 
+     (do-sparql *dbpedia* '(:select :all (:distinct t :limit 10) (?s #$rdf:type ?t))))
+  (assert-true 
+   (member #$http://dbpedia.org/resource/Illinois
+     (do-sparql-one-var *dbpedia* '(:select (?t) (:distinct t :limit 10) (#$http://dbpedia.org/resource/Chicago #$dbpprop:subdivisionName ?t)))))
+  (assert-true 
+   (do-sparql *dbpedia* '(:select (?t ?f)
+				  (:distinct t :limit 10)
+				  (#$http://dbpedia.org/resource/Chicago #$dbpprop:subdivisionName ?t)
+				  (:optional (?t #$dbpprop:fossil ?f))
+			  ))))
+
+
 (setq linkedct-query 
   '(:select
     (?trial ?title ?inttype ?intname)

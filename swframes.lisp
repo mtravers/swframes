@@ -444,7 +444,7 @@ An RDF-backed frame system
 
 ;;; find-label: do a breadth first search from a frame until we hit something with a label, and produce a string
 (defun find-label (f)
-  (or (slotv f (intern-uri "http://www.w3.org/2000/01/rdf-schema#label") t)
+  (or (slotv f #$rdfs:label t)
       (let ((fringe (list f f))
 	    (done nil))
 	(do ((f (pop fringe) (pop fringe)))
@@ -454,7 +454,7 @@ An RDF-backed frame system
 			   (dolist (elt v)
 			     (when  (and (frame-p elt) (not (member elt done)))
 			       (print elt)
-			       (aif (slotv f (intern-uri "http://www.w3.org/2000/01/rdf-schema#label") t)
+			       (aif (slotv f #$rdfs:label t)
 				    (return-from find-label (format nil "~A of ~A" (frame-label s) it))
 				    (pushnew elt fringe)))))))))
 				  

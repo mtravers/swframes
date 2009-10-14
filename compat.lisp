@@ -6,7 +6,6 @@ are many rough edges.
 
 If you patch the web code by hand (see the end of this file) it works well enough for the old BioBike frame browser
 to run
-
 |#
 
 (defun frames::%make-frame (&rest args)
@@ -87,5 +86,4 @@ In Webdefs/webframes-display.lisp
 Change methods that refer to class %frame to sw:frame (emit-value, wob-html, wob-url)
 
 Add call to fill-frame in wob-html
-
 |#

@@ -77,7 +77,7 @@ Lisp slots handle any printable Lisp object,
 		 (fill-frame f)))
 	(test-slot 23 t t)
 	(test-slot "foo" t t)
-	(test-slot #$foobar t t)
+	(test-slot #$crx:foobar t t)
 	(test-slot 'a nil t)
 	(test-slot t nil t)
 	(test-slot nil nil t)
