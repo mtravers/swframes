@@ -4,9 +4,6 @@
 An RDF-backed frame system
 |#
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defvar *default-frame-source* nil))
-
 (export '(make-frame
 	  *default-frame-source* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
@@ -173,8 +170,8 @@ An RDF-backed frame system
 		    (setf (frame-source frame) nil)
 		    (dereference frame force?)))) ;+++
 	  (dereference frame force?))		;+++
-      (set-frame-loaded? frame))))
-
+      (set-frame-loaded? frame)))
+  frame)
 
 ;;; Called by rdfs-defmethod and other things to mark that a frame is defined from code, and not
 ;;; expected to be read from the database.
