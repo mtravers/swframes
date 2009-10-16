@@ -126,6 +126,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 		    :loaded? mark-loaded?
 		    ))))
 
+;;; Would be nice if this were weak, but only EQ hashtables support that in CCL.
 (defvar *uri->frame-ht* (make-hash-table :test 'equal))
 
 ;;; here for tracability.

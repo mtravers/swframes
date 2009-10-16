@@ -68,8 +68,8 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
 - Works!
 - unfortunately freebase doesn't seem to provide a SPARQL endpoint, sigh.
 
-#$db:diseasome/diseases
-- Works
+#$diseasome:diseasome/diseases
+- Works (not any more)
 
 
 NOT WORKING
