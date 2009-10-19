@@ -22,10 +22,10 @@ to run
   (frame-label f))
 
 (defun frames::slotv (frame slot)
-  (slotv frame slot))
+  (msv frame slot))
 
 (defun frames::set-slotv (frame slot value)
-  (set-slotv frame slot value))
+  (set-msv frame slot value))
 
 (defun frames::%frame-slots (frame)
   (awhen (frame-slots frame)
