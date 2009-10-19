@@ -1,0 +1,2 @@
+A lightly-modified and renamed version of BioLisp's WLisp package, whose only
+role in life is to make (setf (#^foo #$bar) ...) work.

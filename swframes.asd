@@ -12,6 +12,11 @@
   :components
   (;; setup and utilities
    ;; basics
+   (:module :blisp
+	    :serial t 
+	    :components 
+	    ((:file "package")
+	     (:file "redefinitions")))
    (:file "package")
    (:file "utils")
    (:file "xmlu")

@@ -12,7 +12,7 @@
 	  :biolisp)
 
 (defpackage :swframes
-  (:use :cl :mt :clos* :3utils)
+  (:use :blisp :mt :clos* :3utils)
   (:nicknames :sw)
   (:import-from :wb "HTML")
   ;; exports are in the code

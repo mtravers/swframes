@@ -63,39 +63,15 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defpackage :swfuncs)
 
-#|
-;;; New, works with setf without a lot of hair.   But it means we have to type #'#^ to use it as a functional argument...ugh.
-;;; Whups -- fun defined at read time, won't necessarily be available later. Damn! 
-;;; Poss solution -- put all def'd symbols in a special variable somewhere, which gets written to a fasl as the last step of compilation
-;;; of a system, and read back in early.  Ugly...
-(defun pound-carat-frame-reader (stream char arg)
-  (declare (ignore char arg))
-  (let* ((slot (make-frame (frames::read-fname stream)))
-	 (symbol (intern (frame-uri slot) :swfuncs)))
-    (compile symbol #'(lambda (f) (msv f slot)))
-    (eval `(defsetf ,symbol (f) (v) `(set-msv ,f ,,slot ,v)))
-    symbol
-    ))
-|#
 
-;;; go back to this, which won't work with setf
+
+;;; Works with setf through blisp magic -- see swframes/blisp
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let* ((slot (make-reader-frame (read-fname stream))))
     `(lambda (f) (msv f ,slot))))
 
-#|
-(defun pound-inverse-frame-reader (stream char arg)
-  (declare (ignore char arg))
-  (let* ((slot (make-reader-frame (read-fname stream)))
-	 (symbol (intern (string+ "inverse_" (frame-uri slot)) :swfuncs)))
-    (compile symbol #'(lambda (f) (msv-inverse f slot)))
-; No setf for now
-;    (eval `(defsetf ,symbol (f) (v) `(set-slotv-inverse ,f ,,slot ,v)))
-    symbol))
-|#
-
-;;; See above
+;;; See above (+++ blisp doesn't deal with this yet, it's not hard)
 (defun pound-inverse-frame-reader (stream char arg)
   (declare (ignore char arg))
   (let* ((slot (make-reader-frame (read-fname stream))))
@@ -177,5 +153,26 @@ This file has the minimum needed to get the frame system working (esp. the reade
    (string+ "$&+:;,/=?<>#%"*whitespace*) 
    'simple-string)
   "Characters that are not allowed in strings representing frame names")
+
+
+#|
+An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
+
+;;; New, works with setf without a lot of hair.   But it means we have to type #'#^ to use it as a functional argument...ugh.
+;;; Whups -- fun defined at read time, won't necessarily be available later. Damn! 
+;;; Poss solution -- put all def'd symbols in a special variable somewhere, which gets written to a fasl as the last step of compilation
+;;; of a system, and read back in early.  Ugly...
+(defun pound-carat-frame-reader (stream char arg)
+  (declare (ignore char arg))
+  (let* ((slot (make-frame (frames::read-fname stream)))
+	 (symbol (intern (frame-uri slot) :swfuncs)))
+    (compile symbol #'(lambda (f) (msv f slot)))
+    (eval `(defsetf ,symbol (f) (v) `(set-msv ,f ,,slot ,v)))
+    symbol
+    ))
+
+|#
+
+
 
 
