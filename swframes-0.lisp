@@ -73,7 +73,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (let* ((slot (make-frame (frames::read-fname stream)))
 	 (symbol (intern (frame-uri slot) :swfuncs)))
     (compile symbol #'(lambda (f) (msv f slot)))
-    (eval `(defsetf ,symbol (f) (v) `(set-slotv ,f ,,slot ,v)))
+    (eval `(defsetf ,symbol (f) (v) `(set-msv ,f ,,slot ,v)))
     symbol
     ))
 |#
