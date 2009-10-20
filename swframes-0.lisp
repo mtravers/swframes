@@ -103,6 +103,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 		    ))))
 
 ;;; Would be nice if this were weak, but only EQ hashtables support that in CCL.
+;;; Change equal to equalp for case-insensitve URLs (won't work with SPARQL though)
 (defvar *uri->frame-ht* (make-hash-table :test 'equal))
 
 ;;; here for tracability.

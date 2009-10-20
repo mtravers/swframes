@@ -226,8 +226,8 @@
 	 (string-downcase (string thing))
 	 (error "Can't translate ~A into a SPARQL term" thing)))
     (string (if (or (position #\" thing) (position #\Newline thing))
-		(format nil "'''~A'''" thing)
-		(format nil "\"~A\"" thing))) 
+		(format nil "'''~A'''" (backslash-quote-string thing))
+		(format nil "\"~A\"" (backslash-quote-string thing))))
     (fixnum (fast-string thing))
     ;; SPARQL can't handle 3.0D3
     (double-float (fast-string (coerce thing 'single-float)))
@@ -246,6 +246,9 @@
 ;       (fast-string thing)
        )))
 
+;;; Virtuoso requires this
+(defun backslash-quote-string (s)
+  (string-replace s "\\" "\\\\"))
 
 #| for later
 		 ((frame-p el)
