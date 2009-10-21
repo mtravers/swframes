@@ -174,7 +174,7 @@
 (defmethod* nuke-everything ((sparql sparql-endpoint))
   (assert writeable?) 
   (do-sparql sparql
-    (:delete (?s ?p ?o) (:from ,write-graph))))
+    `(:delete (?s ?p ?o) (:from ,write-graph))))
 
 ;;; alternate method --
 (defmethod* nuke-everything2 ((sparql sparql-endpoint))
