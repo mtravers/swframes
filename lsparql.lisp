@@ -43,23 +43,30 @@
 "COMMAND can be a string in SPARQL syntax, or a sexp in the followng syntax)"
 ""
 "(:select <vars> <options> <clauses>*)"
+"(:delete <triple> <options> <clauses>*"
+"(:insert <triple> <options> <clauses>*"
 ""
 "Where:"
 " <vars> is a list of query variables (?foo, etc) or :all, or :count."
 ""
 "<options> is a key/val list:"
+"For :select:"
 ":limit n"
 ":distinct <boolean>"
 ":from:  A frame specifying a named graph"
 ":offset n "
 ":order  value can be a single variable (?var) a 2-list (:desc/:asc ?var), or a list of such elements"
 ""
-"Clauses can be:"
-"A triple "
+"For :delete:"
+":from <graph>"
+"For :insert:"
+":into <graph>"
+
+"<triple>s are"
 "  (subject predicate object)"
-"Where subject and predicate are frames or sparql variables"
-"Object is frame, sparql variable, or a literal (string or number)"
-""
+"Where subject, predicate, object are frames or sparql variables"
+
+"Clauses are triples: "
 "Or"
 "(:filter ...)"
 "(:union ...)"
@@ -139,24 +146,6 @@
 	  ;; DELETE and INSERT can take WHERE clauses, not supported here yet
 	  ;; redone as separate methods on endpoints.
 	  (case	(car form)
-	    #|
-	    ((eq (car form) :insert)
-	    (destructuring-bind ((&key from) &rest clauses) (cdr form)
-	    (with-output-to-string (s)
-	    (format s "INSERT ~A { "
-	    (if from (format nil "INTO GRAPH <~A>" (uri-full from)) ""))
-	    (loop for clause in (cddr form)
-	    do (emit-sparql-clause clause s))
-	    (format s " }"))))
-	    ((eq (car form) :delete)
-	    (destructuring-bind ((&key from) &rest clauses) (cdr form)
-	    (with-output-to-string (s)
-	    (format s "DELETE ~A { "
-	    (if from (format nil "FROM GRAPH <~A>" (uri-full from)) ""))
-	    (loop for clause in (cddr form)
-	    do (emit-sparql-clause clause s))
-	    (format s " }"))))
-	    |#
       (:select
        (destructuring-bind (vars (&key limit offset distinct (from read-graph) order) &rest clauses) (cdr form)
 	 (with-output-to-string (s) 
@@ -203,6 +192,23 @@
 	     (loop for clause in clauses
 		do (emit-sparql-clause clause s))
 	     (write-string " }" s)))))
+      (:delete 
+       (destructuring-bind ((s p o) (&key (from write-graph)) &rest clauses) (cdr form)
+	 (with-output-to-string (str) 
+	   (format str
+		   "DELETE FROM GRAPH ~A { ~A ~A ~A }"
+		   (sparql-term (make-frame from))
+		   (sparql-term s)
+		   (sparql-term p)
+		   (sparql-term o))
+	   (when (or (symbolp s) (symbolp o) (symbolp p))
+	     (push (list s p o) clauses)
+	     )
+	   (when clauses
+	     (write-string "WHERE { " str)
+	     (loop for clause in clauses
+		do (emit-sparql-clause clause str))
+	     (write-string " }" str)))))
       (t (error "Can't handle ~A command yet" (car form)))))
     ;; add prefixes
     (let* ((prefix (with-output-to-string (p)

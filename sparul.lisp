@@ -52,15 +52,17 @@
        ;; normal
        (%write-triple sparql s p o)))
 
-(defun %write-triple (sparql s p o)
+(defmethod* %write-triple ((sparql sparql-endpoint) s p o)
   (do-grouped-sparul sparql
-    (build-insert sparql s p o)))
+    (generate-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
+    ))
 
 ;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod* delete-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)
   (do-grouped-sparul sparql
-    (build-delete sparql s p o)))
+    (generate-sparql sparql `(:delete (,s ,p ,o) (:from ,write-graph)))
+    ))
 
 ;;; default these
 (defmethod write-triple ((sparql null) s p o)
@@ -68,18 +70,6 @@
 
 (defmethod delete-triple ((sparql null) s p o)
   (delete-triple *default-frame-source* s p o))
-
-;;; +++ these should be done in same manner as :selects
-(defmethod* build-insert ((sparql sparql-endpoint) s p o)
-  (format nil
-          "INSERT INTO GRAPH ~A { ~A ~A ~A }"
-          (sparql-term (make-frame write-graph)) (sparql-term s) (sparql-term p) (sparql-term O)))
-
-(defmethod* build-delete ((sparql sparql-endpoint) s p o)
-  (let ((base (format nil "DELETE FROM GRAPH ~A { ~A ~A ~A }" (sparql-term (make-frame write-graph)) (sparql-term s) (sparql-term p) (sparql-term O))))
-    (when (or (symbolp s) (symbolp p) (symbolp o) )
-      (push-string base (format nil " WHERE { ~A ~A ~A }" (sparql-term s) (sparql-term p) (sparql-term O))))
-    base))
 
 (defgeneric write-frame (frame &key source async? no-delete?)
   (:documentation
@@ -184,7 +174,7 @@
 (defmethod* nuke-everything ((sparql sparql-endpoint))
   (assert writeable?) 
   (do-sparql sparql
-    (build-delete sparql '?s '?p '?o)))
+    (:delete (?s ?p ?o) (:from ,write-graph))))
 
 ;;; alternate method --
 (defmethod* nuke-everything2 ((sparql sparql-endpoint))
