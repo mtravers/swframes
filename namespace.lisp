@@ -82,6 +82,7 @@
 
 ;;; Define known real (non-abbreviated) schemas
 (register-namespace "http" :uri-scheme)
+(register-namespace "https" :uri-scheme)
 (register-namespace "urn" :uri-scheme)
 (register-namespace "bnode" :uri-scheme) ;for rdf-file parsing
 (register-namespace "nodeID" :uri-scheme) ;+++ temp: for Virtuoso blank nodes

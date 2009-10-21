@@ -35,15 +35,21 @@ Security?
   (let ((*dereference-depth* 3)
 	(*dereference-namespaces* nil)
 	(*dereference-frames* nil))
-    (frame-description-xml-1 frame)
+    (fill-frame frame)
+    (let ((xml (frame-description-xml-1 frame))
+	  (namespace-terms 
+	   (mt:collecting
+	    (dolist (ns *dereference-namespaces*)
+	      (mt:collect (string+ "xmlns:" ns))
+	      (mt:collect (namespace-expand ns))))))
+      `((:|rdf:RDF| ,@namespace-terms)
+	,xml)
+      )
     ))
-
 
 (defun frame-description-xml-1 (frame)
   (let ((*dereference-depth* (1- *dereference-depth*)))
-    `((:|rdf:RDF|
-	:|xmlns:rdf| "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-      ((:|rdf:Description| :|rdf:about| ,(frame-uri frame))
+    `((:|rdf:Description| :|rdf:about| ,(frame-uri frame))
        ,@(when (expand-frame? frame)
 	       (push frame *dereference-frames*)
 	 (mt:collecting
@@ -52,7 +58,7 @@ Security?
 			     (mt:collect (slot-description-xml slot elt))
 			     )))
 	       )
-       ))))
+       )))
 
 (defun expand-frame? (f)
   (and (> *dereference-depth* 0)
@@ -66,7 +72,7 @@ Security?
 	   (float "http://www.w3.org/2001/XMLSchema#double")
 	   (t nil)
 	   )))
-    `((,(frame-xml-tag slot) ,@(when datatype `((|rdf|:|datatype| ,datatype))))
+    `((,(frame-xml-tag slot) ,@(when datatype `(|rdf|:|datatype| ,datatype)))
       ,(cond ((frame-p value)
 	      (frame-description-xml-1 value)) ;+++ need to do some depth calc
 	     (t
@@ -76,7 +82,9 @@ Security?
 
 (defun frame-xml-tag (frame)
   (multiple-value-bind (uri namespace) (abbreviate-uri (frame-uri frame))
-    (unless namespace
+    (unless (and namespace
+		 (not (position #\/ uri))
+		 )
       (setf namespace (generate-namespace frame)
 	    uri (abbreviate-uri (frame-uri frame))) ;redo
       )
@@ -93,8 +101,5 @@ Security?
   )
 
 
-#|
-	   `((|rdf|:RDF :|xmlns:rdf| "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-	     ((|corp|:|Company| |rdf|:|about|
-		     ,(frame-uri frame)
-|#
+(defun dereference-local (frame)
+  (dereference-1 frame (string+ "http://localhost:8002" *dereference-path* "?uri=" (frame-uri frame) )))

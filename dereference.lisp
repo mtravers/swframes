@@ -68,7 +68,7 @@ http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
 - Works!
 - unfortunately freebase doesn't seem to provide a SPARQL endpoint, sigh.
 
-#$diseasome:diseasome/diseases
+#$diseasome:diseases
 - Works (not any more)
 
 
@@ -107,12 +107,12 @@ http://data.linkedmdb.org/all/director
       (setf (frame-dereferenced? frame) t)))
   frame)
 
-(defmethod dereference-1 ((frame frame))
+(defmethod dereference-1 ((frame frame) &optional (url (frame-uri frame)))
   (handler-case 
       (multiple-value-bind (body response-code response-headers uri)
 	  ;; turns out this processes the 303 redirect without any further intervention
 	  (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
-	    (get-url (frame-uri frame) :accept "application/rdf+xml"))
+	    (get-url url :accept "application/rdf+xml"))
 	#+:CCL (declare (ccl::ignore-if-unused response-headers uri))
 ;;;	(print `(response-code ,response-code response-headers ,response-headers ,uri))
 	(unless (= response-code 200)
@@ -127,7 +127,8 @@ http://data.linkedmdb.org/all/director
     ;; +++ deal with 404
     (error (e)
       (warn "Unexpected error ~A while dereferencing ~A" e frame)
-      nil)))
+      nil)
+    ))
 
 ;;; can get RSS feeds, ie
 (defun process-rdf-url (url)
@@ -170,7 +171,7 @@ http://data.linkedmdb.org/all/director
              (make-blank-node (type)
                (intern-uri (format nil "bnode:~A" (gensym (symbol-name type)))))
              (process-description (desc &optional top)
-;;;	       (print `(process-description ,desc))
+	       (print `(process-description ,desc))
                (let* ((about0 (or (lxml-attribute desc '|rdf|::|about|)
                                   (and (lxml-attribute desc '|rdf|::|ID|)
                                        base

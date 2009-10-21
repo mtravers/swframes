@@ -22,8 +22,9 @@
     ("dbpedia" "http://dbpedia.org/property/")
     ("drugbank" "http://www4.wiwiss.fu-berlin.de/drugbank/resource/")
     ("dailymed" "http://www4.wiwiss.fu-berlin.de/dailymed/resource/")
-    ("diseasome" "http://www4.wiwiss.fu-berlin.de/diseasome/resource/")
-
+    ;; +++ These namespaces are fucked.  Playing with diseasome, should deal with the other wiwiss ones
+    ("diseasome" "http://www4.wiwiss.fu-berlin.de/diseasome/resource/diseasome/")
+    ("diseasomer" "http://www4.wiwiss.fu-berlin.de/diseasome/resource/")
     ;; Other
     ("nci" "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#")
     ("go" "http://www.geneontology.org/go#")
