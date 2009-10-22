@@ -72,7 +72,7 @@ Security?
 	   (float "http://www.w3.org/2001/XMLSchema#double")
 	   (t nil)
 	   )))
-    `((,(frame-xml-tag slot) ,@(when datatype `(|rdf|:|datatype| ,datatype)))
+    `((,(frame-xml-tag slot) ,@(when datatype `(:|rdf:datatype| ,datatype)))
       ,(cond ((frame-p value)
 	      (frame-description-xml-1 value)) ;+++ need to do some depth calc
 	     (t

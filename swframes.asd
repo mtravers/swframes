@@ -30,6 +30,7 @@
    (:file "dump")
    ;; sources
    (:file "dereference")
+   (:file "dereference-server")
    (:file "k-sparql")
    (:file "lsparql")
    (:file "sparul")
