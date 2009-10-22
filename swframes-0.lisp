@@ -149,7 +149,7 @@ Prob. wrong to use *code-source* by default.  Argh.
 
 ;;; Reuse some biobike machinery
 (defun clean-string (string)
-  (frames::create-valid-frame-name 
+  (create-valid-frame-name 
    string
    :space-char-action #\_
    :from-chars "$&+,/:;=?@<>#%"
@@ -157,7 +157,7 @@ Prob. wrong to use *code-source* by default.  Argh.
 				   
 ;;; redo this for urls.  Source http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
 ;;; note that chars like : and / are legal for URIs, but only in a certain way...
-(defparameter frames::*illegal-frame-chars*
+(defparameter *illegal-frame-chars*
   (coerce 
    (string+ "$&+:;,/=?<>#%"*whitespace*) 
    'simple-string)
@@ -252,9 +252,13 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
       (let ((bad-char? nil))
         (loop for ch across sstring do
               (unless (valid-frame-char? ch)
-                (cformatt "Ruh roh. Invalid character: ~S" ch)
+                (error "Ruh roh. Invalid character: ~S" ch)
                 (setq bad-char? t)))
         (when bad-char? 
           (error "CONCOCT-VALID-FRAME-NAME: Illegal characters found!"))))
     sstring
     ))
+
+
+
+(defun valid-frame-char? (x) (null (find x *illegal-frame-chars*)))
