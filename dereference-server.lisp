@@ -107,8 +107,6 @@ as(rdf, "data.frame")
       (setf namespace (generate-namespace frame)
 	    uri (abbreviate-uri (frame-uri frame))) ;redo
       )
-    ;; trying to catch bug
-    (assert (stringp namespace))
     (print `(ns ,namespace ,*dereference-namespaces*))
     (pushnew namespace *dereference-namespaces*)
     uri))	
@@ -118,6 +116,7 @@ as(rdf, "data.frame")
 	 (slashpos (position #\/ uri :from-end t))
 	 (ns (string (gensym "NS"))))
     (register-namespace ns (subseq uri 0 (1+ slashpos)))
+    ns
     )
   )
 
