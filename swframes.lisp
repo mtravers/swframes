@@ -425,8 +425,6 @@ An RDF-backed frame system
 	(setf (frame-loaded? nframe) t)
 	(maphash #'(lambda (slot value)
 		     (cond ((member slot omit-slots))
-;			   ((member slot shallow-slots)
-;			    (setf (slotv nframe slot) (copy-list value)))
 			   ((or (member slot deep-slots)
 				(ssv slot #$crx:slots/deep-copy))
 			    (setf (slotv nframe slot) (mapcar #'(lambda (sf)

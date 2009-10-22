@@ -25,7 +25,7 @@
 ;;; slot equality is set equality
 (defun slotv-equal (a b)
   (if (and (listp a) (listp b))
-      (set-equal a b #'equal)
+      (mt:set-equal a b #'equal)
       (equal a b)))
 
 #|

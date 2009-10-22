@@ -33,16 +33,24 @@ This file has the minimum needed to get the frame system working (esp. the reade
        (format stream "[~A]" (frame-label frame t))
        (format stream "#$~A" (frame-name frame)))))
 
-(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader (frames::frames-readtable))
-(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader (frames::frames-readtable))
-(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader (frames::frames-readtable))
+#|
+(defparameter *frame-modified-readtable* (copy-readtable))
 
+(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader *frame-modified-readtable*)
+(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader *frame-modified-readtable*)
+(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader *frame-modified-readtable*)
+|#
+
+;;; We set this globally.
 (set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader )
 (set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader )
 (set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
 
+#|
+Prob. wrong to use *code-source* by default.  Argh.
+|#
 (defun make-reader-frame (s)
-  (make-frame s :source *code-source*))
+  (make-frame s :source *code-source*))	
 
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
@@ -175,5 +183,78 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
 |#
 
 
+;;; Following borrowed from BioLisp more or less verbaitm.
 
-
+(defun create-valid-frame-name 
+       (string 
+        &key
+        (prefix nil)
+        (suffix nil)
+        (case-action :none)
+        (space-char-action :remove)
+        (from-chars "()")
+        (to-chars "[]")
+        (verify? t)
+        )
+  #.(doc
+     "Create a frame name from an arbitrary string STRING.  By default:"
+     "  -- No case conversion is done."
+     "  -- Spaces in the string are removed."
+     "  -- left/right parentheses are converted to left/right brackets."
+     "  -- the resulting string is scanned for illegal frame characters."
+     "STRING itself is not modified, a freshly minted string is returned."
+     "CASE-ACTION determines what Lisp 'case' function to call on STRING:"
+     "  -- :UPPERCASE - STRING-UPCASE"
+     "  -- :LOWERCASE - STRING-DOWNCASE"
+     "  -- :CAPITALIZE - STRING-CAPITALIZE"
+     "  -- :NONE (or NIL) - no case conversion."
+     "SPACE-CHAR-ACTION determines what happens to space characters in STRING."
+     "If the value is :REMOVE or :DELETE (the default) all spaces (but not"
+     "other whitespace) are removed from STRING.  If the value is a character"
+     "object, that character replaces all occurences of spaces in STRING."
+     "Any other value is erroneous."
+     "FROM-CHARS and TO-CHARS define a substitution mapping. STRING is scanned"
+     "and any char in STRING which is found in FROM-CHARS is replaced by the"
+     "corresponding (indexwise) char in TO-CHARS."
+     "If PREFIX and/or SUFFIX are non-nil they are assumed to be strings and"
+     "are concatenated to STRING before and/or after."
+     "VERIFY determines whether the result string is finally scanned for"
+     "characters that are not legal in frame names."
+     )
+  (let ((sstring (coerce (copy-seq string) 'simple-string)))
+    (setq sstring
+          (case case-action
+            ((nil :none) sstring)
+            (:uppercase (nstring-upcase sstring))
+            (:lowercase (nstring-downcase sstring))
+            (:capitalize (nstring-capitalize sstring))
+            ))
+    (when from-chars
+      (unless to-chars (error "FROM-CHARS provided but not TO-CHARS!"))
+      (unless (= (length to-chars) (length from-chars))
+        (error "FROM-CHARS and TO-CHARS must be same length!"))
+      (ntranslate-string sstring from-chars to-chars))
+    (case space-char-action
+      ((:remove :delete) (setq sstring (delete #\Space sstring)))
+      (t
+       (unless (characterp space-char-action)
+         (error "SPACE-CHAR-ACTION neither a valid action nor a character!"))
+       (setq sstring (nsubstitute space-char-action #\Space sstring))
+       ))
+    (setq sstring
+          (cond
+           ((and (null prefix) (null suffix)) sstring)
+           ((and prefix suffix) (one-string prefix sstring suffix))
+           (prefix (one-string prefix sstring))
+           (suffix (one-string sstring suffix))
+           ))
+    (when verify?
+      (let ((bad-char? nil))
+        (loop for ch across sstring do
+              (unless (valid-frame-char? ch)
+                (cformatt "Ruh roh. Invalid character: ~S" ch)
+                (setq bad-char? t)))
+        (when bad-char? 
+          (error "CONCOCT-VALID-FRAME-NAME: Illegal characters found!"))))
+    sstring
+    ))

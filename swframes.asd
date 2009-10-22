@@ -25,6 +25,7 @@
    (:file "namespace")
    (:file "standard-namespaces")
    (:file "swframes")
+   #+BIOLISP
    (:file "compat")
    (:file "rdfs")
    (:file "dump")

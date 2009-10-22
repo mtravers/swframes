@@ -1,5 +1,6 @@
 (in-package :cl-user)
 
+#+BIOLISP
 ;;; Clean these up so we can use-package :swframes
 (unexport '(frames:describe-frame
 	    frames:rename-frame
@@ -8,6 +9,7 @@
 	    frames:for-all-frames)
 	  :biolisp)
 
+#+BIOLISP
 (unexport '(weblistener:parse-xml) 
 	  :biolisp)
 

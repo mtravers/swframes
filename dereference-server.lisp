@@ -10,6 +10,23 @@ Of course what exactly gets included with a linked-data query is undefined, as f
 
 Security?
 
+Should provide n3 also?
+
+Get rid of temporary namespaces.  Seems wrong that we need to make them
+
+Announce:
+So, here's a technique that ought to be allow R programs to read our RDF data.
+
+HTTP GET http://lila.collabrx.com/dereference?uri=<frame-uri>
+ returns RDF XML that describes <frame-uri>
+
+This is a standin for proper dereferencable URLs, but ought to be fine for now
+
+From R:
+library(Rredland)      # http://www.bioconductor.org/packages/bioc/html/Rredland.html
+rdf = readRDF('http://10.1.1.113:8002/dereference?uri=http://collabrx.com/rdf/bioblog/Entry/99/4318')
+as(rdf, "data.frame")
+
 |#
 
 (defparameter *uri-prefix* "http://rdf.collabrx.com/")
@@ -34,11 +51,13 @@ Security?
 (defun frame-description-xml (frame)
   (let ((*dereference-depth* 3)
 	(*dereference-namespaces* nil)
-	(*dereference-frames* nil))
-    (fill-frame frame)
+	(*dereference-frames* nil)
+	(*sw-namespaces* *sw-namespaces*) ;intent of this is to revert away all the temp namespaces
+	)
     (let ((xml (frame-description-xml-1 frame))
 	  (namespace-terms 
 	   (mt:collecting
+	    (print *dereference-namespaces*)
 	    (dolist (ns *dereference-namespaces*)
 	      (mt:collect (string+ "xmlns:" ns))
 	      (mt:collect (namespace-expand ns))))))
@@ -52,13 +71,13 @@ Security?
     `((:|rdf:Description| :|rdf:about| ,(frame-uri frame))
        ,@(when (expand-frame? frame)
 	       (push frame *dereference-frames*)
-	 (mt:collecting
-	  (for-frame-slots (frame slot value)
-			   (dolist (elt value)
-			     (mt:collect (slot-description-xml slot elt))
-			     )))
-	       )
-       )))
+	       (fill-frame frame)
+	       (mt:collecting
+		(for-frame-slots (frame slot value)
+				 (dolist (elt value)
+				   (mt:collect (slot-description-xml slot elt))
+				   )))
+	       ))))
 
 (defun expand-frame? (f)
   (and (> *dereference-depth* 0)
@@ -88,9 +107,11 @@ Security?
       (setf namespace (generate-namespace frame)
 	    uri (abbreviate-uri (frame-uri frame))) ;redo
       )
+    ;; trying to catch bug
+    (assert (stringp namespace))
+    (print `(ns ,namespace ,*dereference-namespaces*))
     (pushnew namespace *dereference-namespaces*)
-    uri
-    ))	
+    uri))	
 
 (defun generate-namespace (frame)
   (let* ((uri (frame-uri frame))

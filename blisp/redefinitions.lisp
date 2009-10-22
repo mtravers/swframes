@@ -80,9 +80,9 @@
         ;; so just let LISP:SETF deal with everything.
         (if (not (find-package :sw)) 
             `(common-lisp:setf ,@place-value-pairs)
-          ;; Look for (setf ((lambda (x) (frames:slotv x #$foo)) z) 5)
+          ;; Look for (setf ((lambda (x) (msv x #$foo)) z) 5)
           (if (specially-hacked-slotv-lambda? place)
-              ;; Transform to (common-lisp:setf (frames:slotv z #$foo) 5)
+              ;; Transform to (common-lisp:setf (msv z #$foo) 5)
               `(common-lisp:setf
                 ,(transform-slotv-lambda-place-into-slotv-place place)
                 ,value)
