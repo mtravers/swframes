@@ -84,7 +84,6 @@
 (defparameter all-printable-chars
   " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
 
-
 (define-test sparql-quoting
     (test-sparql-quoting "foo" nil nil)
     (test-sparql-quoting all-printable-chars t t)

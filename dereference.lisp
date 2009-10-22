@@ -171,7 +171,7 @@ http://data.linkedmdb.org/all/director
              (make-blank-node (type)
                (intern-uri (format nil "bnode:~A" (gensym (symbol-name type)))))
              (process-description (desc &optional top)
-	       (print `(process-description ,desc))
+;;;	       (print `(process-description ,desc))
                (let* ((about0 (or (lxml-attribute desc '|rdf|::|about|)
                                   (and (lxml-attribute desc '|rdf|::|ID|)
                                        base

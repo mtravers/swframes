@@ -6,6 +6,16 @@
 (defun gen-test-frame (&optional (root "crx:test"))
   (make-frame (format nil "~A~A" root (gensym)) :source *code-source*))
 
+(defun gen-random-frame ()
+  (let ((f (gen-test-frame)))
+    (dotimes (n 10)
+      (let ((s (gen-test-frame "crx:slot"))
+	    (v (if (> (random 10) 5)
+		   (random 100)
+		   (gen-test-frame))))
+	(setf (ssv f s) v)))
+    f))
+
 (define-test intern
     (assert-eq (intern-uri "blither")
 	       (intern-uri "blither")))
