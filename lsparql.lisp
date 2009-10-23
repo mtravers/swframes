@@ -466,25 +466,26 @@
      "Alternate, much faster version of CASE-INSENSITIZE, does not handle all cases though,"
      "Works by searching for upcased, downcased, and capitalized forms of all string literals.")
   (setq query (copy-tree query))
-    (flet ((modify-triple (triple)
+    (labels ((modify-triple (triple)
 	     (if (stringp (third triple))	;+++ doesn't play with ("foo" :en) clauses
 		 `(:union ((,(car triple) ,(cadr triple) ,(caddr triple)))
 			  ((,(car triple) ,(cadr triple) ,(string-downcase (caddr triple))))
 			  ((,(car triple) ,(cadr triple) ,(string-upcase (caddr triple))))
 			  ((,(car triple) ,(cadr triple) ,(string-capitalize (caddr triple)))))
 		 triple
-		 )))	     
+		 ))
+	   (modify-clause (clause)
+	     (cond ((eq (car clause) :union)
+		    (cons :union
+			  (mapcar #'(lambda (group)
+				      (mapcar #'modify-clause group))
+				  (cdr clause))))
+		   (t (modify-triple clause))))
+	   )	     
       `(,(car query) 
 	 ,(cadr query)
 	 ,(caddr query)
-	 ,@(mapcar #'(lambda (clause)
-		       (cond ((eq (car clause) :union)
-			      (cons :union
-				    (mapcar #'(lambda (group)
-						(mapcar #'modify-triple group))
-					    (cdr clause))))
-			     (t (modify-triple clause))))
-		   (nthcdr 3 query)))))
+	 ,@(mapcar #'modify-clause (nthcdr 3 query)))))
 
 ;;; +++ could be generalized for other dependent properties
 ;;; OPTIONAL could be optional
