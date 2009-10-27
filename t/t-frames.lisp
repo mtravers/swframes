@@ -17,8 +17,8 @@
     f))
 
 (define-test intern
-    (assert-eq (intern-uri "blither")
-	       (intern-uri "blither")))
+    (assert-eq (intern-uri "crx:blither")
+	       (intern-uri "crx:blither")))
 
 (define-test frame-reader
     (let ((f1 (read-from-string "#$crx:frame0"))
@@ -123,7 +123,7 @@ Lisp slots handle any printable Lisp object,
 (define-test inverses 
     (let ((x (gen-test-frame))
 	  (y (gen-test-frame))
-	  (p (gen-test-frame "hasProp")))
+	  (p (gen-test-frame "crx:hasProp")))
       (setf (ssv x p) y)
       (assert-true (member x (slotv-inverse y p)))
       (delete-frame x)

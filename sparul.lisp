@@ -47,10 +47,10 @@
 
 (defmethod* write-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)
-  (aif (%slotv p #$crx:specialhandling)
-       (rdfs-call write-triple-special p s o sparql)
-       ;; normal
-       (%write-triple sparql s p o)))
+  (if (%slotv p #$crx:specialhandling)
+      (rdfs-call write-triple-special p s o sparql)
+      ;; normal
+      (%write-triple sparql s p o)))
 
 (defmethod* %write-triple ((sparql sparql-endpoint) s p o)
   (do-grouped-sparul sparql
@@ -84,8 +84,7 @@
       (unless no-delete?
         (delete-triple source frame '?p '?o))
       (dolist (slot (%frame-slots frame))
-	(dolist (val (slotv frame slot))
-	  (write-triple source frame slot val)))
+	(write-slot source frame slot :no-delete? t)) 
       ;; write out dependents
       (dolist (d dependents)
         (write-frame d))
@@ -93,12 +92,15 @@
       (set-frame-loaded? frame t source))
     frame))
 
-;;; write out a single slot
-(defmethod write-slot ((frame frame) (slot frame) &optional (sparql (frame-source frame)))
-  (with-sparul-group (sparql)
-    (delete-triple sparql frame slot '?o)
-    (dolist (val (slotv frame slot))
-      (write-triple sparql frame slot val))))
+
+(defmethod write-slot (source frame slot &key no-delete?)
+  (unless no-delete?
+    (delete-triple source frame slot '?o))
+  (if (%slotv slot #$crx:specialhandling)
+      (rdfs-call write-slot-special slot frame source)
+      ;; normal
+      (dolist (val (slotv frame slot))
+	(write-triple source frame slot val))))
 
 (rdfs-def-class #$crx:slots/specialSlot ())
 
@@ -121,6 +123,7 @@
 
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 
+;;; this probably shouldn't ever get called.
 (rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
 		(let ((*print-readably* t)
 		      (oo (typecase o
@@ -133,14 +136,31 @@
 		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
 		      ))))
 
+(rdfs-defmethod write-slot-special ((p #$crx:slots/LispValueSlot) s sparql)
+		(let* ((*print-readably* t)
+		       (o (%slotv s p))
+		       (oo (typecase o
+			     (fixnum o)
+			     (otherwise (prin1-to-string o)))))
+		  (handler-case
+		      (%write-triple sparql s p oo)
+		    (print-not-readable (e)
+		      (declare (ignore e))
+		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
+		      ))))
+
 (rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
 (rdfs-defmethod write-triple-special ((p #$crx:slots/TransientSlot) s o sparql)
 		(declare (ignore s o sparql))
 		)
 
+(rdfs-defmethod write-slot-special ((p #$crx:slots/TransientSlot) s sparql)
+		(declare (ignore s sparql))
+		)
+
 ;;; Sometimes these unserializable slots get serialized, so ignore them
-(rdfs-defmethod deserialize-value ((p #$crx:slots/TransientSlot) value)
-		(declare (ignore value))
+(rdfs-defmethod deserialize-slot ((p #$crx:slots/TransientSlot) frame value)
+		(declare (ignore frame value))
 		nil)
 
 

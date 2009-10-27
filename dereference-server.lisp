@@ -107,7 +107,7 @@ as(rdf, "data.frame")
       (setf namespace (generate-namespace frame)
 	    uri (abbreviate-uri (frame-uri frame))) ;redo
       )
-    (print `(ns ,namespace ,*dereference-namespaces*))
+;;;    (print `(ns ,namespace ,*dereference-namespaces*))
     (pushnew namespace *dereference-namespaces*)
     uri))	
 
