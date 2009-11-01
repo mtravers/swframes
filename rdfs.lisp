@@ -78,7 +78,8 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 ;;; Also option for specifying a name or partial name.
 (defvar *fast-instances?* t)
 
-(defun rdfs-make-instance (class &rest slots)
+;;; +++ should have an optional frame arg, when we know the name
+(defun rdfs-make-instnce (class &rest slots)
   "Make an instance of CLASS.  Slots are alternating frame/values.  The URI is generated automatically."
   (flet ((check-class (thing class)
 	   (when class
