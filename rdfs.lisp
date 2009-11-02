@@ -108,6 +108,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	(bulk-load-query source sparql)
 	(do-sparql-one-var source sparql))))
 
+;;; generalize to multiple slot/values.  +++
 (defun rdfs-find-sparql (value &key slot class word?)
   (let ((vvar (if word? (gensym "?V"))))
     `(:select (?s) (:distinct t)
