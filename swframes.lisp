@@ -19,7 +19,7 @@ An RDF-backed frame system
 	  declare-special-slot
 	  for-frame-slots for-frame-inverse-slots
 	  add-triple remove-triple
-	  rename-frame delete-frame write-frame destroy-frame with-sparul-group
+	  frame-copy rename-frame delete-frame write-frame destroy-frame with-sparul-group
 	  describe-frame df dft
 	  register-namespace def-namespace expand-uri abbreviate-uri))
 
@@ -417,8 +417,10 @@ An RDF-backed frame system
 	  (setf (ssv frame #$crx:slots/last_child) n)
 	  (intern-uri uri)))))
 
-;;; +++ it would be better to have info on how to treat slots on the slots themselves, or in classes.
 (defun frame-copy (frame &key deep-slots omit-slots (uri-generator #'default-uri-generator))
+  #.(doc "Make a new frame by copying the contents of FRAME."
+	 "Slots listed in omit-slots are not copied."
+	 "Slots listed in DEEP-SLOTS or marked with #$crx:slots/deep-copy will have copies made of their contents, otherwise a shallow copy is performed.")
   (if (not (frame-p frame))
       frame				;nonframes remain the same (makes recursion easier)
       (let ((nframe (funcall uri-generator frame)))
