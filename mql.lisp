@@ -27,12 +27,12 @@
 					;     (net.aserve.client::do-http-request url)
 	   (get-via-curl url)
 	   ))
-    (unless (equal "/api/status/ok" (utils:assocdr :code response))
+    (unless (equal "/api/status/ok" (assocdr :code response))
       (error "MQL error ~A" response))
     (when *mql-debug*
       (terpri)
       (print response))
-    (utils:assocdr :result response)))
+    (assocdr :result response)))
 
 (defun mql-read-raw (q &optional credentials)
   (let* ((args (net.aserve:uriencode-string q))
@@ -68,7 +68,7 @@
 ;;; I think this is isomorphic to what you get from dereferencing the RDF?
 (defun id->everything (id)
   (let ((types
-	 (utils:assocdr 
+	 (assocdr 
 	  :type 
 	  (car (mql-read `((:id . ,id)
 			   (:type . :empty-list))))))
@@ -116,7 +116,7 @@
 ;			  ("/base/bioventurist/product/developed_by"  . (:empty-dict)))))
 		  ;; Aigh, bad car
 		  (dev (mapunion #'(lambda (result)
-				     (utils:assocdr (keywordize property) result))
+				     (assocdr (keywordize property) result))
 				 mql
 				 :test #'equal))
 		  )
@@ -160,7 +160,7 @@
 ;;;; Bio specific
 (defun mql-gene (gene-id)
   (let* ((raw (mql-read `(("/biology/gene/symbol" . ,gene-id) (:id  . nil))))
-	 (id (utils:assocdr :id (car raw)))
+	 (id (assocdr :id (car raw)))
 	 (frame (and id (mql-result->frame id))))
     (when frame
       (fill-frame frame)			;optional

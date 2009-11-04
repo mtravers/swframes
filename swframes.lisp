@@ -49,12 +49,12 @@ An RDF-backed frame system
 (defun %frame-slots (frame)
   "Return a list of known slots for this frame"
   (and (frame-slots frame)
-       (wlisp::hash-keys (frame-slots frame))))
+       (hash-keys (frame-slots frame))))
 
 (defun %frame-inverse-slots (frame)
   "Return a list of known inverse slots for this frame"
   (and (frame-inverse-slots frame)
-       (wlisp::hash-keys (frame-inverse-slots frame))))
+       (hash-keys (frame-inverse-slots frame))))
 
 (defmacro for-frame-slots ((frame slot value) &body body)
   "Iterate BODY over all slots of a frame, successively binding SLOT and VALUE vars"
@@ -371,10 +371,10 @@ An RDF-backed frame system
   (when fill? (fill-frame frame :force? t))
   (format t "~&Forward:")
   (when (frame-slots frame)
-    (pprint (utils:ht-contents (frame-slots frame))))
+    (pprint (ht-contents (frame-slots frame))))
   (when (frame-inverse-slots frame)
     (format t "~&Inverse:")
-    (pprint (utils:ht-contents (frame-inverse-slots frame))))
+    (pprint (ht-contents (frame-inverse-slots frame))))
   frame )
 
 (defun df (frame &optional (fill? nil))

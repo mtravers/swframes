@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
-#+BIOLISP
 ;;; Clean these up so we can use-package :swframes
+#+BIOLISP
 (unexport '(frames:describe-frame
 	    frames:rename-frame
 	    frames:df
@@ -16,7 +16,7 @@
 (defpackage :swframes
   (:use :blisp :mt :clos* :3utils)
   (:nicknames :sw)
-  (:import-from :wb "HTML")
+  (:import-from #+BIOLISP :wb "HTML")
   ;; exports are in the code
   )
 

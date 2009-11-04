@@ -139,7 +139,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 ;;; This has to be relative to a frame source so you can check for taken ids. 
 ;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  
-(defvar gensym-lock (mp:make-process-lock))
+(defvar gensym-lock (acl-compat.mp:make-process-lock))
 
 (defun gensym-instance-frame (class &key start (fast? t) (source *default-frame-source*) base)
   (if (eq (frame-source class) *code-source*)
@@ -147,7 +147,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
       ;; Here we might want to do an initial write of frame to db
       )
   (unless base (setq base (frame-uri class)))
-  (mp:with-process-lock (gensym-lock)	;+++ I hope this won't slow down the world too much.
+  (acl-compat.mp:with-process-lock (gensym-lock)	;+++ I hope this won't slow down the world too much.
     (unless (and fast?
 		 (msv class #$crx:last_used_id))
       (fill-frame class :force? t :inverse? nil))
