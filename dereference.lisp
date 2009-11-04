@@ -176,7 +176,7 @@ http://data.linkedmdb.org/all/director
                                   (and (lxml-attribute desc '|rdf|::|ID|)
                                        base
                                        (string+ base "#" (lxml-attribute desc '|rdf|::|ID|)))))
-                      (about (if about0
+                      (about (if (and about0 (not (equal "" about0)))
                                  (intern-uri about0)
                                  (make-blank-node (lxml-tag desc))
                                  )))

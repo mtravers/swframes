@@ -22,10 +22,12 @@
 
 ;;; some endpoints are giving me preceding nulls which break things.
 ;;; inefficient, but this shouldn't be needed at all!
-(defun adjust-sparql-string (s)
-  (if (char= #\< (char s 0))
-      s
-      (adjust-sparql-string (subseq s 1))))
+(defun adjust-sparql-string (s &optional (limit 25))
+  (cond ((char= #\< (char s 0))
+	 s)
+	((minusp limit)
+	 (error "Bad XML string: ~A" s))
+	(t (adjust-sparql-string (subseq s 1) (1- limit)))))
 
 (defun run-sparql (endpoint sparql &key (make-uri #'identity) eager-make-uri? timeout)
   (let* ((s-xml:*ignore-namespaces* t)

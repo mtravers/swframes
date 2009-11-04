@@ -63,7 +63,7 @@
       ((null namespace)
        (if no-error?
 	   uri
-	   (error "Unknown namespace ~A" prefix)))
+	   (error "Unknown namespace ~A in ~A" prefix uri)))
       ((eq namespace :uri-scheme)
        uri)
       (t (namespace-splice namespace suffix)))))
