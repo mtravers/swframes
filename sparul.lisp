@@ -78,13 +78,13 @@
       "ASYNC? causes the write to be done in a separate thread"
       "NO-DELETE? causes the previous contents in the database to be retained (not recommended).")))
 
-(defmethod write-frame ((frame frame) &key (source (frame-source frame)) (async? nil) (no-delete? nil))
+(defmethod write-frame ((frame frame) &key (source (frame-source frame)) (async? nil) (no-delete? nil) )
   (let ((dependents (frame-dependents frame)))
     (with-sparul-group (source :async? async?)
       (unless no-delete?
         (delete-triple source frame '?p '?o))
       (dolist (slot (%frame-slots frame))
-	(write-slot source frame slot :no-delete? t)) 
+	(write-slot frame slot :source source :no-delete? t)) 
       ;; write out dependents
       (dolist (d dependents)
         (write-frame d))
@@ -92,8 +92,14 @@
       (set-frame-loaded? frame t source))
     frame))
 
+(defgeneric write-slot (frame slot &key source no-delete? value)
+  (:documentation
+   #.(doc "Write a single slot of a single frame to SOURCE."
+	  "VALUE if provided is a single value to set the slot to.")))
 
-(defmethod write-slot (source frame slot &key no-delete?)
+(defmethod write-slot (frame slot &key (source (frame-source frame)) no-delete? (value nil value-provided?))
+  (when value-provided?
+    (setf (ssv frame slot) value))
   (unless no-delete?
     (delete-triple source frame slot '?o))
   (if (%slotv slot #$crx:specialhandling)

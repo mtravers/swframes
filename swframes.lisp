@@ -20,6 +20,7 @@ An RDF-backed frame system
 	  for-frame-slots for-frame-inverse-slots
 	  add-triple remove-triple
 	  frame-copy rename-frame delete-frame write-frame destroy-frame with-sparul-group
+	  write-slot write-triple
 	  describe-frame df dft
 	  register-namespace def-namespace expand-uri abbreviate-uri))
 
