@@ -56,8 +56,8 @@ Lisp slots handle any printable Lisp object,
 
 (define-test basic-slot
     (let ((f (gen-test-frame))
-	  (s (gen-test-frame "slot"))
-	  (ls (gen-test-frame "lslot")))
+	  (s (gen-test-frame "crx:slot"))
+	  (ls (gen-test-frame "crx:lslot")))
       (declare-special-slot ls #$crx:slots/LispValueSlot)
       (labels ((test-slot (v normal lisp)
 		 (when normal

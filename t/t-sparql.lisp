@@ -21,7 +21,7 @@
 			  ))))
 
 
-(setq linkedct-query 
+(defvar linkedct-query 
   '(:select
     (?trial ?title ?inttype ?intname)
     (:offset 0)

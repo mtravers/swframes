@@ -22,7 +22,8 @@
   )
 
 (define-test deref-round-trip
-  (let ((f (gen-random-frame)))
+  (let ((f (gen-random-frame))
+	ff fff xml sxml pxml)
     (setf ff (frame-copy f))
     ;; sanity check equality tester
     (assert-true (frames-equal f ff))
