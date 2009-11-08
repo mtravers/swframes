@@ -151,7 +151,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
     (unless (and fast?
 		 (msv class #$crx:last_used_id))
       (fill-frame class :force? t :inverse? nil))
-    (let* ((last (or start (msv class #$crx:last_used_id)))
+    (let* ((last (or start (ssv class #$crx:last_used_id)))
 	   (next (if last
 		     (1+ (coerce-number last))
 		     0))
