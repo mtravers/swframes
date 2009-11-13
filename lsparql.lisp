@@ -223,6 +223,7 @@
 
 ;;; +++ methodize
 ;;; see http://www.w3.org/TR/rdf-sparql-query/#QSynLiterals
+;;; symbols are put out as-is, allowing ie |bif:contains|.
 (defun sparql-term (thing)
   (typecase thing
     (null (error "NIL in SPARQL"))
@@ -230,7 +231,7 @@
     (symbol
      (if (var-p thing)
 	 (string-downcase (string thing))
-	 (error "Can't translate ~A into a SPARQL term" thing)))
+	 (string thing)))
     (string (if (or (position #\" thing) (position #\Newline thing))
 		(format nil "'''~A'''" (backslash-quote-string thing))
 		(format nil "\"~A\"" (backslash-quote-string thing))))
