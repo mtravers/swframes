@@ -21,7 +21,7 @@
   `(let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
 	 (*sparul-group* (or *sparul-group* (list ,endpoint nil)))
 	 retval)
-     (unless (equal (car *sparul-group*) ,endpoint)
+     (unless (clos*::oequal (car *sparul-group*) ,endpoint)
        (error "Bad nested SPARUL groups: ~A ~A" (car *sparul-group*) ,endpoint))
      (setf retval (progn ,@body))
      (let ((clauses (cadr *sparul-group*))) ;make sure this gets captured
