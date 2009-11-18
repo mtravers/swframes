@@ -6,7 +6,16 @@
 (defvar *sparul-group* nil)
 (defvar *sparul-group-limit* 1000)      ;max # of groups (virtuoso has a 10000 LINE limit, this is groups)
 
-;;; async is NOT WORKING PROPERLY yet, so don't use it!
+;;; error handling +++
+(defmacro in-background-thread (&body body)
+  `(#+ACL 
+    mp:process-run-function
+    #-ACL
+    acl-compat.mp:process-run-function
+    (string (gensym "THREAD"))
+    #'(lambda () ,@body)))
+
+;;; async is NOT WORKING PROPERLY yet, so don't use it! +++
 (defmacro with-sparul-group ((endpoint &key async?) &body body)
   "Causes all writes to endpoint within the dynamic scope to be delayed until the form is exited (or in other words, it saves all SPARQL insert/delete commands and does them at the end)."
   `(let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
