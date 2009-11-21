@@ -4,16 +4,28 @@
 This file has the minimum needed to get the frame system working (esp. the reader)
 |#
 
-(defstruct (frame (:print-function frame-printer) (:constructor %make-frame))
-  uri
-  (slots nil)
-  (inverse-slots nil)
-  ;; Below here is various state-manipulation info; very in flux
-  source
-  loaded?				;T if slots have been loaded
-  dirty?				;T if needs to be written back out, or list of preds to write out.
-  dereferenced? 
-  )
+(defclass* frame ();  (:print-function frame-printer) (:constructor %make-frame))
+  (uri
+   (slots nil)
+   (inverse-slots nil)
+   ;; Below here is various state-manipulation info; very in flux
+   source
+   (loaded? nil)				;T if slots have been loaded
+   (dirty? nil)				;T if needs to be written back out, or list of preds to write out.
+   (dereferenced? nil) 
+   )
+  :initable-instance-variables		;trim down CCC
+  :writable-instance-variables		;trim down CCC
+  :readable-instance-variables)
+
+(defmethod print-object ((frame frame) stream)
+  (report-and-ignore-errors
+   (if *print-frame-labels*
+       (format stream "[~A]" (frame-label frame t))
+       (format stream "#$~A" (frame-name frame)))))  
+
+(defun frame-p (f)
+  (typep f 'frame))
 
 (setf (documentation #'frame-loaded? 'function)
       "T if frame has been completely loaded from it's source")
@@ -26,12 +38,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defvar *print-frame-labels* nil)
 
-(defun frame-printer (frame stream ignore)
-  (declare (ignore ignore))
-  (report-and-ignore-errors
-   (if *print-frame-labels*
-       (format stream "[~A]" (frame-label frame t))
-       (format stream "#$~A" (frame-name frame)))))
+
 
 #|
 (defparameter *frame-modified-readtable* (copy-readtable))
@@ -105,10 +112,11 @@ Prob. wrong to use *code-source* by default.  Argh.
   (assert (> (length uri) 0))
   (or (frame-named uri)
       (intern-frame
-       (%make-frame :uri uri 
-		    :source source
-		    :loaded? mark-loaded?
-		    ))))
+       (make-instance 'frame
+		      :uri uri 
+		      :source source
+		      :loaded? mark-loaded?
+		      ))))
 
 ;;; Would be nice if this were weak, but only EQ hashtables support that in CCL.
 ;;; Change equal to equalp for case-insensitve URLs (won't work with SPARQL though)
