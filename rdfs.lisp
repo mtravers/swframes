@@ -59,7 +59,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		(let ((slot (car slotdef)))
 		  (unless (frame-p slot)
 		    (setf slot (gen-slot-name class slot)))
-		  (a! slot #$rdf:type #$rdfs:Property)
+		  (a! slot #$rdf:type #$rdf:Property)
 		  (a!x slot #$rdfs:domain class)
 		  (awhen (member :range (cdr slotdef))
 			 (a!x slot #$rdfs:range (cadr it)))
