@@ -6,9 +6,7 @@
   :author "Mike Travers"
   :serial t
   :depends-on
-  (:mtlisp :3utils
-   :s-xml
-   :cl-json)
+  (:mtlisp :3utils :s-xml) ;   :cl-json - I don't think we need it any more +++
   :components
   (;; setup and utilities
    ;; basics
@@ -18,7 +16,6 @@
 	    ((:file "package")
 	     (:file "redefinitions")))
    (:file "package")
-   (:file "utils")
    (:file "xmlu")
    (:file "source")
    (:file "swframes-0")
@@ -36,7 +33,6 @@
    (:file "lsparql")
    (:file "sparul")
    (:file "files")
-   (:file "mql")
    )
 )
 
