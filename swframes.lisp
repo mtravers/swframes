@@ -171,6 +171,7 @@ An RDF-backed frame system
 		    (setf (frame-source frame) nil)
 		    (dereference frame force?)))) ;+++
 	  (dereference frame force?))		;+++
+      (set-frame-class frame nil)		;CCC
       (set-frame-loaded? frame)))
   frame)
 

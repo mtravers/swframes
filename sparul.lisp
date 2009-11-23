@@ -117,7 +117,7 @@
       (dolist (val (slotv frame slot))
 	(write-triple source frame slot val))))
 
-(rdfs-def-class #$crx:slots/specialSlot ())
+(rdfs-def-class #$crx:slots/specialSlot (#$rdf:Property))
 
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
