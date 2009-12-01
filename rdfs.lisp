@@ -95,13 +95,13 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	(setf (msv frame (car rest)) 
 	      (cadr rest))))))
 
-(defun rdfs-find (value &key slot class source word? fill? case-insensitize?)
+(defun rdfs-find (value &key slot class source word? fill? case-insensitize? limit)
   #.(doc
      "Find instances of CLASS that have VALUE on SLOT."
      "VALUE can be :all, in which case all instances of CLASS are returned"
      "If SLOT is nil, VALUE can be on any slot of instance. "
      "If WORD? is true, does a text search of VALUE as a word contained in the actual slot value")
-  (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word?)))
+  (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word? :limit limit)))
     (when case-insensitize?
       (setf sparql (case-insensitize-2 sparql)))
     (if fill?
@@ -109,9 +109,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	(do-sparql-one-var source sparql))))
 
 ;;; generalize to multiple slot/values.  +++
-(defun rdfs-find-sparql (value &key slot class word?)
+(defun rdfs-find-sparql (value &key slot class word? limit)
   (let ((vvar (if word? (gensym "?V"))))
-    `(:select (?s) (:distinct t)
+    `(:select (?s) (:distinct t :limit ,limit)
 	      ,@(unless (eq value :all)
 			`((?s ,(if slot slot '?p) ,(if word? vvar value))))
 	      ,@(if class `((?s #$rdf:type ,class)))
