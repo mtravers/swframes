@@ -332,20 +332,27 @@ An RDF-backed frame system
   (member value (slotv frame slot)))
 
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
-  (when remove-old
-    (remove-triple s p '?o :to-db to-db :test test))
-  (if (frame-p o) (frame-fresh? o))
-  (pushnew o (%slotv s p) :test test)
-  ;; PPP this can be a performance bottleneck for things like types that can have thousands of members.  
-  ;; Need to use hashtables or some structure with better performance 
-  (when (frame-p o)
-    (pushnew s (%slotv-inverse o p) :test #'eq))
-  (when to-db
-    (let ((source (if (typep to-db 'frame-source)
-		      to-db
-		      (frame-source s))))
-      (write-triple source s p o)))
-  nil)
+  (if (%slotv p #$crx:specialhandling)
+      (add-triple-special s p o)	;+++ forward call
+      (progn
+    (when remove-old
+      (remove-triple s p '?o :to-db to-db :test test))
+    (if (frame-p o) (frame-fresh? o))
+    (pushnew o (%slotv s p) :test test)
+    ;; PPP this can be a performance bottleneck for things like types that can have thousands of members.  
+    ;; Need to use hashtables or some structure with better performance 
+    (when (frame-p o)
+      (pushnew s (%slotv-inverse o p) :test #'eq))
+    (when to-db
+      (let ((source (if (typep to-db 'frame-source)
+			to-db
+			(frame-source s))))
+	(write-triple source s p o)))
+    nil)))
+
+;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet
+(defun add-triple-special (s p o)
+  (setf (%slotv s p) o))
 
 ;;; see comment on delete-triple
 (defun remove-triple (s p o &key (test #'equal) to-db &aux savedo)
