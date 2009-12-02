@@ -50,7 +50,7 @@ as(rdf, "data.frame")
 
 (defun frame-description-xml (frame)
   (let ((*dereference-depth* 3)
-	(*dereference-namespaces* nil)
+	(*dereference-namespaces* (list "rdf"))
 	(*dereference-frames* nil)
 	(*sw-namespaces* *sw-namespaces*) ;intent of this is to revert away all the temp namespaces
 	)
@@ -108,7 +108,7 @@ as(rdf, "data.frame")
 	    uri (abbreviate-uri (frame-uri frame))) ;redo
       )
 ;;;    (print `(ns ,namespace ,*dereference-namespaces*))
-    (pushnew namespace *dereference-namespaces*)
+    (pushnew namespace *dereference-namespaces* :test #'equal)
     uri))	
 
 (defun generate-namespace (frame)
