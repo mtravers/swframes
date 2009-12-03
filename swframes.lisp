@@ -102,9 +102,10 @@ An RDF-backed frame system
 (defmethod delete-frame ((frame frame))
   ;;; remove references (that we know about)
   (for-frame-slots (frame slot value)
-		   (dolist (elt value)
-		     (when (and (frame-p elt) (frame-inverse-slots elt))
-		       (deletef frame (gethash slot (frame-inverse-slots elt)))))) ;NNN
+		   (unless (%slotv slot #$crx:specialhandling)
+		     (dolist (elt value)
+		       (when (and (frame-p elt) (frame-inverse-slots elt))
+			 (deletef frame (gethash slot (frame-inverse-slots elt))))))) ;NNN
   (for-frame-inverse-slots (frame slot value)
 			   (dolist (elt value)
 			     (when (frame-p elt)
