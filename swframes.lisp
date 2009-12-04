@@ -442,6 +442,8 @@ An RDF-backed frame system
 								  (frame-copy sf :deep-slots deep-slots :omit-slots omit-slots :uri-generator uri-generator))
 							      value)))
 			   ;;; Shallow copy
+			   ((%slotv slot #$crx:specialhandling)
+			    (setf (ssv nframe slot) value))
 			   (t
 			    (setf (slotv nframe slot) (copy-list value)))
 			   ))
