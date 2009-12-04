@@ -443,7 +443,7 @@ An RDF-backed frame system
 							      value)))
 			   ;;; Shallow copy
 			   ((%slotv slot #$crx:specialhandling)
-			    (setf (ssv nframe slot) value))
+			    (setf (%slotv nframe slot) value))
 			   (t
 			    (setf (slotv nframe slot) (copy-list value)))
 			   ))
