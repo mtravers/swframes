@@ -356,6 +356,7 @@ An RDF-backed frame system
   (setf (%slotv s p) o))
 
 ;;; see comment on delete-triple
+;;; +++ should handle vars in ?s -- and needs to be nailed down in general.
 (defun remove-triple (s p o &key (test #'equal) to-db &aux savedo)
   (if (var-p o)
       (progn 
