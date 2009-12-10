@@ -556,4 +556,6 @@
 (defun augment-query-standard (source query &key (var (car (second query))))
   (augment-query source query :var var :slots (list #$rdf:type #$rdfs:label)))
        
-    
+; Find which graph a triple is in (can take vars).  Very useful!    
+(defun find-named-graph (source s p o)
+  (do-sparql-one-var source `(:select (?g) (:distinct t) (:graph ?g (,s ,p ,o)))))
