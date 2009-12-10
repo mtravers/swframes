@@ -20,10 +20,6 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
           (cdr lxml))
       nil))
 
-(defun lxml-attributes (lxml)
-  (and (listp (car lxml))
-       (cdr (car lxml))))
-
 (defun lxml-subelement (lxml tag)
   (dolist (elt (lxml-subelements lxml))
     (when (lxml-tag-p tag elt)
@@ -32,6 +28,11 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
 (defun lxml-attribute (lxml attr)
   (and (listp lxml)
        (cadr (member attr (lxml-attributes lxml)))))
+
+(defun lxml-attributes (lxml)
+  (and (listp lxml)
+       (listp (car lxml))
+       (cdr (car lxml))))
 
 ;;; does anything call this? (yes, sparql)
 (defun lxml-find-element (lxml tag)
