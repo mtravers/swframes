@@ -22,26 +22,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 
 |#
 
-;;; New CLOS stuff
-(defclass rdfs-class (frame)
-  ())
 
-(defmethod initialize-instance :after ((f rdfs-class) &rest ignore)
-  (with-slots (uri) f
-    (unless uri
-      (setf uri (gensym-instance-uri (class-frame (class-of f)))))))
-
-;;; Setting the class of a frame
-
-(defun set-frame-class (f &optional error?)
-  (let ((rclass (collapse-class-list (slotv f #$rdf:type))))
-    (if (= 1 (length rclass))
-	(let ((cclass (rdfs-clos-class (car rclass))))
-	  (change-class f cclass))
-	(if error?
-	    (error "Can't set class, no or multiple types for ~A" f)
-	    (warn "Can't set class, no or multiple types for ~A" f)
-	    ))))
 
 (defun all-superclasses (c1)
   (transitive-closure c1 (slot-accessor #$rdfs:subClassOf nil)))
@@ -63,31 +44,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 				 (is-superclass? c1 c2)))
 			cl))
 	      cl))
-			
-
-(defun classify-frame (f)
-  (when (eq 'frame (type-of f))
-    (set-frame-class f))
-  )
-
-(defun frame-as-symbol (frame)
-  (keywordize (frame-name frame)))
 
 (defun frame-supertypes (frame)
   (slotv frame #$rdfs:subClassOf))
-
-(defun rdfs-clos-class (frame)
-  (let ((sym (frame-as-symbol frame)))
-    (unless (find-class sym nil)
-      (setf (get sym :frame) frame)
-      (print `(defining ,sym))
-      (eval `(defclass ,sym
-			,(append (mapcar #'rdfs-clos-class (frame-supertypes frame))
-				 (list 'rdfs-class))
-	       ())))
-    sym))
-
-
 
 (defmacro rdfs-def-class (class superclasses &body slots)
   #.(doc
@@ -139,6 +98,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		  ))
 	    slots)
       `(progn ,@clauses
+	      ,(defclass-form class)
 	      ,class))))
 
 ;;; Put in some checking;  should be under a flag. 
@@ -162,13 +122,13 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	(setf (msv frame (car rest)) 
 	      (cadr rest))))))
 
-(defun rdfs-find (value &key slot class source word? fill? case-insensitize?)
+(defun rdfs-find (value &key slot class source word? fill? case-insensitize? limit from)
   #.(doc
      "Find instances of CLASS that have VALUE on SLOT."
      "VALUE can be :all, in which case all instances of CLASS are returned"
      "If SLOT is nil, VALUE can be on any slot of instance. "
      "If WORD? is true, does a text search of VALUE as a word contained in the actual slot value")
-  (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word?)))
+  (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word? :limit limit :from from)))
     (when case-insensitize?
       (setf sparql (case-insensitize-2 sparql)))
     (if fill?
@@ -176,62 +136,15 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	(do-sparql-one-var source sparql))))
 
 ;;; generalize to multiple slot/values.  +++
-(defun rdfs-find-sparql (value &key slot class word?)
+(defun rdfs-find-sparql (value &key slot class word? limit from)
   (let ((vvar (if word? (gensym "?V"))))
-    `(:select (?s) (:distinct t)
+    `(:select (?s) (:distinct t :limit ,limit :from ,from)
 	      ,@(unless (eq value :all)
 			`((?s ,(if slot slot '?p) ,(if word? vvar value))))
 	      ,@(if class `((?s #$rdf:type ,class)))
 	      ;; UGH quoting, but I think this is right...
 	      ,@(if word? `((:filter (:regex ,vvar ,(format nil "\\\\W~A\\\\W" value) "i"))))
 	      )))
-
-(rdfs-def-class #$crx:session ()
-		(#$crx:session/machine))
-
-(defvar *unique-session* nil)
-
-;;; should get called once for a lisp session
-(defun make-unique-session ()
-  (let* ((*fast-instances?* nil)
-	 (session
-	  (rdfs-make-instance #$crx:session 
-			      #$crx:session/machine (machine-instance))))
-    (write-frame session)
-    (setf *unique-session* session)))
-
-(defun unique-session ()
-  (or *unique-session*
-      (make-unique-session)))
-
-;;; This has to be relative to a frame source so you can check for taken ids. 
-;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  
-(defvar gensym-lock (acl-compat.mp:make-process-lock))
-
-(defun gensym-instance-frame (class &key start (fast? t) (source *default-frame-source*) base)
-  (if (eq (frame-source class) *code-source*)
-      (setf (frame-source class) source)
-      ;; Here we might want to do an initial write of frame to db
-      )
-  (unless base (setq base (frame-uri class)))
-  (acl-compat.mp:with-process-lock (gensym-lock)	;+++ I hope this won't slow down the world too much.
-    (unless (and fast?
-		 (msv class #$crx:last_used_id))
-      (fill-frame class :force? t :inverse? nil))
-    (let* ((last (or start (ssv class #$crx:last_used_id)))
-	   (next (if last
-		     (1+ (coerce-number last))
-		     0))
-	   (uri (string+ base "/"
-			 (if fast? (string+ (frame-label (unique-session)) "/") "")
-			 (fast-string next))))
-      (if (and (not fast?) (uri-used? source uri))
-	  (gensym-instance-frame class :start next :fast? fast?)
-	  (progn
-	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
-	    (intern-uri uri))))))
-
-(defgeneric uri-used? (source uri))
 
 (defun rdfs-classp (frame class)
   (if (frame-p frame)

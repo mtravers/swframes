@@ -24,7 +24,9 @@
    (:file "swframes")
    #+BIOLISP
    (:file "compat")
+   (:file "clos")
    (:file "rdfs")
+   (:file "session")
    (:file "dump")
    ;; sources
    (:file "dereference")

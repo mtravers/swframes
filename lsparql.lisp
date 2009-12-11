@@ -223,7 +223,7 @@
 
 ;;; +++ methodize
 ;;; see http://www.w3.org/TR/rdf-sparql-query/#QSynLiterals
-;;; symbols are put out as-is, allowing ie |bif:contains|.
+;;; symbols are put out as-is, allowing ie |bif:contains|.  But USUALLY a symbol here is a bug.
 (defun sparql-term (thing)
   (typecase thing
     (null (error "NIL in SPARQL"))
@@ -231,7 +231,7 @@
     (symbol
      (if (var-p thing)
 	 (string-downcase (string thing))
-	 (string thing)))
+	 (string thing))) 
     (string (if (or (position #\" thing) (position #\Newline thing))
 		(format nil "'''~A'''" (backslash-quote-string thing))
 		(format nil "\"~A\"" (backslash-quote-string thing))))
@@ -417,11 +417,20 @@
       (set-frame-loaded? frame))
     ))
 
+(rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
+
 (rdfs-defmethod deserialize-slot ((slot #$crx:slots/LispValueSlot) frame value)
 		(setf (%slotv frame slot)
 		      (if (stringp value)
 			  (read-from-string value)
 			  value)))
+
+(rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
+
+;;; Sometimes these unserializable slots get serialized, so ignore them
+(rdfs-defmethod deserialize-slot ((p #$crx:slots/TransientSlot) frame value)
+		(declare (ignore frame value))
+		nil)
 
 ;;; +++ this can time out without the limit, but of course it produces incorrect results.  Maybe ths should only be done on demand.
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
@@ -559,4 +568,6 @@
 (defun augment-query-standard (source query &key (var (car (second query))))
   (augment-query source query :var var :slots (list #$rdf:type #$rdfs:label)))
        
-    
+; Find which graph a triple is in (can take vars).  Very useful!    
+(defun find-named-graph (source s p o)
+  (do-sparql-one-var source `(:select (?g) (:distinct t) (:graph ?g (,s ,p ,o)))))
