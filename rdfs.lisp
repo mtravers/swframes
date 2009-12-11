@@ -97,9 +97,10 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 			 (push `(setf (ssv ,slot #$crx:slots/deep-copy) t) clauses))
 		  ))
 	    slots)
-      `(progn ,@clauses
-	      ,(defclass-form class)
-	      ,class))))
+      `(eval-when (:compile-toplevel :load-toplevel :execute)
+	 ,@clauses
+	 ,(defclass-form class superclasses)
+	 ,class))))
 
 ;;; Put in some checking;  should be under a flag. 
 ;;; Also option for specifying a name or partial name.

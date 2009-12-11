@@ -417,6 +417,10 @@
       (set-frame-loaded? frame))
     ))
 
+(rdfs-def-class #$rdf:Property ())
+
+(rdfs-def-class #$crx:slots/specialSlot (#$rdf:Property))
+
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 
 (rdfs-defmethod deserialize-slot ((slot #$crx:slots/LispValueSlot) frame value)

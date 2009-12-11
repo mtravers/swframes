@@ -46,38 +46,41 @@ could do it.
 (defun frame-as-symbol (frame)
   (keywordize (frame-name frame)))
 
-(defun defclass-form (frame)
+(defun defclass-form (frame supertypes)
   `(defclass ,(frame-as-symbol frame)
-       ,(append (mapcar #'rdfs-clos-class (frame-supertypes frame))
+       ,(append (mapcar #'frame-as-symbol supertypes)
 		(list 'rdfs-class))
      ()))
 
-
-
-
-(defun rdfs-clos-class (frame)
+(defun rdfs-clos-class (frame &optional (error? t))
   (let ((sym (frame-as-symbol frame)))
-    (unless (find-class sym nil)
+    (find-class sym error?)))		
+#|
+    (unless
       (setf (get sym :frame) frame)
-      (print `(defining ,sym))
-      (eval (defclass-form frame)))
+;      (print `(defining ,sym))
+;      (eval (defclass-form frame)))
     sym))
+
+|#
 
 ;;; Setting the class of a frame
 
 (defun classify-frame (f)
   (when (eq 'frame (type-of f))
-    (set-frame-class f))
+    (set-frame-class f nil))
   )
 
 (defun set-frame-class (f &optional error?)
   (let ((rclass (collapse-class-list (slotv f #$rdf:type))))
     (if (= 1 (length rclass))
-	(let ((cclass (rdfs-clos-class (car rclass))))
-	  (change-class f cclass))
+	(let ((cclass (rdfs-clos-class (car rclass) error?)))
+	  (if cclass 
+	      (change-class f cclass)
+	      (if error?
+		  (error "Can't set class for ~A, no class found" f))))
 	(if error?
 	    (error "Can't set class, no or multiple types for ~A" f)
-	    (warn "Can't set class, no or multiple types for ~A" f)
 	    ))))
 
 ;;; Make instance

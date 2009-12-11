@@ -176,6 +176,10 @@ An RDF-backed frame system
       (set-frame-loaded? frame)))
   frame)
 
+;;; Gets overwritten later, here to support load, probably not the right solution +++
+(defmethod dereference ((frame frame) &optional force?)
+  )
+
 ;;; Called by rdfs-defmethod and other things to mark that a frame is defined from code, and not
 ;;; expected to be read from the database.
 (defun frame-from-code (f)
