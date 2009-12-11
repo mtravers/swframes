@@ -43,6 +43,6 @@
 	  (gensym-instance-frame class :start next :fast? fast?)
 	  (progn
 	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
-	    (intern-uri uri))))))
+	    (intern-uri uri :class class))))))
 
 (defgeneric uri-used? (source uri))

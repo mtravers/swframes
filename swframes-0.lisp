@@ -99,20 +99,21 @@ Prob. wrong to use *code-source* by default.  Argh.
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists."
      "Synonymous (more or less) with INTERN-URI")
-  (intern-uri thing source))
+  (intern-uri thing :source source))
 
 ;;; mark-loaded? arg is not presently used.
-(defun intern-uri (uri &optional (source *default-frame-source*) mark-loaded?)
+(defun intern-uri (uri &key (source *default-frame-source*) mark-loaded? (class 'frame))
   #.(doc
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists.")
   (if (frame-p uri) (return-from intern-uri uri))
+  (if (frame-p class) (setf class (rdfs-clos-class class t)))
   (assert (stringp uri))
   (setf uri (expand-uri uri))	
   (assert (> (length uri) 0))
   (or (frame-named uri)
       (intern-frame
-       (make-instance 'frame
+       (make-instance class
 		      :uri uri 
 		      :source source
 		      :loaded? mark-loaded?
