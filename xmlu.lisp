@@ -41,9 +41,12 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
 (defun lxml-tag (elt)
   (cond ((symbolp elt)
          elt)
-        ((listp (car elt))
+        ((and (listp elt)
+	      (listp (car elt)))
          (caar elt))
-        (t (car elt))))
+	((listp elt)
+	 (car elt))
+	(t nil)))
 
 (defun lxml-tag-p (tag elt)
   (or (eq tag elt)
@@ -56,10 +59,7 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
   (let ((found
          (loop with q = (list element)
             for this = (pop q)
-            for (name . children) = this
-            if (cond ((consp name)
-                      (tag-equal (car name) tag))
-                     (t (tag-equal name tag)))
+            if (eq tag (lxml-tag this))
             do (return this)
             else do (when (listp children) (setq q (nconc q (remove-if-not 'consp children))))
             while q)))
@@ -67,6 +67,17 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
         (apply 'lxml-find-element-with-tag found more-tags)
         found)))
 
+;;; rewrite -- need to test it thoroughly +++
+(defun lxml-find-element-with-tag (element tag &rest more-tags)
+  (if (eq tag (lxml-tag element))
+      (if more-tags
+	  (apply 'lxml-find-element-with-tag element more-tags)
+	  element)
+      (dolist (sub (lxml-subelements element))
+	(awhen (apply 'lxml-find-element-with-tag sub tag more-tags)
+	       (return it)))))
+
+;;; rewrite this one too+++
 (defun lxml-find-elements-with-tag (element tag &rest more-tags)
   (let ((found
          (loop with q = (list element)
