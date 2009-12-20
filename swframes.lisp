@@ -214,25 +214,28 @@ An RDF-backed frame system
 ;;; note that this and set-slotv-inverse never do fills
 ;;; this can't really do inverses, can it? we'd have to a difference...
 (defun set-slotv (frame slot value)
-  (when *check-slot-domains?*
-    (awhen (ssv slot #$rdfs:domain)
-	   (assert (rdfs-classp frame it)))
-    (awhen (ssv slot #$rdfs:range)
-	   (assert (rdfs-classp frame it))))
-  (let ((old (%slotv frame slot)))
-    ;; enforce rule that slot values are lists...
-    (unless (listp value) 
-      (error "Arg to set-slotv must be list: ~A ~A ~A" frame slot value))
-    (%set-slotv frame slot value)
-    ;; (too slow for long lists) PPP
-    (when old
+  (if (%slotv slot #$crx:specialhandling)
+      (add-triple-special frame slot value)
+      (progn
+	(when *check-slot-domains?*
+	  (awhen (ssv slot #$rdfs:domain)
+		 (assert (rdfs-classp frame it)))
+	  (awhen (ssv slot #$rdfs:range)
+		 (assert (rdfs-classp frame it))))
+	(let ((old (%slotv frame slot)))
+	  ;; enforce rule that slot values are lists...
+	  (unless (listp value) 
+	    (error "Arg to set-slotv must be list: ~A ~A ~A" frame slot value))
+	  (%set-slotv frame slot value)
+	  ;; (too slow for long lists) PPP
+	  (when old
       (dolist (removed (set-difference old value :test #'equal))
 	(when (frame-p removed)
 	  (deletef frame (gethash slot (frame-inverse-slots-force removed))))))
-    (dolist (added (set-difference value old :test #'equal))
-      (when (frame-p added)
-	(pushnew frame (gethash slot (frame-inverse-slots-force added)))))
-    value))
+	  (dolist (added (set-difference value old :test #'equal))
+	    (when (frame-p added)
+	      (pushnew frame (gethash slot (frame-inverse-slots-force added)))))
+	  value))))
 
 (defsetf slotv set-slotv)
 
@@ -341,20 +344,20 @@ An RDF-backed frame system
   (if (%slotv p #$crx:specialhandling)
       (add-triple-special s p o)	;+++ forward call
       (progn
-    (when remove-old
-      (remove-triple s p '?o :to-db to-db :test test))
-    (if (frame-p o) (frame-fresh? o))
-    (pushnew o (%slotv s p) :test test)
-    ;; PPP this can be a performance bottleneck for things like types that can have thousands of members.  
-    ;; Need to use hashtables or some structure with better performance 
-    (when (frame-p o)
-      (pushnew s (%slotv-inverse o p) :test #'eq))
-    (when to-db
-      (let ((source (if (typep to-db 'frame-source)
-			to-db
-			(frame-source s))))
-	(write-triple source s p o)))
-    nil)))
+	(when remove-old
+	  (remove-triple s p '?o :to-db to-db :test test))
+	(if (frame-p o) (frame-fresh? o))
+	(pushnew o (%slotv s p) :test test)
+	;; PPP this can be a performance bottleneck for things like types that can have thousands of members.  
+	;; Need to use hashtables or some structure with better performance 
+	(when (frame-p o)
+	  (pushnew s (%slotv-inverse o p) :test #'eq))
+	(when to-db
+	  (let ((source (if (typep to-db 'frame-source)
+			    to-db
+			    (frame-source s))))
+	    (write-triple source s p o)))
+	nil)))
 
 ;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet
 (defun add-triple-special (s p o)
