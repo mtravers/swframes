@@ -20,9 +20,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defmethod print-object ((frame frame) stream)
   (report-and-ignore-errors
-   (if *print-frame-labels*
-       (format stream "[~A]" (frame-label frame t))
-       (format stream "#$~A" (frame-name frame)))))  
+   (format stream "#$~A" (frame-name frame))))
 
 (defun frame-p (f)
   (typep f 'frame))
@@ -36,26 +34,11 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (setf (documentation #'frame-uri 'function)
       "The URI of the frame as a string")
 
-(defvar *print-frame-labels* nil)
-
-
-
-#|
-(defparameter *frame-modified-readtable* (copy-readtable))
-
-(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader *frame-modified-readtable*)
-(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader *frame-modified-readtable*)
-(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader *frame-modified-readtable*)
-|#
-
 ;;; We set this globally.
 (set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader )
 (set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader )
 (set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
 
-#|
-Prob. wrong to use *code-source* by default.  Argh.
-|#
 (defun make-reader-frame (s)
   (make-frame s :source *code-source*))	
 
@@ -75,10 +58,6 @@ Prob. wrong to use *code-source* by default.  Argh.
 	  t)))
     (assert (not (char= #\# (char name 0)))) ;catch this common error
     name))
-
-(defpackage :swfuncs)
-
-
 
 ;;; Works with setf through blisp magic -- see swframes/blisp
 (defun pound-carat-frame-reader (stream char arg)
@@ -176,6 +155,8 @@ Prob. wrong to use *code-source* by default.  Argh.
 #|
 An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
 
+(defpackage :swfuncs)
+
 ;;; New, works with setf without a lot of hair.   But it means we have to type #'#^ to use it as a functional argument...ugh.
 ;;; Whups -- fun defined at read time, won't necessarily be available later. Damn! 
 ;;; Poss solution -- put all def'd symbols in a special variable somewhere, which gets written to a fasl as the last step of compilation
@@ -190,7 +171,6 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
     ))
 
 |#
-
 
 ;;; Following borrowed from BioLisp more or less verbaitm.
 
@@ -267,7 +247,5 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
           (error "CONCOCT-VALID-FRAME-NAME: Illegal characters found!"))))
     sstring
     ))
-
-
 
 (defun valid-frame-char? (x) (null (find x *illegal-frame-chars*)))

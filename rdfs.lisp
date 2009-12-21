@@ -170,6 +170,8 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 ;;; Method system; now based on CLOS
 
 ;;; This now can just be an ordinary defmethod.  
+;;; +++ support method types.
+;;; +++ other args can be frame classes as well.
 (defmacro rdfs-defmethod (name args &body body)
   "Define a method that dispatches on the RDFS class of the first element of ARGS. Synatx is similar to CLOS defmethod."
   (let ((arg1 (if (listp (car args)) (car (car args)) (car args)))

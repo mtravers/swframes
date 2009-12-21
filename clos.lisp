@@ -92,7 +92,7 @@ could do it.
       ;; Here we might want to do an initial write of frame to db
       )
   (unless base (setq base (frame-uri class)))
-  (acl-compat.mp:with-process-lock (gensym-lock)	;+++ I hope this won't slow down the world too much.
+  (acl-compat.mp:with-process-lock (gensym-lock)	
     (unless (and fast?
 		 (msv class #$crx:last_used_id))
       (fill-frame class :force? t :inverse? nil))
