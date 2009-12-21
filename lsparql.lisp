@@ -77,6 +77,14 @@
 
 )))
 
+(defparameter *sparql-performance-monitor* t)
+
+(defmethod do-sparql :around ((sparql string) (command t) &key timeout)
+  (declare (ignore timeout))
+  (if *sparql-performance-monitor*
+      (ccl::report-time command #'(lambda () (call-next-method))) 
+      (call-next-method)))
+
 (defmethod do-sparql ((sparql string) (command t) &key (timeout *default-sparql-timeout*))
   (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout))
 
