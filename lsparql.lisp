@@ -509,27 +509,38 @@
       (push-end `(:optional (,var #$rdfs:label ,label-var)) query)))
   query)
 
+;;; An extension to do this to n levels might be useful.
 (defun bulk-load-query (source query &key (var (car (second query))))
   #.(doc
-     "Given a SPARQL query and a VAR extend the query to load all slots of frames that match VAR, and mark them as loaded."
-     "This function actually peforms the query and returns the list of frames matching VAR")
+     "Given a SPARQL query and a VAR extend the query to load all slots and inverse-slots of frames that match VAR, and mark them as loaded."
+     "This function actually peforms the query and returns the list of frames matching VAR.")
   (setq query (copy-tree query))	;we mutate query, so copy it first
-  (push-end `(,var ?bl_p ?bl_o) query)
+  (push-end `(:union ((,var ?bl_p ?bl_o))
+		     ((?bl_s ?bl_p ,var)))
+	    query)
   (push-end '?bl_p (second query))
   (push-end '?bl_o (second query))
+  (push-end '?bl_s (second query))
   (let ((res (do-sparql source query)))
     (collecting
      (dolist (bind res)
-	(let ((s (sparql-binding-elt bind var))
+	(let ((sm (sparql-binding-elt bind var))
+	      (s (sparql-binding-elt bind "bl_s"))
 	      (p (sparql-binding-elt bind "bl_p"))
 	      (o (sparql-binding-elt bind "bl_o")))
-	  (add-triple s p o)
-	  (collect-new s)
-	  (set-frame-loaded? s)
-	  (setf (frame-source s) source)
+	  (when o
+	    (add-triple sm p o))
+	  (when s
+	    (add-triple s p sm))
+	  (collect-new sm)
+	  (set-frame-loaded? sm)
+	  (setf (frame-source sm) source)
 	  (when (and (frame-p o)		;not sure about this, but for now
 		     (null (frame-source o)))
 	    (setf (frame-source o) source))
+	  (when (and (frame-p s)		;not sure about this, but for now
+		     (null (frame-source s)))
+	    (setf (frame-source s) source))
 	  )))))
 
 (defun augment-query (source query &key (var (car (second query))) slots &aux slot-vars)
