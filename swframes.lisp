@@ -416,7 +416,7 @@ An RDF-backed frame system
 
 (defun default-uri-generator (frame)
   (aif (rdfs-classes frame)
-       (gensym-instance-frame (car it) :fast? t)
+       (gensym-instance-frame (car (order-classes it)) :fast? t)
        (gen-child-uri frame)))
 
 ;;; Another method for generating unique URIs, if no class is found.
