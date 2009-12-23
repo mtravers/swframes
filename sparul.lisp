@@ -195,7 +195,7 @@
       "Deletes frame from database, then calls DELETE-FRAME to remove from memory.")))
 
 ;;; Nuke frame from db
-(defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))
+(defmethod destroy-frame ((frame frame) &optional (sparql (or (frame-source frame) *default-sparql-endpoint*)))
   (let ((dependents (frame-dependents frame)))
     (with-sparul-group (sparql)
       (delete-triple sparql frame '?p '?o)

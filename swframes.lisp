@@ -160,7 +160,9 @@ An RDF-backed frame system
 
 (defvar *fill-by-default?* t "True if slot functions do a fill by default.  Initally T, can be dynamically bound")
 
-(defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
+(defparameter *dereference?* nil)
+
+(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-sparql-endpoint*)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
     (let ((*fill-by-default?* nil))	;prevent recursion
@@ -170,8 +172,8 @@ An RDF-backed frame system
 		 (unless (frame-loaded? frame)
 		   (progn		;was report-and-ignore-errors
 		    (setf (frame-source frame) nil)
-		    (dereference frame force?)))) ;+++
-	  (dereference frame force?))		;+++
+		    (when *dereference?* (dereference frame force?))))) ;+++
+	  (when *dereference?* (dereference frame force?)))	
       (set-frame-loaded? frame)))
   frame)
 
@@ -471,3 +473,8 @@ An RDF-backed frame system
 				    (pushnew elt fringe)))))))))
 				  
  
+#|
+;;; Debugging, search db for templates with bad template
+(dolist (temp (rdfs-find :all :class #$crx:Template)) 
+  (print (list temp (report-and-ignore-errors (template-string temp)))))
+|#
