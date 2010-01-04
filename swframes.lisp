@@ -212,7 +212,7 @@ An RDF-backed frame system
 ;;; this can't really do inverses, can it? we'd have to a difference...
 (defun set-slotv (frame slot value)
   (if (%slotv slot #$crx:specialhandling)
-      (add-triple-special frame slot value)
+      (%set-slotv frame slot value)
       (progn
 	(when *check-slot-domains?*
 	  (awhen (ssv slot #$rdfs:domain)
@@ -358,7 +358,7 @@ An RDF-backed frame system
 
 ;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet
 (defun add-triple-special (s p o)
-  (setf (%slotv s p) o))
+  (push o (%slotv s p)))
 
 ;;; see comment on delete-triple
 ;;; +++ should handle vars in ?s -- and needs to be nailed down in general.

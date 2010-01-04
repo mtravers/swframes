@@ -113,11 +113,12 @@
     (setf (ssv frame slot) value))
   (unless no-delete?
     (delete-triple source frame slot '?o))
-  (if (%slotv slot #$crx:specialhandling)
-      (rdfs-call write-slot-special slot frame source)
-      ;; normal
-      (dolist (val (slotv frame slot))
-	(write-triple source frame slot val))))
+  (let ((method (and (%slotv slot #$crx:specialhandling)
+		     (rdfs-method 'write-triple-special slot))))
+    (dolist (val (slotv frame slot))
+      (if method
+	  (funcall method slot frame val source)
+	  (write-triple source frame slot val)))))
 
 (rdfs-def-class #$crx:slots/specialSlot ())
 
@@ -140,7 +141,6 @@
 
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 
-;;; this probably shouldn't ever get called.
 (rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
 		(let ((*print-readably* t)
 		      (oo (typecase o
@@ -153,7 +153,8 @@
 		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
 		      ))))
 
-(rdfs-defmethod write-slot-special ((p #$crx:slots/LispValueSlot) s sparql)
+;;; no
+'(rdfs-defmethod write-slot-special ((p #$crx:slots/LispValueSlot) s sparql)
 		(let* ((*print-readably* t)
 		       (o (%slotv s p))
 		       (oo (typecase o
@@ -176,7 +177,7 @@
 		)
 
 ;;; Sometimes these unserializable slots get serialized, so ignore them
-(rdfs-defmethod deserialize-slot ((p #$crx:slots/TransientSlot) frame value)
+(rdfs-defmethod deserialize-value ((p #$crx:slots/TransientSlot) frame value)
 		(declare (ignore frame value))
 		nil)
 

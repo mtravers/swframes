@@ -407,18 +407,18 @@
       (let ((p (sparql-binding-elt binding "p"))
 	    (o (sparql-binding-elt binding "o")))
 	(if (%slotv p #$crx:specialhandling)
-	    (rdfs-call deserialize-slot p frame o)
+	    (rdfs-call deserialize-value p frame o)
 	    (add-triple frame p o))
 	))
     (when results
       (set-frame-loaded? frame))
     ))
 
-(rdfs-defmethod deserialize-slot ((slot #$crx:slots/LispValueSlot) frame value)
-		(setf (%slotv frame slot)
-		      (if (stringp value)
-			  (read-from-string value)
-			  value)))
+(rdfs-defmethod deserialize-value ((slot #$crx:slots/LispValueSlot) frame value)
+		(add-triple frame slot
+			    (if (stringp value)
+				(read-from-string value)
+				value)))
 
 ;;; +++ this can time out without the limit, but of course it produces incorrect results.  Maybe ths should only be done on demand.
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))

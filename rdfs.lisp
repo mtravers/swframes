@@ -208,12 +208,16 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 ;;; temp broken by #^ stuff
 ;;; no ordering, blah
 ;;; this version fills which can cause loops, bleah
-(defun rdfs-classes (thing)
+(defun rdfs-classes (thing &optional order?)
   "Returns all classes of THING."
   ;; try to avoid filling
-  (or (transitive-closure (slotv thing #$rdf:type nil) (slot-accessor  #$rdfs:subClassOf nil))
-      (transitive-closure (#^rdf:type thing) #'(lambda (x) (slotv x #$rdfs:subClassOf)))))
+  (let ((classes (or (transitive-closure (slotv thing #$rdf:type nil) (slot-accessor  #$rdfs:subClassOf nil))
+		     (transitive-closure (#^rdf:type thing) #'(lambda (x) (slotv x #$rdfs:subClassOf))))))
+    (if order?
+	(order-classes classes)
+	classes)))
 
+;;; This is bogus -- needs to use the transitive closure of #$rdfs:subClassOf to be accurate.
 (defun order-classes (classes)
   (sort classes #'(lambda (c1 c2) (member c2 (slotv c1 #$rdfs:subClassOf)))))
 
