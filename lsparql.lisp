@@ -392,6 +392,7 @@
 (defmethod fill-frame-from ((frame frame) (source sparql-endpoint) &key inverse?)
 ;;; this causes too many problems...needs rethinking
 ;  (reset-frame frame)	
+  (reset-frame-limited frame)
   (fill-frame-sparql frame source)
   (when inverse?
     (fill-frame-inverse-sparql frame source))

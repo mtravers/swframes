@@ -94,6 +94,13 @@ An RDF-backed frame system
   (setf (frame-loaded? frame) nil)
   (setf (frame-inverse-slots frame) nil))
 
+;;; Just clear out special frames, since equality doesn't work on them
+(defmethod reset-frame-limited ((frame frame))
+  (for-frame-slots (frame slot value)
+		   (when (%slotv slot #$crx:specialhandling)
+		     (remhash slot (frame-slots frame)))))
+
+
 (defgeneric delete-frame (frame) 
   (:documentation   #.(doc
      "Delete FRAME from memory.  Attempts to remove all references from other frames, but this is not guaranteed."
@@ -358,7 +365,7 @@ An RDF-backed frame system
 
 ;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet
 (defun add-triple-special (s p o)
-  (push o (%slotv s p)))
+  (pushnew o (%slotv s p)))
 
 ;;; see comment on delete-triple
 ;;; +++ should handle vars in ?s -- and needs to be nailed down in general.
