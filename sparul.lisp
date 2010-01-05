@@ -153,34 +153,15 @@
 		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
 		      ))))
 
-;;; no
-'(rdfs-defmethod write-slot-special ((p #$crx:slots/LispValueSlot) s sparql)
-		(let* ((*print-readably* t)
-		       (o (%slotv s p))
-		       (oo (typecase o
-			     (fixnum o)
-			     (otherwise (prin1-to-string o)))))
-		  (handler-case
-		      (%write-triple sparql s p oo)
-		    (print-not-readable (e)
-		      (declare (ignore e))
-		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
-		      ))))
-
 (rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
 (rdfs-defmethod write-triple-special ((p #$crx:slots/TransientSlot) s o sparql)
 		(declare (ignore s o sparql))
 		)
 
-(rdfs-defmethod write-slot-special ((p #$crx:slots/TransientSlot) s sparql)
-		(declare (ignore s sparql))
-		)
-
 ;;; Sometimes these unserializable slots get serialized, so ignore them
-(rdfs-defmethod deserialize-value ((p #$crx:slots/TransientSlot) frame value)
+(rdfs-defmethod deserialize-value ((p #$crx:slots/TransientSlot) value)
 		(declare (ignore frame value))
 		nil)
-
 
 (defun frame-dependents (frame)
   (collecting

@@ -406,19 +406,22 @@
     (dolist (binding results)
       (let ((p (sparql-binding-elt binding "p"))
 	    (o (sparql-binding-elt binding "o")))
-	(if (%slotv p #$crx:specialhandling)
-	    (rdfs-call deserialize-value p frame o)
-	    (add-triple frame p o))
-	))
+	(add-triple frame p (process-value p o)))
+      )
     (when results
       (set-frame-loaded? frame))
     ))
 
-(rdfs-defmethod deserialize-value ((slot #$crx:slots/LispValueSlot) frame value)
-		(add-triple frame slot
-			    (if (stringp value)
-				(read-from-string value)
-				value)))
+;;; Maybe this should be folded into add-triple
+(defun process-value (slot value)
+  (if (%slotv slot #$crx:specialhandling)
+      (rdfs-call deserialize-value slot value)
+      value))
+
+(rdfs-defmethod deserialize-value ((slot #$crx:slots/LispValueSlot) value)
+		(if (stringp value)
+		    (read-from-string value)
+		    value))
 
 ;;; +++ this can time out without the limit, but of course it produces incorrect results.  Maybe ths should only be done on demand.
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
@@ -521,15 +524,20 @@
   (push-end '?bl_p (second query))
   (push-end '?bl_o (second query))
   (push-end '?bl_s (second query))
-  (let ((res (do-sparql source query)))
+  (let ((res (do-sparql source query))
+	(processed? nil))
     (collecting
      (dolist (bind res)
 	(let ((sm (sparql-binding-elt bind var))
 	      (s (sparql-binding-elt bind "bl_s"))
 	      (p (sparql-binding-elt bind "bl_p"))
 	      (o (sparql-binding-elt bind "bl_o")))
+	  ;; do a reset on frames we bring in
+	  (unless (member sm processed?)
+	    (reset-frame sm)
+	    (push sm processed?))
 	  (when o
-	    (add-triple sm p o))
+	    (add-triple sm p (process-value p o)))
 	  (when s
 	    (add-triple s p sm))
 	  (collect-new sm)
@@ -560,7 +568,7 @@
 	 (mapc #'(lambda (slot slot-var)
 		   (let ((val (sparql-binding-elt bind slot-var)))
 		    (when val
-		      (add-triple s slot val))))
+		      (add-triple s slot (process-value slot val)))))
 	      slots slot-vars
 	  ))))))
 
