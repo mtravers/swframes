@@ -4,7 +4,10 @@
 (defparameter *sw-namespaces* nil)
 
 (defun register-namespace (abbrev full &optional force?)
-  "Register ABBREV as a namespace definition for"
+  "Register ABBREV as a namespace definition for FULL.  Ie, (register-namespace \"dbpedia\" \"http://dbpedia.org/property/\")"
+  (assert (stringp abbrev))
+  (assert (or (stringp full)
+	      (keywordp full)))
   (aif (member abbrev *sw-namespaces* :key #'car :test #'string-equal)
        (unless (equal (cadr (car it)) full)
 	 (if force?
