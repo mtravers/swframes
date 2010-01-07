@@ -142,16 +142,16 @@
 (rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 
 (rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
-		(let ((*print-readably* t)
-		      (oo (typecase o
-			    (fixnum o)
-			    (otherwise (prin1-to-string o)))))
-		  (handler-case
-		      (%write-triple sparql s p oo)
-		    (print-not-readable (e)
-		      (declare (ignore e))
-		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
-		      ))))
+		(with-standard-io-syntax ;aka print-readably
+		  (let ((oo (typecase o
+			      (fixnum o)
+			      (otherwise (prin1-to-string o)))))
+		    (handler-case
+			(%write-triple sparql s p oo)
+		      (print-not-readable (e)
+			(declare (ignore e))
+			(error "Can't save nonreadable object ~A in ~A / ~A" o s p)
+			)))))
 
 (rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
 (rdfs-defmethod write-triple-special ((p #$crx:slots/TransientSlot) s o sparql)
