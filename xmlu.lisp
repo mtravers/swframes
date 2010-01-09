@@ -93,6 +93,15 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
         (loop for el in found append (apply 'lxml-find-elements-with-tag el more-tags))
         found)))
 
+;;; This finds all <tag> elements, recursively, including tags within tags.  
+(defun lxml-find-all-elements-with-tag (element tag)
+  (let ((subs (mapappend #'(lambda (sub) (lxml-find-all-elements-with-tag sub tag))
+			 (lxml-subelements element t))))
+    (if (eq tag (lxml-tag element))
+	(cons element subs)
+	subs)))
+
+
 (defun tag-equal (a b)
   (equal (string a) (string b)))
 
