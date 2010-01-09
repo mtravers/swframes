@@ -94,6 +94,13 @@ An RDF-backed frame system
   (setf (frame-loaded? frame) nil)
   (setf (frame-inverse-slots frame) nil))
 
+;;; Just clear out special frames, since equality doesn't work on them
+(defmethod reset-frame-limited ((frame frame))
+  (for-frame-slots (frame slot value)
+		   (when (%slotv slot #$crx:specialhandling)
+		     (remhash slot (frame-slots frame)))))
+
+
 (defgeneric delete-frame (frame) 
   (:documentation   #.(doc
      "Delete FRAME from memory.  Attempts to remove all references from other frames, but this is not guaranteed."
@@ -160,7 +167,9 @@ An RDF-backed frame system
 
 (defvar *fill-by-default?* t "True if slot functions do a fill by default.  Initally T, can be dynamically bound")
 
-(defmethod fill-frame ((frame frame) &key force? (source (frame-source frame)) (inverse? t))
+(defparameter *dereference?* nil)
+
+(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-sparql-endpoint*)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
     (let ((*fill-by-default?* nil))	;prevent recursion
@@ -215,7 +224,7 @@ An RDF-backed frame system
 ;;; this can't really do inverses, can it? we'd have to a difference...
 (defun set-slotv (frame slot value)
   (if (%slotv slot #$crx:specialhandling)
-      (add-triple-special frame slot value)
+      (%set-slotv frame slot value)
       (progn
 	(when *check-slot-domains?*
 	  (awhen (ssv slot #$rdfs:domain)
@@ -318,7 +327,7 @@ An RDF-backed frame system
   "Returns the value of SLOT in FRAME, which must be a single element (or missing) or an error is signalled."
   (let ((v (slotv frame slot fill?)))
     (if (> (length v) 1)
-	(error "Multiple values where one expected"))
+	(error "Multiple values where one expected: ~A/~A was ~A" frame slot v))
     (car v)))
 
 (defun set-ssv (frame slot value)
@@ -341,6 +350,10 @@ An RDF-backed frame system
   (member value (slotv frame slot)))
 
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
+  ;; DEBUG
+  (if (and (eq s #$crx:session)
+	   (eq p #$crx:last_used_id))
+      (break "FUCK ME"))
   (if (%slotv p #$crx:specialhandling)
       (add-triple-special s p o)	;+++ forward call
       (progn
@@ -361,7 +374,7 @@ An RDF-backed frame system
 
 ;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet
 (defun add-triple-special (s p o)
-  (setf (%slotv s p) o))
+  (pushnew o (%slotv s p)))
 
 ;;; see comment on delete-triple
 ;;; +++ should handle vars in ?s -- and needs to be nailed down in general.
@@ -476,3 +489,11 @@ An RDF-backed frame system
 				    (pushnew elt fringe)))))))))
 				  
  
+#|
+;;; Debugging, search db for templates with bad template
+(dolist (temp (rdfs-find :all :class #$crx:Template)) 
+  (print (list temp (report-and-ignore-errors (template-string temp)))))
+|#
+
+;;; for debugging, of course
+(trace set-ssv set-slotv set-msv add-triple remove-triple)

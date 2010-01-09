@@ -71,7 +71,8 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (let* ((slot (make-reader-frame (read-fname stream))))
     `(lambda (f) (msv-inverse f ,slot))))
 
-(defvar *default-frame-source* nil "A FRAME-SOURCE used by default when frames are created.  Can by dynamically bound.")
+;;; CCC needs to default to something reasomable for templates
+(defvar *default-frame-source* *code-source* "A FRAME-SOURCE used by default when frames are created.  Can by dynamically bound.")
 
 (defun make-frame (thing &key (source *default-frame-source*))
   #.(doc
@@ -110,7 +111,8 @@ This file has the minimum needed to get the frame system working (esp. the reade
   frame)
 
 (defun intern-frame (frame)
-  (setf (gethash (frame-uri frame) *uri->frame-ht*) frame))  
+  (setf (gethash (frame-uri frame) *uri->frame-ht*) frame)
+  frame)  
 
 (defun frame-named (uri)
   "The frame named URI or nil if none is known.  Inverse of FRAME-URI"

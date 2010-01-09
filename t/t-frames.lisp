@@ -54,6 +54,9 @@ Lisp slots handle any printable Lisp object,
 (defmacro assert-slotv-equal (expected form)
   `(assert-true (slotv-equal ,expected ,form)))
 
+;;; Useful for finding the problem when test below fails
+;(trace set-slotv set-msv set-ssv slotv msv ssv)
+
 (define-test basic-slot
     (let ((f (gen-test-frame))
 	  (s (gen-test-frame "crx:slot"))
@@ -67,14 +70,17 @@ Lisp slots handle any printable Lisp object,
 		   (test-slot-1 ls v nil)
 		   (test-slot-1 ls v t)))
 	       (test-slot-1 (s v db)
-;		 (print `(test ,v ,s ,db))
-		 (when db (forget))
+		 (print `(test ,v ,s ,db))
 		 (setf (msv f s) v)
+		 (when db (forget))
 		 (assert-slotv-equal v (msv f s))
+
 		 (when (normal-slot-element? v)
-		   (setf (ssv f s) v)
+;		   (setf (ssv f s) v)
+		   (sw::SET-SSV F S V)
 		   (when db (forget))
 		   (assert-slotv-equal v (ssv f s)))
+
 		 (when (listp v)
 		   (setf (slotv f s) v)
 		   (when db (forget))

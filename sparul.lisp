@@ -16,6 +16,7 @@
     #'(lambda () ,@body)))
 
 ;;; async is NOT WORKING PROPERLY yet, so don't use it! +++
+;;; CCC needs to do something reasonable on code sources.
 (defmacro with-sparul-group ((endpoint &key async?) &body body)
   "Causes all writes to endpoint within the dynamic scope to be delayed until the form is exited (or in other words, it saves all SPARQL insert/delete commands and does them at the end)."
   `(let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
@@ -113,11 +114,12 @@
     (setf (ssv frame slot) value))
   (unless no-delete?
     (delete-triple source frame slot '?o))
-  (if (%slotv slot #$crx:specialhandling)
-      (rdfs-call write-slot-special slot frame source)
-      ;; normal
-      (dolist (val (slotv frame slot))
-	(write-triple source frame slot val))))
+  (let ((method (and (%slotv slot #$crx:specialhandling)
+		     (rdfs-method 'write-triple-special slot))))
+    (dolist (val (slotv frame slot))
+      (if method
+	  (funcall method slot frame val source)
+	  (write-triple source frame slot val)))))
 
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
@@ -136,42 +138,29 @@
   (setf (slotv slot #$rdf:type) nil
         (slotv slot #$crx:specialhandling) nil)  )
 
-;;; this probably shouldn't ever get called.
+(rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
+
 (rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
-		(let ((*print-readably* t)
-		      (oo (typecase o
-			    (fixnum o)
-			    (otherwise (prin1-to-string o)))))
-		  (handler-case
-		      (%write-triple sparql s p oo)
-		    (print-not-readable (e)
-		      (declare (ignore e))
-		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
-		      ))))
+		(with-standard-io-syntax ;aka print-readably
+		  (let ((oo (typecase o
+			      (fixnum o)
+			      (otherwise (prin1-to-string o)))))
+		    (handler-case
+			(%write-triple sparql s p oo)
+		      (print-not-readable (e)
+			(declare (ignore e))
+			(error "Can't save nonreadable object ~A in ~A / ~A" o s p)
+			)))))
 
-(rdfs-defmethod write-slot-special ((p #$crx:slots/LispValueSlot) s sparql)
-		(let* ((*print-readably* t)
-		       (o (%slotv s p))
-		       (oo (typecase o
-			     (fixnum o)
-			     (otherwise (prin1-to-string o)))))
-		  (handler-case
-		      (%write-triple sparql s p oo)
-		    (print-not-readable (e)
-		      (declare (ignore e))
-		      (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
-		      ))))
-
+(rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
 (rdfs-defmethod write-triple-special ((p #$crx:slots/TransientSlot) s o sparql)
 		(declare (ignore s o sparql))
 		)
 
-(rdfs-defmethod write-slot-special ((p #$crx:slots/TransientSlot) s sparql)
-		(declare (ignore s sparql))
-		)
-
-
-
+;;; Sometimes these unserializable slots get serialized, so ignore them
+(rdfs-defmethod deserialize-value ((p #$crx:slots/TransientSlot) value)
+		(declare (ignore frame value))
+		nil)
 
 (defun frame-dependents (frame)
   (collecting
@@ -187,7 +176,7 @@
       "Deletes frame from database, then calls DELETE-FRAME to remove from memory.")))
 
 ;;; Nuke frame from db
-(defmethod destroy-frame ((frame frame) &optional (sparql (frame-source frame)))
+(defmethod destroy-frame ((frame frame) &optional (sparql (or (frame-source frame) *default-sparql-endpoint*)))
   (let ((dependents (frame-dependents frame)))
     (with-sparul-group (sparql)
       (delete-triple sparql frame '?p '?o)

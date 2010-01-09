@@ -29,6 +29,17 @@ Dereferencing is a "frame source" of sorts...
 
 (defvar *code-source* (make-instance 'code-source))
 
+(defmethod uri-used? ((source code-source) uri)
+  (frame-named (expand-uri uri)))
+
+;;; Done in memory, so is done (CCC)
+(defmethod delete-triple ((source code-source) s p o)
+  )
+
+(defmethod write-triple ((source code-source) s p o)
+  )
+
+
 ;;; Write classes defined in code to a database.  This is only called by hand at the moment.
 (defun write-code-source-classes (to)
   (with-sparul-group (to)		;+++ this needs to be moved after definition
