@@ -64,23 +64,24 @@ could do it.
 
 |#
 
-;;; Setting the class of a frame
-(defun classify-frame (f)
+;;; Set class of frame based on its RDF type
+(defun classify-frame (f &optional error?)
   (when (eq 'frame (type-of f))
-    (set-frame-class f nil))
-  )
+    (let ((rclasses (collapse-class-list (slotv f #$rdf:type))))
+      (if (= 1 (length rclasses))
+	  (set-frame-class f (car rclasses) error?)
+	  (if error?
+	      (error "Can't set class, no or multiple types for ~A" f)
+	      )))))
 
-(defun set-frame-class (f &optional error?)
-  (let ((rclass (collapse-class-list (slotv f #$rdf:type))))
-    (if (= 1 (length rclass))
-	(let ((cclass (rdfs-clos-class (car rclass) error?)))
-	  (if cclass 
-	      (change-class f cclass)
-	      (if error?
-		  (error "Can't set class for ~A, no class found" f))))
+(defun set-frame-class (frame rdf-class &optional error?)
+  (let ((cclass (rdfs-clos-class rdf-class error?)))
+    (if cclass 
+	(change-class frame cclass)
 	(if error?
-	    (error "Can't set class, no or multiple types for ~A" f)
-	    ))))
+	    (error "Can't set class for ~A, no class found" frame)))
+    frame))
+
 
 ;;; Make instance
 

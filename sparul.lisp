@@ -101,6 +101,9 @@
     (generate-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
     ))
 
+(defmethod %write-triple ((sparql t) s p o)
+  )
+
 ;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod* delete-triple ((sparql sparql-endpoint) s p o)
   (assert writeable?)

@@ -169,7 +169,7 @@ An RDF-backed frame system
 
 (defparameter *dereference?* nil)
 
-(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-sparql-endpoint*)) (inverse? t))
+(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
     (let ((*fill-by-default?* nil))	;prevent recursion
@@ -181,7 +181,7 @@ An RDF-backed frame system
 		    (setf (frame-source frame) nil)
 		    (dereference frame force?)))) ;+++
 	  (dereference frame force?))		;+++
-      (set-frame-class frame nil)		;CCC
+      (classify-frame frame)		;CCC
       (set-frame-loaded? frame)))
   frame)
 
