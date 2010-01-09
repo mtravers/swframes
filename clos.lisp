@@ -65,7 +65,6 @@ could do it.
 |#
 
 ;;; Setting the class of a frame
-
 (defun classify-frame (f)
   (when (eq 'frame (type-of f))
     (set-frame-class f nil))

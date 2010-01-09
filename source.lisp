@@ -39,10 +39,16 @@ Dereferencing is a "frame source" of sorts...
 (defmethod write-triple ((source code-source) s p o)
   )
 
+;;; CCC this is getting called from compile, no idea why
+(defmethod make-load-form ((source code-source) &optional env)
+  `(or *code-source*
+       (setf *code-source* (make-instance 'code-source))))
+
+
 
 ;;; Write classes defined in code to a database.  This is only called by hand at the moment.
 (defun write-code-source-classes (to)
-  (with-sparul-group (to)		;+++ this needs to be moved after definition
+  (with-write-group (to)		;+++ this needs to be moved after definition
     (dolist (class (slotv-inverse  #$rdfs:Class #$rdf:type))
       (when (eq *code-source* (frame-source class))
 	(write-frame class :source to)))))

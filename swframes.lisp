@@ -19,7 +19,7 @@ An RDF-backed frame system
 	  declare-special-slot
 	  for-frame-slots for-frame-inverse-slots
 	  add-triple remove-triple
-	  frame-copy rename-frame delete-frame write-frame destroy-frame with-sparul-group
+	  frame-copy rename-frame delete-frame write-frame destroy-frame with-write-group
 	  write-slot write-triple
 	  describe-frame df dft
 	  register-namespace def-namespace expand-uri abbreviate-uri))
@@ -350,10 +350,6 @@ An RDF-backed frame system
   (member value (slotv frame slot)))
 
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
-  ;; DEBUG
-  (if (and (eq s #$crx:session)
-	   (eq p #$crx:last_used_id))
-      (break "FUCK ME"))
   (if (%slotv p #$crx:specialhandling)
       (add-triple-special s p o)	;+++ forward call
       (progn
@@ -496,4 +492,4 @@ An RDF-backed frame system
 |#
 
 ;;; for debugging, of course
-(trace set-ssv set-slotv set-msv add-triple remove-triple)
+;(trace set-ssv set-slotv set-msv add-triple remove-triple)

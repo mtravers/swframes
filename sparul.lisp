@@ -15,9 +15,41 @@
     (string (gensym "THREAD"))
     #'(lambda () ,@body)))
 
+(defmacro with-write-group ((&optional (endpoint *default-frame-source*) &key async?) &body body)
+  `(do-write-group ,endpoint ,async?
+     #'(lambda ()
+	 ,@body)))
+
+(defmethod do-write-group ((source code-source) async? proc)
+  (funcall proc))
+
+(defmethod do-write-group ((endpoint sparql-endpoint) async? proc)
+  (let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
+	(*sparul-group* (or *sparul-group* (list endpoint nil)))
+	retval)
+    (unless (clos*::oequal (car *sparul-group*) endpoint)
+      (error "Bad nested SPARUL groups: ~A ~A" (car *sparul-group*) endpoint))
+    (setf retval (funcall proc))
+    (let ((clauses (cadr *sparul-group*))) ;make sure this gets captured
+       (when (and clauses
+		  (not prior-group))
+	 (flet ((do-it ()
+;		  (print `(clauses ,clauses))
+		  (do-sparql endpoint
+		    (with-output-to-string (out)
+		      (dolist (s clauses)
+			(write-string s out)
+			(terpri out))))))
+	   (if async?
+	       (in-background-thread (do-it))
+	       (do-it)))))
+     retval))
+
+  
+
 ;;; async is NOT WORKING PROPERLY yet, so don't use it! +++
-;;; CCC needs to do something reasonable on code sources.
-(defmacro with-sparul-group ((endpoint &key async?) &body body)
+;;; CCC needs to do something reasonable on code sources.  (OBSO)
+'(defmacro with-sparul-group ((endpoint &key async?) &body body)
   "Causes all writes to endpoint within the dynamic scope to be delayed until the form is exited (or in other words, it saves all SPARQL insert/delete commands and does them at the end)."
   `(let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
 	 (*sparul-group* (or *sparul-group* (list ,endpoint nil)))
@@ -92,7 +124,7 @@
 
 (defmethod write-frame ((frame frame) &key (source (frame-source frame)) (async? nil) (no-delete? nil) )
   (let ((dependents (frame-dependents frame)))
-    (with-sparul-group (source :async? async?)
+    (with-write-group (source :async? async?)
       (unless no-delete?
         (delete-triple source frame '?p '?o))
       (dolist (slot (%frame-slots frame))
@@ -114,11 +146,11 @@
     (setf (ssv frame slot) value))
   (unless no-delete?
     (delete-triple source frame slot '?o))
-  (let ((method (and (%slotv slot #$crx:specialhandling)
-		     (rdfs-method 'write-triple-special slot))))
+  ;;; CCC -- clean this up
+  (let ((special (%slotv slot #$crx:specialhandling)))
     (dolist (val (slotv frame slot))
-      (if method
-	  (funcall method slot frame val source)
+      (if special
+	  (rdfs-call write-triple-special slot frame val source)
 	  (write-triple source frame slot val)))))
 
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
@@ -178,7 +210,7 @@
 ;;; Nuke frame from db
 (defmethod destroy-frame ((frame frame) &optional (sparql (or (frame-source frame) *default-sparql-endpoint*)))
   (let ((dependents (frame-dependents frame)))
-    (with-sparul-group (sparql)
+    (with-write-group (sparql)
       (delete-triple sparql frame '?p '?o)
       (delete-triple sparql '?s '?p frame))
     ;; also do locally
