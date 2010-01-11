@@ -52,29 +52,43 @@ could do it.
 		(list 'rdfs-class))
      ()))
 
-(defun rdfs-clos-class (frame &optional (error? t))
+;;; older, doesnt force
+'(defun rdfs-clos-class (frame &optional (error? t))
   (let ((sym (frame-as-symbol frame)))
-    (find-class sym error?)))		
+    (find-class sym error?)))
 
-#|
-    (unless
-      (setf (get sym :frame) frame)
-    sym))
+;;; newer
+(defun rdfs-clos-class (frame &key force? (error? t))
+  (let ((sym (frame-as-symbol frame)))
+    (acond ((find-class sym nil)
+	    it)
+	   (force?
+	    (eval (defclass-form frame nil))
+	    (find-class sym t))
+	   (error?
+	    (error "Can't turn ~A into class" frame))
+	   (t nil)))
 
-|#
+(defun ensure-clos-class (frame)
+  (rdfs-class-class frame :force? t :error t))
 
 ;;; Set class of frame based on its RDF type
 (defun classify-frame (f &optional error?)
   (when (eq 'frame (type-of f))
     (let ((rclasses (collapse-class-list (slotv f #$rdf:type))))
-      (if (= 1 (length rclasses))
-	  (set-frame-class f (car rclasses) error?)
-	  (if error?
-	      (error "Can't set class, no or multiple types for ~A" f)
-	      )))))
+      (cond ((= 1 (length rclasses))
+	     (set-frame-class f (car rclasses) error?))
+	    ((null rclasses)
+	     (if error? (error "Can't set class, no type for ~A" f)))
+	    (t
+	     ;; Multiple types, so heuristicate -- pick one that already is a CLOS class
+	     (dolist (c rclasses)
+	       (when (rdfs-clos-class c :force? nil :error? nil)
+		 (set-frame-class f c error?)
+		 (return c))))))))
 
 (defun set-frame-class (frame rdf-class &optional error?)
-  (let ((cclass (rdfs-clos-class rdf-class error?)))
+  (let ((cclass (rdfs-clos-class rdf-class :force? t :error? error?)))
     (if cclass 
 	(change-class frame cclass)
 	(if error?
