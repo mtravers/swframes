@@ -32,7 +32,7 @@ Dereferencing is a "frame source" of sorts...
 (defmethod uri-used? ((source code-source) uri)
   (frame-named (expand-uri uri)))
 
-;;; Done in memory, so is done (CCC)
+;;; Done in memory, so nothing more to do
 (defmethod delete-triple ((source code-source) s p o)
   )
 
@@ -43,8 +43,6 @@ Dereferencing is a "frame source" of sorts...
 (defmethod make-load-form ((source code-source) &optional env)
   `(or *code-source*
        (setf *code-source* (make-instance 'code-source))))
-
-
 
 ;;; Write classes defined in code to a database.  This is only called by hand at the moment.
 (defun write-code-source-classes (to)

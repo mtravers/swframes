@@ -14,7 +14,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
    (dirty? nil)				;T if needs to be written back out, or list of preds to write out.
    (dereferenced? nil) 
    )
-  :initable-instance-variables		;trim down CCC
+  (:initable-instance-variables uri source)
   :writable-instance-variables		;trim down CCC
   :readable-instance-variables)
 
@@ -87,7 +87,8 @@ This file has the minimum needed to get the frame system working (esp. the reade
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists.")
   (if (frame-p uri) (return-from intern-uri uri))
-  (if (frame-p class) (setf class (rdfs-clos-class class t)))
+  (if (frame-p class)
+      (setf class (rdfs-clos-class class t)))
   (assert (stringp uri))
   (setf uri (expand-uri uri))	
   (assert (> (length uri) 0))
@@ -96,7 +97,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
        (make-instance class
 		      :uri uri 
 		      :source source
-		      :loaded? mark-loaded?
+;CCC		      :loaded? mark-loaded?
 		      ))))
 
 ;;; Would be nice if this were weak, but only EQ hashtables support that in CCL.

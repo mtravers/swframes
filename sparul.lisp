@@ -15,7 +15,7 @@
     (string (gensym "THREAD"))
     #'(lambda () ,@body)))
 
-(defmacro with-write-group ((&optional (endpoint *default-frame-source*) &key async?) &body body)
+(defmacro with-write-group ((&optional (endpoint '*default-frame-source*) &key async?) &body body)
   `(do-write-group ,endpoint ,async?
      #'(lambda ()
 	 ,@body)))
@@ -149,7 +149,7 @@
     (setf (ssv frame slot) value))
   (unless no-delete?
     (delete-triple source frame slot '?o))
-  ;;; CCC -- clean this up
+  ;;; CCC -- write-triple should be a method that dispatches on slot type, maybe on source
   (let ((special (%slotv slot #$crx:specialhandling)))
     (dolist (val (slotv frame slot))
       (if special

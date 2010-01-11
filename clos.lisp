@@ -55,11 +55,10 @@ could do it.
 (defun rdfs-clos-class (frame &optional (error? t))
   (let ((sym (frame-as-symbol frame)))
     (find-class sym error?)))		
+
 #|
     (unless
       (setf (get sym :frame) frame)
-;      (print `(defining ,sym))
-;      (eval (defclass-form frame)))
     sym))
 
 |#
