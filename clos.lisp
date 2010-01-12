@@ -1,5 +1,7 @@
 (in-package :sw)
 
+(export '(defmethod$))
+
 #|
 Theory:
 - need a mapping from URIs to class names.
@@ -70,7 +72,7 @@ could do it.
 	   (t nil)))
 
 (defun ensure-clos-class (frame)
-  (rdfs-class-class frame :force? t :error t))
+  (rdfs-clos-class frame :force? t :error t))
 
 ;;; Set class of frame based on its RDF type
 (defun classify-frame (f &optional error?)
@@ -134,3 +136,12 @@ could do it.
     (mapcar #'frame-class classes)))
 
 |#
+
+;;; handle full range of defmethod hair +++
+(defmacro defmethod$ (name args &body body)
+  (let ((trans-args (mapcar #'(lambda (arg)
+			       (if (listp arg)
+				   (list (car arg) (class-name (sw::rdfs-clos-class (cadr arg) :force? t)))
+				   arg))
+		     args)))
+    `(defmethod ,name ,trans-args ,@body)))
