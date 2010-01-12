@@ -89,7 +89,10 @@
       "ASYNC? causes the write to be done in a separate thread"
       "NO-DELETE? causes the previous contents in the database to be retained (not recommended).")))
 
-(defmethod write-frame ((frame frame) &key (source (frame-source frame)) (async? nil) (no-delete? nil) )
+(defmethod write-frame ((frame frame) &key source (async? nil) (no-delete? nil) )
+  (unless source
+    (setf source (or (frame-source frame) *default-sparql-endpoint*)))
+  (setf (frame-source frame) source)
   (let ((dependents (frame-dependents frame)))
     (with-sparul-group (source :async? async?)
       (unless no-delete?
