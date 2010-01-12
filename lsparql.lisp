@@ -77,6 +77,14 @@
 
 )))
 
+(defparameter *sparql-performance-monitor* t)
+
+(defmethod do-sparql :around ((sparql string) (command t) &key timeout)
+  (declare (ignore timeout))
+  (if *sparql-performance-monitor*
+      (ccl::report-time command #'(lambda () (call-next-method))) 
+      (call-next-method)))
+
 (defmethod do-sparql ((sparql string) (command t) &key (timeout *default-sparql-timeout*))
   (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout))
 
@@ -89,7 +97,7 @@
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))
 ;  (print command)
   (run-sparql url command 
-		      :make-uri #'(lambda (u) (intern-uri u sparql))
+	      :make-uri #'(lambda (u) (intern-uri u :source sparql))
 		      ;; this suddenly became necessary since I was geting literals back...no idea why 
 		      :eager-make-uri? t
 		      :timeout timeout
@@ -397,7 +405,10 @@
   (when inverse?
     (fill-frame-inverse-sparql frame source))
   (let ((*fill-by-default?* nil))
-    (rdfs-call-if post-fill frame)))
+    (rdfs-call post-fill frame)))
+
+(rdfs-defmethod post-fill (frame)
+		)
 
 (defmethod fill-frame-sparql ((frame frame) (source sparql-endpoint))
   (let* ((*default-frame-source* source) ;not sure
@@ -413,6 +424,12 @@
       (set-frame-loaded? frame))
     ))
 
+(rdfs-def-class #$rdf:Property ())
+
+(rdfs-def-class #$crx:slots/specialSlot (#$rdf:Property))
+
+(rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
+
 ;;; Maybe this should be folded into add-triple
 (defun process-value (slot value)
   (if (%slotv slot #$crx:specialhandling)
@@ -423,6 +440,13 @@
 		(if (stringp value)
 		    (read-from-string value)
 		    value))
+
+(rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
+
+;;; Sometimes these unserializable slots get serialized, so ignore them
+(rdfs-defmethod deserialize-slot ((p #$crx:slots/TransientSlot) frame value)
+		(declare (ignore frame value))
+		nil)
 
 ;;; +++ this can time out without the limit, but of course it produces incorrect results.  Maybe ths should only be done on demand.
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))

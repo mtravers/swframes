@@ -13,7 +13,7 @@
 	 (if force?
 	     (progn (deletef abbrev *sw-namespaces* :key #'car :test #'string-equal)
 		    (push (list abbrev full) *sw-namespaces*))
-	     (warn "Attempt to redefine namespace ~A from ~A to ~A" abbrev (cadr (car it)) full)
+	     (error "Attempt to redefine namespace ~A from ~A to ~A" abbrev (cadr (car it)) full)
 	     ))
        (push (list abbrev full) *sw-namespaces*)))
 

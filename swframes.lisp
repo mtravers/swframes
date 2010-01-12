@@ -19,7 +19,7 @@ An RDF-backed frame system
 	  declare-special-slot
 	  for-frame-slots for-frame-inverse-slots
 	  add-triple remove-triple
-	  frame-copy rename-frame delete-frame write-frame destroy-frame with-sparul-group
+	  frame-copy rename-frame delete-frame write-frame destroy-frame with-write-group
 	  write-slot write-triple
 	  describe-frame df dft
 	  register-namespace def-namespace expand-uri abbreviate-uri))
@@ -169,7 +169,7 @@ An RDF-backed frame system
 
 (defparameter *dereference?* nil)
 
-(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-sparql-endpoint*)) (inverse? t))
+(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)) (inverse? t))
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
     (let ((*fill-by-default?* nil))	;prevent recursion
@@ -179,10 +179,15 @@ An RDF-backed frame system
 		 (unless (frame-loaded? frame)
 		   (progn		;was report-and-ignore-errors
 		    (setf (frame-source frame) nil)
-		    (when *dereference?* (dereference frame force?))))) ;+++
-	  (when *dereference?* (dereference frame force?)))	
+		    (dereference frame force?)))) ;+++
+	  (dereference frame force?))		;+++
+      (classify-frame frame)		
       (set-frame-loaded? frame)))
   frame)
+
+;;; Gets overwritten later, here to support load, probably not the right solution +++
+(defmethod dereference ((frame frame) &optional force?)
+  )
 
 ;;; Called by rdfs-defmethod and other things to mark that a frame is defined from code, and not
 ;;; expected to be read from the database.
@@ -322,7 +327,7 @@ An RDF-backed frame system
   "Returns the value of SLOT in FRAME, which must be a single element (or missing) or an error is signalled."
   (let ((v (slotv frame slot fill?)))
     (if (> (length v) 1)
-	(error "Multiple values where one expected"))
+	(error "Multiple values where one expected: ~A/~A was ~A" frame slot v))
     (car v)))
 
 (defun set-ssv (frame slot value)
@@ -485,3 +490,6 @@ An RDF-backed frame system
 (dolist (temp (rdfs-find :all :class #$crx:Template)) 
   (print (list temp (report-and-ignore-errors (template-string temp)))))
 |#
+
+;;; for debugging, of course
+;(trace set-ssv set-slotv set-msv add-triple remove-triple)

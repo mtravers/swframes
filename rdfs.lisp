@@ -2,7 +2,7 @@
 
 (export '(rdfs-def-class rdfs-make-instance 
 	  rdfs-classes rdfs-classp rdfs-subclasses
-	  rdfs-defmethod rdfs-call rdfs-call-if rdfs-find))
+	  rdfs-defmethod rdfs-call rdfs-find))
 
 #|
 Notes:
@@ -21,6 +21,32 @@ Todo (+++):
 rdfs-lists (important...to translate from/to frame rep, slots need to have a property that says if the value is a list (as opposed to just a collection of elements))
 
 |#
+
+
+
+(defun all-superclasses (c1)
+  (transitive-closure c1 (slot-accessor #$rdfs:subClassOf nil)))
+
+(defun all-subclasses (c1)
+  (transitive-closure c1 (inverse-slot-accessor #$rdfs:subClassOf nil)))
+  
+(defun is-subclass? (c1 c2)
+  (member c2 (all-superclasses c1)))
+
+(defun is-superclass? (c1 c2)
+  (member c2 (all-subclasses c1)))
+
+;;; Way inefficient, but 
+(defun collapse-class-list (cl)
+  (filter-out #'(lambda (c1)
+		  (some #'(lambda (c2)
+			    (and (not (eq c1 c2))
+				 (is-superclass? c1 c2)))
+			cl))
+	      cl))
+
+(defun frame-supertypes (frame)
+  (slotv frame #$rdfs:subClassOf))
 
 (defmacro rdfs-def-class (class superclasses &body slots)
   #.(doc
@@ -73,8 +99,10 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		      (error "Unknown slot properties in ~A" slotdef))
 		    )))
 	    slots)
-      `(progn ,@clauses
-	      ,class))))
+      `(eval-when (:compile-toplevel :load-toplevel :execute)
+	 ,@clauses
+	 ,(defclass-form class superclasses)
+	 ,class))))
 
 ;;; Put in some checking;  should be under a flag. 
 ;;; Also option for specifying a name or partial name.
@@ -87,9 +115,10 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	   (when class
 	     (assert (rdfs-classp thing class)))))
     (check-class class #$rdfs:Class)
-    (let ((frame (gensym-instance-frame class :fast? *fast-instances?*)))
+    (let ((frame (intern-uri (gensym-instance-uri class :fast? *fast-instances?*))))
       (setf (ssv frame #$rdf:type) class)
       (setf (frame-loaded? frame) t)	;if we are consing this from scratch in memory, it is considered loaded
+      (set-frame-class frame class t)
       (do ((rest slots (cddr rest)))
 	  ((null rest) frame)
 	(check-class frame (#^rdfs:domain (car rest))) 
@@ -121,53 +150,6 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	      ,@(if word? `((:filter (:regex ,vvar ,(format nil "\\\\W~A\\\\W" value) "i"))))
 	      )))
 
-(rdfs-def-class #$crx:session ()
-		(#$crx:session/machine))
-
-(defvar *unique-session* nil)
-
-;;; should get called once for a lisp session
-(defun make-unique-session ()
-  (let* ((*fast-instances?* nil)
-	 (session
-	  (rdfs-make-instance #$crx:session 
-			      #$crx:session/machine (machine-instance))))
-    (write-frame session)
-    (setf *unique-session* session)))
-
-(defun unique-session ()
-  (or *unique-session*
-      (make-unique-session)))
-
-;;; This has to be relative to a frame source so you can check for taken ids. 
-;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  
-(defvar gensym-lock (acl-compat.mp:make-process-lock))
-
-(defun gensym-instance-frame (class &key start (fast? t) (source *default-frame-source*) base)
-  (if (eq (frame-source class) *code-source*)
-      (setf (frame-source class) source)
-      ;; Here we might want to do an initial write of frame to db
-      )
-  (unless base (setq base (frame-uri class)))
-  (acl-compat.mp:with-process-lock (gensym-lock)	;+++ I hope this won't slow down the world too much.
-    (unless (and fast?
-		 (msv class #$crx:last_used_id))
-      (fill-frame class :force? t :inverse? nil))
-    (let* ((last (or start (ssv class #$crx:last_used_id)))
-	   (next (if last
-		     (1+ (coerce-number last))
-		     0))
-	   (uri (string+ base "/"
-			 (if fast? (string+ (frame-label (unique-session)) "/") "")
-			 (fast-string next))))
-      (if (and (not fast?) (uri-used? source uri))
-	  (gensym-instance-frame class :start next :fast? fast?)
-	  (progn
-	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
-	    (intern-uri uri))))))
-
-(defgeneric uri-used? (source uri))
-
 (defun rdfs-classp (frame class)
   (if (frame-p frame)
       (or (eq class #$rdfs:Resource)	;special handling, everything is a Resource (???)
@@ -188,24 +170,32 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defun rdfs-subclasses (class)
   (slotv-inverse class #$rdfs:subClassOf))
 
-;;; Method system.  Need to think about this, RDF things can be multiply typed and there is no ordering.  
-;;; Alternative is to map rdf to CLOS classes which have a more well-behaved orderng.
-;;; Another alternative: define an ordinary function which does dispatching.  Eliminates need for rdfs-call, allows tracing
+;;; Method system; now based on CLOS
 
-(defun rdfs-methodtable (symbol)
-  (or (get :rdfs-methods symbol)
-      (setf (get :rdfs-methods symbol)
-	    (make-hash-table :test #'eq))))
-
+;;; This now can just be an ordinary defmethod.  
+;;; +++ support method types.
+;;; +++ other args can be frame classes as well.
 (defmacro rdfs-defmethod (name args &body body)
   "Define a method that dispatches on the RDFS class of the first element of ARGS. Synatx is similar to CLOS defmethod."
-  (let ((realargs (cons (car (car args)) (cdr args)))
-	(class (cadr (car args))))
-    `(setf (gethash ,class (rdfs-methodtable ',name))
-	   #'(lambda ,realargs
-	       #+CCL (declare (ccl::ignore-if-unused ,(car realargs)))
-	       ,@body))))
+  (let ((arg1 (if (listp (car args)) (car (car args)) (car args)))
+	(class (if (listp (car args))
+		   (rdfs-clos-class (cadr (car args)))
+		   'frame)))
+    `(defmethod ,name ((,arg1 ,class) ,@(cdr args))
+       ,@body)))
 
+(defmacro rdfs-call (name &rest args)
+  `(progn
+     (classify-frame ,(car args))	;+++ temp to get things rolling
+     (,name ,@args)))
+
+;;; Punt, use default methods instead
+'(defmacro rdfs-call-if (name &rest args)
+  "Call a method on FIRSTARG if it is defined, otherwise do nothing."
+  `(let* ((args-v (list ,@args))	;+++ should gensym these
+	  (method (find-method (function ,name) nil (mapcar #'type-of args-v) nil)))
+     (when method
+       (,name args-v))))
 
 ;;; temp broken by #^ stuff
 ;;; no ordering, blah
@@ -223,26 +213,5 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defun order-classes (classes)
   (sort classes #'(lambda (c1 c2) (member c2 (slotv c1 #$rdfs:subClassOf)))))
 
-(defun rdfs-method (name thing &optional (errorp t))
-  (assert (frame-p thing))
-  (let ((classes (order-classes (rdfs-classes thing)))
-	(methodtable (rdfs-methodtable name)))
-    (or (some #'(lambda (class) (gethash class methodtable )) classes)
-	(if errorp
-	    (error "no method found for ~a on ~a" name thing)
-	    nil))))
 
-(defmacro rdfs-call (name firstarg &rest restargs)
-  "Do a RDFS-dispatched method call.  Will find the most specific method of multiple are defined."
-  `(funcall (rdfs-method ',name ,firstarg)
-	  ,firstarg
-	  ,@restargs))
-
-(defmacro rdfs-call-if (name firstarg &rest restargs)
-  "Call a method on FIRSTARG if it is defined, otherwise do nothing."
-  `(let ((method (and ,firstarg (rdfs-method ',name ,firstarg nil))))
-     (when method
-       (funcall method
-		,firstarg
-		,@restargs))))
 

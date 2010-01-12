@@ -4,16 +4,26 @@
 This file has the minimum needed to get the frame system working (esp. the reader)
 |#
 
-(defstruct (frame (:print-function frame-printer) (:constructor %make-frame))
-  uri
-  (slots nil)
-  (inverse-slots nil)
-  ;; Below here is various state-manipulation info; very in flux
-  source
-  loaded?				;T if slots have been loaded
-  dirty?				;T if needs to be written back out, or list of preds to write out.
-  dereferenced? 
-  )
+(defclass* frame ();  (:print-function frame-printer) (:constructor %make-frame))
+  (uri
+   (slots nil)
+   (inverse-slots nil)
+   ;; Below here is various state-manipulation info; very in flux
+   source
+   (loaded? nil)				;T if slots have been loaded
+   (dirty? nil)				;T if needs to be written back out, or list of preds to write out.
+   (dereferenced? nil) 
+   )
+  (:initable-instance-variables uri source)
+  :writable-instance-variables		;trim down CCC
+  :readable-instance-variables)
+
+(defmethod print-object ((frame frame) stream)
+  (report-and-ignore-errors
+   (format stream "#$~A" (frame-name frame))))
+
+(defun frame-p (f)
+  (typep f 'frame))
 
 (setf (documentation #'frame-loaded? 'function)
       "T if frame has been completely loaded from it's source")
@@ -24,31 +34,11 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (setf (documentation #'frame-uri 'function)
       "The URI of the frame as a string")
 
-(defvar *print-frame-labels* nil)
-
-(defun frame-printer (frame stream ignore)
-  (declare (ignore ignore))
-  (report-and-ignore-errors
-   (if *print-frame-labels*
-       (format stream "[~A]" (frame-label frame t))
-       (format stream "#$~A" (frame-name frame)))))
-
-#|
-(defparameter *frame-modified-readtable* (copy-readtable))
-
-(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader *frame-modified-readtable*)
-(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader *frame-modified-readtable*)
-(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader *frame-modified-readtable*)
-|#
-
 ;;; We set this globally.
 (set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader )
 (set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader )
 (set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
 
-#|
-Prob. wrong to use *code-source* by default.  Argh.
-|#
 (defun make-reader-frame (s)
   (make-frame s :source *code-source*))	
 
@@ -69,10 +59,6 @@ Prob. wrong to use *code-source* by default.  Argh.
     (assert (not (char= #\# (char name 0)))) ;catch this common error
     name))
 
-(defpackage :swfuncs)
-
-
-
 ;;; Works with setf through blisp magic -- see swframes/blisp
 (defun pound-carat-frame-reader (stream char arg)
   (declare (ignore char arg))
@@ -85,30 +71,34 @@ Prob. wrong to use *code-source* by default.  Argh.
   (let* ((slot (make-reader-frame (read-fname stream))))
     `(lambda (f) (msv-inverse f ,slot))))
 
-(defvar *default-frame-source* nil "A FRAME-SOURCE used by default when frames are created.  Can by dynamically bound.")
+;;; CCC needs to default to something reasomable for templates
+(defvar *default-frame-source* *code-source* "A FRAME-SOURCE used by default when frames are created.  Can by dynamically bound.")
 
 (defun make-frame (thing &key (source *default-frame-source*))
   #.(doc
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists."
      "Synonymous (more or less) with INTERN-URI")
-  (intern-uri thing source))
+  (intern-uri thing :source source))
 
 ;;; mark-loaded? arg is not presently used.
-(defun intern-uri (uri &optional (source *default-frame-source*) mark-loaded?)
+(defun intern-uri (uri &key (source *default-frame-source*) mark-loaded? (class 'frame))
   #.(doc
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists.")
   (if (frame-p uri) (return-from intern-uri uri))
+  (if (frame-p class)
+      (setf class (rdfs-clos-class class t)))
   (assert (stringp uri))
   (setf uri (expand-uri uri))	
   (assert (> (length uri) 0))
   (or (frame-named uri)
       (intern-frame
-       (%make-frame :uri uri 
-		    :source source
-		    :loaded? mark-loaded?
-		    ))))
+       (make-instance class
+		      :uri uri 
+		      :source source
+;CCC		      :loaded? mark-loaded?
+		      ))))
 
 ;;; Would be nice if this were weak, but only EQ hashtables support that in CCL.
 ;;; Change equal to equalp for case-insensitve URLs (won't work with SPARQL though)
@@ -122,7 +112,8 @@ Prob. wrong to use *code-source* by default.  Argh.
   frame)
 
 (defun intern-frame (frame)
-  (setf (gethash (frame-uri frame) *uri->frame-ht*) frame))  
+  (setf (gethash (frame-uri frame) *uri->frame-ht*) frame)
+  frame)  
 
 (defun frame-named (uri)
   "The frame named URI or nil if none is known.  Inverse of FRAME-URI"
@@ -167,6 +158,8 @@ Prob. wrong to use *code-source* by default.  Argh.
 #|
 An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
 
+(defpackage :swfuncs)
+
 ;;; New, works with setf without a lot of hair.   But it means we have to type #'#^ to use it as a functional argument...ugh.
 ;;; Whups -- fun defined at read time, won't necessarily be available later. Damn! 
 ;;; Poss solution -- put all def'd symbols in a special variable somewhere, which gets written to a fasl as the last step of compilation
@@ -181,7 +174,6 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
     ))
 
 |#
-
 
 ;;; Following borrowed from BioLisp more or less verbaitm.
 
@@ -258,7 +250,5 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
           (error "CONCOCT-VALID-FRAME-NAME: Illegal characters found!"))))
     sstring
     ))
-
-
 
 (defun valid-frame-char? (x) (null (find x *illegal-frame-chars*)))
