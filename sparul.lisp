@@ -56,31 +56,32 @@
       ;; otherwise do immediately
       (do-sparql sparql string)))
 
-(defmethod* write-triple ((sparql sparql-endpoint) s p o)
+(defmethod* write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (assert writeable?)
   (if (%slotv p #$crx:specialhandling)
-      (rdfs-call write-triple-special p s o sparql)
+      (rdfs-call write-triple-special p s o sparql) ;+++ deal with write-graph here
       ;; normal
-      (%write-triple sparql s p o)))
+      (%write-triple sparql s p o :write-graph write-graph)))
 
-(defmethod* %write-triple ((sparql sparql-endpoint) s p o)
-  (do-grouped-sparul sparql
-    (generate-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
-    ))
+(defmethod %write-triple ((sparql sparql-endpoint) s p o &key write-graph)
+  (let ((write-graph (or write-graph (slot-value sparql 'write-graph))))
+    (do-grouped-sparul sparql
+      (generate-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
+      )))
 
 ;;; +++ this isn't parallel with add-triple, so rethink names
-(defmethod* delete-triple ((sparql sparql-endpoint) s p o)
-  (assert writeable?)
-  (do-grouped-sparul sparql
-    (generate-sparql sparql `(:delete (,s ,p ,o) (:from ,write-graph)))
-    ))
+(defmethod delete-triple ((sparql sparql-endpoint) s p o &key write-graph)
+  (let ((write-graph (or write-graph (slot-value sparql 'write-graph))))
+    (do-grouped-sparul sparql
+      (generate-sparql sparql `(:delete (,s ,p ,o) (:from ,write-graph)))
+      )))
 
 ;;; default these
-(defmethod write-triple ((sparql null) s p o)
-  (write-triple *default-frame-source* s p o))
+(defmethod write-triple ((sparql null) s p o &key write-graph)
+  (write-triple *default-frame-source* s p o :key write-graph))
 
-(defmethod delete-triple ((sparql null) s p o)
-  (delete-triple *default-frame-source* s p o))
+(defmethod delete-triple ((sparql null) s p o &key write-graph)
+  (delete-triple *default-frame-source* s p o :write-graph write-graph))
 
 (defgeneric write-frame (frame &key source async? no-delete?)
   (:documentation
