@@ -119,7 +119,7 @@
     (delete-triple source frame slot '?o))
   (let ((method (and (%slotv slot #$crx:specialhandling)
 		     (rdfs-method 'write-triple-special slot))))
-    (dolist (val (slotv frame slot))
+    (dolist (val (slotv frame slot nil))
       (if method
 	  (funcall method slot frame val source)
 	  (write-triple source frame slot val)))))
