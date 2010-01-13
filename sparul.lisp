@@ -78,7 +78,7 @@
 
 ;;; default these
 (defmethod write-triple ((sparql null) s p o &key write-graph)
-  (write-triple *default-frame-source* s p o :key write-graph))
+  (write-triple *default-frame-source* s p o :write-graph write-graph))
 
 (defmethod delete-triple ((sparql null) s p o &key write-graph)
   (delete-triple *default-frame-source* s p o :write-graph write-graph))
