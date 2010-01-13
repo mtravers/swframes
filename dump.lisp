@@ -30,7 +30,8 @@
 (defclass* nt-writer (file-bulk-out) ()
 	   (:documentation "Source (sink) for writing out frames in Ntriples format (not to be confused with n3)"))
 
-(defmethod* write-triple ((out nt-writer) s p o)
+(defmethod* write-triple ((out nt-writer) s p o &key write-graph)
+  (declare (ignore write-graph))
   (terpri stream)
   (write-entity out s)
   (write-char #\Space stream)

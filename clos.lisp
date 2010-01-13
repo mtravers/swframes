@@ -69,10 +69,10 @@ could do it.
 	    (find-class sym t))
 	   (error?
 	    (error "Can't turn ~A into class" frame))
-	   (t nil)))
+	   (t nil))))
 
 (defun ensure-clos-class (frame)
-  (rdfs-clos-class frame :force? t :error t))
+  (rdfs-clos-class frame :force? t :error? t))
 
 ;;; Set class of frame based on its RDF type
 (defun classify-frame (f &optional error?)

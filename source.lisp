@@ -22,6 +22,11 @@ Dereferencing is a "frame source" of sorts...
   `(let ((*default-frame-source* ,source))
      ,@body))
 	 
+(defmacro with-write-group ((&optional (endpoint '*default-frame-source*) &key async?) &body body)
+  `(do-write-group ,endpoint ,async?
+     #'(lambda ()
+	 ,@body)))
+
 ;;; Singleton class to represent frames defined in code
 
 (defclass code-source (frame-source) 
@@ -33,16 +38,19 @@ Dereferencing is a "frame source" of sorts...
   (frame-named (expand-uri uri)))
 
 ;;; Done in memory, so nothing more to do
-(defmethod delete-triple ((source code-source) s p o)
+(defmethod delete-triple ((source code-source) s p o &key write-graph)
   )
 
-(defmethod write-triple ((source code-source) s p o)
+(defmethod write-triple ((source code-source) s p o  &key write-graph)
   )
 
 ;;; CCC this is getting called from compile, no idea why
 (defmethod make-load-form ((source code-source) &optional env)
   `(or *code-source*
        (setf *code-source* (make-instance 'code-source))))
+
+(defmethod do-write-group ((source code-source) async? proc)
+  (funcall proc))
 
 ;;; Write classes defined in code to a database.  This is only called by hand at the moment.
 (defun write-code-source-classes (to)
