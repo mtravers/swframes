@@ -15,14 +15,6 @@
     (string (gensym "THREAD"))
     #'(lambda () ,@body)))
 
-(defmacro with-write-group ((&optional (endpoint '*default-frame-source*) &key async?) &body body)
-  `(do-write-group ,endpoint ,async?
-     #'(lambda ()
-	 ,@body)))
-
-(defmethod do-write-group ((source code-source) async? proc)
-  (funcall proc))
-
 (defmethod do-write-group ((endpoint sparql-endpoint) async? proc)
   (let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
 	(*sparul-group* (or *sparul-group* (list endpoint nil)))
@@ -45,35 +37,7 @@
 	       (do-it)))))
      retval))
 
-  
-
-;;; async is NOT WORKING PROPERLY yet, so don't use it! +++
-;;; CCC needs to do something reasonable on code sources.  (OBSO)
-'(defmacro with-sparul-group ((endpoint &key async?) &body body)
-  "Causes all writes to endpoint within the dynamic scope to be delayed until the form is exited (or in other words, it saves all SPARQL insert/delete commands and does them at the end)."
-  `(let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
-	 (*sparul-group* (or *sparul-group* (list ,endpoint nil)))
-	 retval)
-     (unless (typep ,endpoint 'sparql-endpoint)
-       (error "Bad endpoint ~A" ,endpoint))
-     (unless (clos*::oequal (car *sparul-group*) ,endpoint)
-       (error "Bad nested SPARUL groups: ~A ~A" (car *sparul-group*) ,endpoint))
-     (setf retval (progn ,@body))
-     (let ((clauses (cadr *sparul-group*))) ;make sure this gets captured
-       (when (and clauses
-		  (not prior-group))
-	 (flet ((do-it ()
-;		  (print `(clauses ,clauses))
-		  (do-sparql ,endpoint
-		    (with-output-to-string (out)
-		      (dolist (s clauses)
-			(write-string s out)
-			(terpri out))))))
-	   (if ,async?
-	       (in-background-thread (do-it))
-	       (do-it)))))
-     retval))
-
+;;; CCC Why is this still here? Should combine into do-write-group
 (defmethod do-grouped-sparul ((sparql sparql-endpoint) string)
   (if (and *sparul-group*
            (eq sparql (car *sparul-group*)))
@@ -89,34 +53,36 @@
       ;; otherwise do immediately
       (do-sparql sparql string)))
 
-(defmethod* write-triple ((sparql sparql-endpoint) s p o)
+(defmethod* write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (assert writeable?)
   (if (%slotv p #$crx:specialhandling)
-      (rdfs-call write-triple-special p s o sparql)
+      (rdfs-call write-triple-special p s o sparql) ;+++ deal with write-graph here
       ;; normal
-      (%write-triple sparql s p o)))
+      (%write-triple sparql s p o :write-graph write-graph)))
 
-(defmethod* %write-triple ((sparql sparql-endpoint) s p o)
-  (do-grouped-sparul sparql
-    (generate-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
-    ))
+(defmethod %write-triple ((sparql sparql-endpoint) s p o &key write-graph)
+  (let ((write-graph (or write-graph (slot-value sparql 'write-graph))))
+    (do-grouped-sparul sparql
+      (generate-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
+      )))
 
-(defmethod %write-triple ((sparql t) s p o)
+(defmethod %write-triple ((sparql t) s p o &key write-graph)
+  (%write-triple *default-sparql-endpoint* s p o :write-graph write-graph)
   )
 
 ;;; +++ this isn't parallel with add-triple, so rethink names
-(defmethod* delete-triple ((sparql sparql-endpoint) s p o)
-  (assert writeable?)
-  (do-grouped-sparul sparql
-    (generate-sparql sparql `(:delete (,s ,p ,o) (:from ,write-graph)))
-    ))
+(defmethod delete-triple ((sparql sparql-endpoint) s p o &key write-graph)
+  (let ((write-graph (or write-graph (slot-value sparql 'write-graph))))
+    (do-grouped-sparul sparql
+      (generate-sparql sparql `(:delete (,s ,p ,o) (:from ,write-graph)))
+      )))
 
 ;;; default these
-(defmethod write-triple ((sparql null) s p o)
-  (write-triple *default-frame-source* s p o))
+(defmethod write-triple ((sparql null) s p o &key write-graph)
+  (write-triple *default-frame-source* s p o :write-graph write-graph))
 
-(defmethod delete-triple ((sparql null) s p o)
-  (delete-triple *default-frame-source* s p o))
+(defmethod delete-triple ((sparql null) s p o &key write-graph)
+  (delete-triple *default-frame-source* s p o :write-graph write-graph))
 
 (defgeneric write-frame (frame &key source async? no-delete?)
   (:documentation
@@ -125,7 +91,10 @@
       "ASYNC? causes the write to be done in a separate thread"
       "NO-DELETE? causes the previous contents in the database to be retained (not recommended).")))
 
-(defmethod write-frame ((frame frame) &key (source (frame-source frame)) (async? nil) (no-delete? nil) )
+(defmethod write-frame ((frame frame) &key source (async? nil) (no-delete? nil) )
+  (unless source
+    (setf source (or (frame-source frame) *default-sparql-endpoint*)))
+  (setf (frame-source frame) source)
   (let ((dependents (frame-dependents frame)))
     (with-write-group (source :async? async?)
       (unless no-delete?
@@ -151,10 +120,12 @@
     (delete-triple source frame slot '?o))
   ;;; CCC -- write-triple should be a method that dispatches on slot type, maybe on source
   (let ((special (%slotv slot #$crx:specialhandling)))
-    (dolist (val (slotv frame slot))
+    (dolist (val (slotv frame slot nil))
       (if special
 	  (rdfs-call write-triple-special slot frame val source)
 	  (write-triple source frame slot val)))))
+
+(rdfs-def-class #$crx:slots/specialSlot ())
 
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
