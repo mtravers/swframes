@@ -579,3 +579,9 @@
 ; Find which graph a triple is in (can take vars).  Very useful!    
 (defun find-named-graph (source s p o)
   (do-sparql-one-var source `(:select (?g) (:distinct t) (:graph ?g (,s ,p ,o)))))
+
+(defun sparql-type-count (type)
+  (parse-integer (cadr (car (car (do-sparql nil `(:select :count () (?s #$rdf:type ,type))))))))
+
+(defun random-instance (type)
+  (car (do-sparql-one-var nil  `(:select * (:limit 1 :offset ,(random (sparql-type-count type))) (?s #$rdf:type ,type)))))
