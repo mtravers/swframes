@@ -179,8 +179,9 @@ An RDF-backed frame system
 		 (unless (frame-loaded? frame)
 		   (progn		;was report-and-ignore-errors
 		    (setf (frame-source frame) nil)
-		    (dereference frame force?)))) ;+++
-	  (dereference frame force?))		;+++
+		    (when *dereference?*
+		      (dereference frame force?))))) ;+++
+	  (when *dereference?* (dereference frame force?)))		;+++
       (classify-frame frame)		
       (set-frame-loaded? frame)))
   frame)

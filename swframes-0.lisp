@@ -88,7 +88,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
      "SOURCE specifies a source, argument is ignored if frame already exists.")
   (if (frame-p uri) (return-from intern-uri uri))
   (if (frame-p class)
-      (setf class (rdfs-clos-class class t)))
+      (setf class (rdfs-clos-class class :force? t)))
   (assert (stringp uri))
   (setf uri (expand-uri uri))	
   (assert (> (length uri) 0))

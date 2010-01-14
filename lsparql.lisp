@@ -191,7 +191,7 @@
 	 (with-output-to-string (s) 
 	   (format s
 		   "INSERT INTO GRAPH ~A { ~A ~A ~A }"
-		   (sparql-term (make-frame into))
+		   (sparql-term into)
 		   (sparql-term (first triple))
 		   (sparql-term (second triple))
 		   (sparql-term (third triple)))
@@ -205,7 +205,7 @@
 	 (with-output-to-string (str) 
 	   (format str
 		   "DELETE FROM GRAPH ~A { ~A ~A ~A }"
-		   (sparql-term (make-frame from))
+		   (sparql-term from)
 		   (sparql-term s)
 		   (sparql-term p)
 		   (sparql-term o))

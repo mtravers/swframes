@@ -93,6 +93,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		    (a!x slot #$rdfs:domain class)
 		    (handle-slot-property :range (a!x slot #$rdfs:range (cadr it)))
 		    (handle-slot-property :class (push `(declare-special-slot ,slot ,(cadr it)) clauses))
+		    (handle-slot-property :uitype (push `(setf (ssv ,slot #$crx:slots/uitype) ,(cadr it)) clauses))
 		    (handle-slot-property :dependent (push `(setf (ssv ,slot #$crx:slots/dependent) t) clauses))
 		    (handle-slot-property :deep-copy (push `(setf (ssv ,slot #$crx:slots/deep-copy) t) clauses))
 		    (when (cdr slotdef)
