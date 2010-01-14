@@ -214,10 +214,14 @@ An RDF-backed frame system
 (defun slotv (frame slot &optional (fill? *fill-by-default?*))
   "Returns the value of SLOT in FRAME (will always be a list)"
   (if (eq fill? t) (fill-frame frame))
-  (or (%slotv frame slot)
-      (when (eq fill? :if)
-	(fill-frame frame)
-	(%slotv frame slot))))
+  (let ((v  (or (%slotv frame slot)
+		(when (eq fill? :if)
+		  (fill-frame frame)
+		  (%slotv frame slot)))))
+    (dolist (v-elt v)			;CCC do a classify here.  Will only work if fill has happened.
+      (when (frame-p v-elt)
+	(classify-frame v-elt)))
+    v))
 
 (defvar *check-slot-domains?* nil)
 
