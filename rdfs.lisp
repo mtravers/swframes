@@ -90,10 +90,12 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
       (setf (frame-loaded? frame) t)	;if we are consing this from scratch in memory, it is considered loaded
       (do ((rest slots (cddr rest)))
 	  ((null rest) frame)
-	(check-class frame (#^rdfs:domain (car rest))) 
-	(check-class (cadr rest) (#^rdfs:range (car rest))) 
-	(setf (msv frame (car rest)) 
-	      (cadr rest))))))
+	(let ((slot (car rest)))
+	  (check-class frame (#^rdfs:domain slot)) 
+	  (check-class (cadr rest) (#^rdfs:range slot)) 
+	  (if (rdfs-classp slot #$crx:slots/LispValueSlot)
+	      (setf (ssv frame slot) (cadr rest))
+	      (setf (msv frame slot) (cadr rest))))))))
 
 (defun rdfs-find (value &key slot class (source *default-sparql-endpoint*) word? fill? case-insensitize? limit from)
   #.(doc
