@@ -26,7 +26,7 @@ An RDF-backed frame system
 
 (defun frame-name (frame)
   "Returns the URI of a frame, possibly abbreviated"
-  (abbreviate-uri (frame-uri frame)))  
+  (abbreviate-uri (frame-uri frame)))
 
 ;;; Get the label, optionally filling
 ;;; Could logically use all subPropertys of rdfs:label, obtainable through:
@@ -169,9 +169,14 @@ An RDF-backed frame system
 
 (defparameter *dereference?* nil)
 
-(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-sparql-endpoint*)) (inverse? t))
+(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-sparql-endpoint*)) (inverse? t) reset?)
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
+    ;; dangerous
+    (when reset?
+      (clrhash (frame-slots frame))
+      (when (frame-inverse-slots frame)
+	(clrhash (frame-inverse-slots frame))))
     (let ((*fill-by-default?* nil))	;prevent recursion
       (if source
 	  (progn (fill-frame-from frame source :inverse? inverse?)

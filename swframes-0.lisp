@@ -92,7 +92,9 @@ Prob. wrong to use *code-source* by default.  Argh.
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists."
      "Synonymous (more or less) with INTERN-URI")
-  (intern-uri thing source))
+  (etypecase thing
+    (frame thing)
+    (string (intern-uri thing :source source))))
 
 ;;; mark-loaded? arg is not presently used.
 (defun intern-uri (uri &optional (source *default-frame-source*) mark-loaded?)
