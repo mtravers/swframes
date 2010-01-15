@@ -94,7 +94,7 @@ Prob. wrong to use *code-source* by default.  Argh.
      "Synonymous (more or less) with INTERN-URI")
   (etypecase thing
     (frame thing)
-    (string (intern-uri thing :source source))))
+    (string (intern-uri thing source))))
 
 ;;; mark-loaded? arg is not presently used.
 (defun intern-uri (uri &optional (source *default-frame-source*) mark-loaded?)
