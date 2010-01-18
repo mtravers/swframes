@@ -23,10 +23,10 @@
 (defun frame-diff (f1 f2)
   (let ((s1 (ht-contents (frame-slots f1)))
 	(s2 (ht-contents (frame-slots f2))))
-    (print "in first, not second:")
-    (print (set-difference s1 s2 :test #'(lambda (a b) (tree-equal a b :test #'equal))))
-    (print "in second not first:")
-    (print (set-difference s2 s1 :test #'(lambda (a b) (tree-equal a b :test #'equal)) ))))
+    (princ "in first, not second:")
+    (pprint (set-difference s1 s2 :test #'(lambda (a b) (tree-equal a b :test #'equal))))
+    (princ "in second not first:")
+    (pprint (set-difference s2 s1 :test #'(lambda (a b) (tree-equal a b :test #'equal)) ))))
 
 ;;; +++ fails because of integer/string issues
 (define-test deref-round-trip
