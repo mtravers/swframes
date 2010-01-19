@@ -165,7 +165,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	  (progn
 	    ;; +++ WRONG for other sources! Argh!
 	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
-	    (intern-uri uri :source source))))))
+	    (intern-uri uri source))))))
 
 (defgeneric uri-used? (source uri))
 
