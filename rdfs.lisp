@@ -163,8 +163,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
       (if (and (not fast?) (uri-used? source uri))
 	  (gensym-instance-frame class :start next :fast? fast?)
 	  (progn
+	    ;; +++ WRONG for other sources! Argh!
 	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
-	    (intern-uri uri))))))
+	    (intern-uri uri :source source))))))
 
 (defgeneric uri-used? (source uri))
 
