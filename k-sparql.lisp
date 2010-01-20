@@ -29,6 +29,7 @@
 	 (error "Bad XML string: ~A" s))
 	(t (adjust-sparql-string (subseq s 1) (1- limit)))))
 
+;;; eager-make-uri? causes literals to be converted to URIs if they look like one
 (defun run-sparql (endpoint sparql &key (make-uri #'identity) eager-make-uri? timeout)
   (let* ((s-xml:*ignore-namespaces* t)
          (xml (s-xml:parse-xml-string

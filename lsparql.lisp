@@ -89,11 +89,13 @@
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))
 ;  (print command)
   (run-sparql url command 
-		      :make-uri #'(lambda (u) (intern-uri u sparql))
-		      ;; this suddenly became necessary since I was geting literals back...no idea why 
-		      :eager-make-uri? t
-		      :timeout timeout
-		      ))
+	      ;; +++ if we get back bad URIs, leave them as strings.  Should be an option I suppose
+	      :make-uri #'(lambda (u) (or (ignore-errors (intern-uri u sparql))
+					  u))
+	      ;; this suddenly became necessary since I was geting literals back...no idea why 
+	      :eager-make-uri? t
+	      :timeout timeout
+	      ))
 
 ;;; Handles translation and breaking up query into chunks if result set is too big
 (defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *default-sparql-timeout*) (chunk-size 5000))
