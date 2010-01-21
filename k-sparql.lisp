@@ -56,6 +56,10 @@
 			      (equal (lxml-attribute value-elt :|datatype|)
 				     "http://www.w3.org/2001/XMLSchema#integer"))
 			 (parse-integer (cadr value-elt)))
+			((and (eq (lxml-tag value-elt) ':|literal|)
+			      (equal (lxml-attribute value-elt :|datatype|)
+				     "http://www.w3.org/2001/XMLSchema#double"))
+			 (read-from-string (cadr value-elt)))
 			;; +++ other datatypes?
 			(t
 			 (cadr value-elt)))))

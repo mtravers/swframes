@@ -238,6 +238,7 @@
 		(format nil "'''~A'''" (backslash-quote-string thing))
 		(format nil "\"~A\"" (backslash-quote-string thing))))
     (fixnum (fast-string thing))
+    (single-float (fast-string thing))	;+++ in theory these dshoudl be tagged with ^^xsd:double
     ;; SPARQL can't handle 3.0D3
     (double-float (fast-string (coerce thing 'single-float)))
     ;; Newish way to generate language-specific literals (ie Melanoma@en) (Melanoma :en)
