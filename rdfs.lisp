@@ -132,12 +132,18 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
      "VALUE can be :all, in which case all instances of CLASS are returned"
      "If SLOT is nil, VALUE can be on any slot of instance. "
      "If WORD? is true, does a text search of VALUE as a word contained in the actual slot value")
-  (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word? :limit limit :from from)))
+  (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word? :limit limit :from from))
+	result)
     (when case-insensitize?
       (setf sparql (case-insensitize-2 sparql)))
-    (if fill?
-	(bulk-load-query source sparql)
-	(do-sparql-one-var source sparql))))
+    (setf result
+	  (if fill?
+	      (bulk-load-query source sparql)
+	      (do-sparql-one-var source sparql)))
+    ;; Set the class if we know it.  Seems like this should be done more places.
+    (when class
+      (mapc #'(lambda (r) (set-frame-class r class)) result))
+    result))
 
 ;;; generalize to multiple slot/values.  +++
 (defun rdfs-find-sparql (value &key slot class word? limit from)
@@ -234,10 +240,15 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
     `(defmethod ,name ((,arg1 ,class) ,@(cdr args))
        ,@body)))
 
+(defun classify-arg (arg)
+  (when (frame-p arg)
+    (classify-frame arg)))
+
 (defmacro rdfs-call (name &rest args)
-  `(progn
-     (classify-frame ,(car args))	;+++ temp to get things rolling
-     (,name ,@args)))
+  `(utils::once-only (args)
+		     ,@(mapcar #'(lambda (arg) `(classify-arg ,arg))
+			       args)
+		     (,name ,@args)))
 
 ;;; Punt, use default methods instead
 '(defmacro rdfs-call-if (name &rest args)
