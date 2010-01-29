@@ -11,3 +11,8 @@
     (assert-true (not (eq (type-of ib) (type-of is))))
     (assert-true (typep is (type-of ib)))
     (assert-true (typep is (type-of random-frame)))))
+
+;;; +++ dependent on CRX database.
+(define-test rdfs-find-classify 
+    (let ((patients (rdfs-find :all :class #$crx:Patient)))
+      (assert-true (typep (car patients) ':|crx:Patient|))))

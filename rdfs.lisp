@@ -103,7 +103,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
       `(eval-when (:compile-toplevel :load-toplevel :execute)
 	 ,@clauses
 	 ,(defclass-form class superclasses)
-	 ,class))))
+	      ,class))))
 
 ;;; Put in some checking;  should be under a flag. 
 ;;; Also option for specifying a name or partial name.
@@ -122,10 +122,12 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
       (set-frame-class frame class t)
       (do ((rest slots (cddr rest)))
 	  ((null rest) frame)
-	(check-class frame (#^rdfs:domain (car rest))) 
-	(check-class (cadr rest) (#^rdfs:range (car rest))) 
-	(setf (msv frame (car rest)) 
-	      (cadr rest))))))
+	(let ((slot (car rest)))
+	  (check-class frame (#^rdfs:domain slot)) 
+	  (check-class (cadr rest) (#^rdfs:range slot)) 
+	  (if (rdfs-classp slot #$crx:slots/LispValueSlot)
+	      (setf (ssv frame slot) (cadr rest))
+	      (setf (msv frame slot) (cadr rest))))))))
 
 (defun rdfs-find (value &key slot class (source *default-sparql-endpoint*) word? fill? case-insensitize? limit from)
   #.(doc
@@ -133,12 +135,18 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
      "VALUE can be :all, in which case all instances of CLASS are returned"
      "If SLOT is nil, VALUE can be on any slot of instance. "
      "If WORD? is true, does a text search of VALUE as a word contained in the actual slot value")
-  (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word? :limit limit :from from)))
+  (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word? :limit limit :from from))
+	result)
     (when case-insensitize?
       (setf sparql (case-insensitize-2 sparql)))
-    (if fill?
-	(bulk-load-query source sparql)
-	(do-sparql-one-var source sparql))))
+    (setf result
+	  (if fill?
+	      (bulk-load-query source sparql)
+	      (do-sparql-one-var source sparql)))
+    ;; Set the class if we know it.  Seems like this should be done more places.
+    (when class
+      (mapc #'(lambda (r) (set-frame-class r class)) result))
+    result))
 
 ;;; generalize to multiple slot/values.  +++
 (defun rdfs-find-sparql (value &key slot class word? limit from)
@@ -150,6 +158,56 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	      ;; UGH quoting, but I think this is right...
 	      ,@(if word? `((:filter (:regex ,vvar ,(format nil "\\\\W~A\\\\W" value) "i"))))
 	      )))
+
+;;; start MMM not sure if this belongs here or was moved.
+(rdfs-def-class #$crx:session ()
+		(#$crx:session/machine))
+
+(defvar *unique-session* nil)
+
+;;; should get called once for a lisp session
+(defun make-unique-session ()
+  (let* ((*fast-instances?* nil)
+	 (session
+	  (rdfs-make-instance #$crx:session 
+			      #$crx:session/machine (machine-instance))))
+    (write-frame session)
+    (setf *unique-session* session)))
+
+(defun unique-session ()
+  (or *unique-session*
+      (make-unique-session)))
+
+;;; This has to be relative to a frame source so you can check for taken ids. 
+;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  
+(defvar gensym-lock (acl-compat.mp:make-process-lock))
+
+(defun gensym-instance-frame (class &key start (fast? t) (source *default-frame-source*) base)
+  (if (eq (frame-source class) *code-source*)
+      (setf (frame-source class) source)
+      ;; Here we might want to do an initial write of frame to db
+      )
+  (unless base (setq base (frame-uri class)))
+  (acl-compat.mp:with-process-lock (gensym-lock)	;+++ I hope this won't slow down the world too much.
+    (unless (and fast?
+		 (msv class #$crx:last_used_id))
+      (fill-frame class :force? t :inverse? nil))
+    (let* ((last (or start (ssv class #$crx:last_used_id)))
+	   (next (if last
+		     (1+ (coerce-number last))
+		     0))
+	   (uri (string+ base "/"
+			 (if fast? (string+ (frame-label (unique-session)) "/") "")
+			 (fast-string next))))
+      (if (and (not fast?) (uri-used? source uri))
+	  (gensym-instance-frame class :start next :fast? fast?)
+	  (progn
+	    ;; +++ WRONG for other sources! Argh!
+	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
+	    (intern-uri uri source))))))
+
+(defgeneric uri-used? (source uri))
+;;; end MMM
 
 (defun rdfs-classp (frame class)
   (if (frame-p frame)
@@ -185,18 +243,13 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
     `(defmethod ,name ((,arg1 ,class) ,@(cdr args))
        ,@body)))
 
-(defmacro rdfs-call (name &rest args)
-  `(progn
-     (classify-frame ,(car args))	;+++ temp to get things rolling
-     (,name ,@args)))
+(defun classify-arg (arg)
+  (when (frame-p arg)
+    (classify-frame arg))
+  arg)
 
-;;; Punt, use default methods instead
-'(defmacro rdfs-call-if (name &rest args)
-  "Call a method on FIRSTARG if it is defined, otherwise do nothing."
-  `(let* ((args-v (list ,@args))	;+++ should gensym these
-	  (method (find-method (function ,name) nil (mapcar #'type-of args-v) nil)))
-     (when method
-       (,name args-v))))
+(defmacro rdfs-call (name &rest args)
+  `(,name ,@(mapcar #'(lambda (arg) `(classify-arg ,arg)) args)))
 
 ;;; temp broken by #^ stuff
 ;;; no ordering, blah

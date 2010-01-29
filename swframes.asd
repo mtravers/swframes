@@ -18,6 +18,7 @@
    (:file "package")
    (:file "xmlu")
    (:file "source")
+   (:file "code-source")
    (:file "swframes-0")
    (:file "namespace")
    (:file "standard-namespaces")

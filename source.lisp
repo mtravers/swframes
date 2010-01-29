@@ -27,43 +27,6 @@ Dereferencing is a "frame source" of sorts...
      #'(lambda ()
 	 ,@body)))
 
-;;; Singleton class to represent frames defined in code
-
-(defclass code-source (frame-source) 
-  ())
-
-(defvar *code-source* (make-instance 'code-source))
-
-(defmethod uri-used? ((source code-source) uri)
-  (frame-named (expand-uri uri)))
-
-;;; Done in memory, so nothing more to do
-(defmethod delete-triple ((source code-source) s p o &key write-graph)
-  )
-
-(defmethod write-triple ((source code-source) s p o  &key write-graph)
-  )
-
-;;; CCC this is getting called from compile, no idea why
-(defmethod make-load-form ((source code-source) &optional env)
-  `(or *code-source*
-       (setf *code-source* (make-instance 'code-source))))
-
-(defmethod do-write-group ((source code-source) async? proc)
-  (funcall proc))
-
-;;; Write classes defined in code to a database.  This is only called by hand at the moment.
-(defun write-code-source-classes (to)
-  (with-write-group (to)		;+++ this needs to be moved after definition
-    (dolist (class (slotv-inverse  #$rdfs:Class #$rdf:type))
-      (when (eq *code-source* (frame-source class))
-	(write-frame class :source to)))))
-
-;;; class FRAME not defined yet.
-(defmethod fill-frame-from (frame (source code-source) &key inverse?)
-  (declare (ignore frame source inverse?))
-  )
-
 #|
 ;;; Not used (but probably should be +++) 
 
