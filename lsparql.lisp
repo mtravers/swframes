@@ -77,6 +77,7 @@
 
 )))
 
+;;; transplanted from mb branch
 (defparameter *sparql-performance-monitor* t)
 
 (defmethod do-sparql :around ((sparql string) (command t) &key timeout)
@@ -97,11 +98,13 @@
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))
 ;  (print command)
   (run-sparql url command 
-	      :make-uri #'(lambda (u) (intern-uri u :source sparql))
-		      ;; this suddenly became necessary since I was geting literals back...no idea why 
-		      :eager-make-uri? t
-		      :timeout timeout
-		      ))
+	      ;; +++ if we get back bad URIs, leave them as strings.  Should be an option I suppose
+	      :make-uri #'(lambda (u) (or (ignore-errors (intern-uri u :source sparql))
+					  u))
+	      ;; this suddenly became necessary since I was geting literals back...no idea why 
+	      :eager-make-uri? t
+	      :timeout timeout
+	      ))
 
 ;;; Handles translation and breaking up query into chunks if result set is too big
 (defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *default-sparql-timeout*) (chunk-size 5000))
@@ -244,6 +247,7 @@
 		(format nil "'''~A'''" (backslash-quote-string thing))
 		(format nil "\"~A\"" (backslash-quote-string thing))))
     (fixnum (fast-string thing))
+    (single-float (fast-string thing))	;+++ in theory these dshoudl be tagged with ^^xsd:double
     ;; SPARQL can't handle 3.0D3
     (double-float (fast-string (coerce thing 'single-float)))
     ;; Newish way to generate language-specific literals (ie Melanoma@en) (Melanoma :en)
@@ -603,3 +607,9 @@
 ; Find which graph a triple is in (can take vars).  Very useful!    
 (defun find-named-graph (source s p o)
   (do-sparql-one-var source `(:select (?g) (:distinct t) (:graph ?g (,s ,p ,o)))))
+
+(defun sparql-type-count (type)
+  (parse-integer (cadr (car (car (do-sparql nil `(:select :count () (?s #$rdf:type ,type))))))))
+
+(defun random-instance (type)
+  (car (do-sparql-one-var nil  `(:select * (:limit 1 :offset ,(random (sparql-type-count type))) (?s #$rdf:type ,type)))))

@@ -6,14 +6,14 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defclass* frame ();  (:print-function frame-printer) (:constructor %make-frame))
   (uri
-   (slots nil)
-   (inverse-slots nil)
-   ;; Below here is various state-manipulation info; very in flux
-   source
+  (slots nil)
+  (inverse-slots nil)
+  ;; Below here is various state-manipulation info; very in flux
+  source
    (loaded? nil)				;T if slots have been loaded
    (dirty? nil)				;T if needs to be written back out, or list of preds to write out.
    (dereferenced? nil) 
-   )
+  )
   (:initable-instance-variables uri source)
   :writable-instance-variables		;trim down CCC
   :readable-instance-variables)
@@ -79,7 +79,9 @@ This file has the minimum needed to get the frame system working (esp. the reade
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists."
      "Synonymous (more or less) with INTERN-URI")
-  (intern-uri thing :source source))
+  (etypecase thing
+    (frame thing)
+    (string (intern-uri thing :source source))))
 
 ;;; mark-loaded? arg is not presently used.
 (defun intern-uri (uri &key (source *default-frame-source*) mark-loaded? (class 'frame))
@@ -96,9 +98,9 @@ This file has the minimum needed to get the frame system working (esp. the reade
       (intern-frame
        (make-instance class
 		      :uri uri 
-		      :source source
+		    :source source
 ;CCC		      :loaded? mark-loaded?
-		      ))))
+		    ))))
 
 ;;; Would be nice if this were weak, but only EQ hashtables support that in CCL.
 ;;; Change equal to equalp for case-insensitve URLs (won't work with SPARQL though)

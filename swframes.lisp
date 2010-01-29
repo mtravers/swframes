@@ -26,7 +26,7 @@ An RDF-backed frame system
 
 (defun frame-name (frame)
   "Returns the URI of a frame, possibly abbreviated"
-  (abbreviate-uri (frame-uri frame)))  
+  (abbreviate-uri (frame-uri frame)))
 
 ;;; Get the label, optionally filling
 ;;; Could logically use all subPropertys of rdfs:label, obtainable through:
@@ -169,9 +169,14 @@ An RDF-backed frame system
 
 (defparameter *dereference?* nil)
 
-(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)) (inverse? t))
+(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)) (inverse? t) reset?)
   (when (or force? (not (frame-loaded? frame)))
     (setf (frame-loaded? frame) nil)
+    ;; dangerous
+    (when reset?
+      (clrhash (frame-slots frame))
+      (when (frame-inverse-slots frame)
+	(clrhash (frame-inverse-slots frame))))
     (let ((*fill-by-default?* nil))	;prevent recursion
       (if source
 	  (progn (fill-frame-from frame source :inverse? inverse?)
@@ -493,3 +498,12 @@ An RDF-backed frame system
 
 ;;; for debugging, of course
 ;(trace set-ssv set-slotv set-msv add-triple remove-triple)
+
+;;; Logically belongs to code-source, but has to come after more frame machinery is defined.
+
+;;; Write classes defined in code to a database.  This is only called by hand at the moment.
+(defun write-code-source-classes (to)
+  (with-write-group (to)		;+++ this needs to be moved after definition
+    (dolist (class (slotv-inverse #$rdfs:Class #$rdf:type))
+      (when (eq *code-source* (frame-source class))
+	(write-frame class :source to)))))

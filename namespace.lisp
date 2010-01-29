@@ -25,20 +25,24 @@
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (register-namespace ,abbrev ,full)))
 
-(defun abbreviate-uri (uri)
-  "Given a full URI as a string, attempt to abbreviate it using known namespaces."
+;;; Return namespace and remainder
+(defun namespacify (uri)
   (dolist (namespace *sw-namespaces*)
     (let ((full (cadr namespace)))
       (when (and (not (eq full :uri-scheme))
 		 (>= (length uri) (length full))
 		 (string= uri full :end1 (length full)))
-	(return-from abbreviate-uri (values (if (car namespace)
-						(format nil "~A:~A" (car namespace) (subseq uri (length full)))
-						(subseq uri (length full)))
-					    (car namespace)
-					    )))))
-  (values uri nil))
+	(return-from namespacify (values (car namespace)
+					 (subseq uri (length full))))))))
 
+(defun abbreviate-uri (uri)
+  "Given a full URI as a string, attempt to abbreviate it using known namespaces."
+  (multiple-value-bind (namespace rest)
+      (namespacify uri)
+    (if namespace
+	(values (format nil "~A:~A" namespace rest)
+		namespace)
+	(values uri nil))))
 
 ;;; takes care of a corner case that arises in practice, not sure if 
 (defun namespace-splice (prefix suffix)
