@@ -209,7 +209,15 @@ http://data.linkedmdb.org/all/director
                              (warn "Empty elt ~A" elt))
                             ((stringp (cadr elt))
                              ;; no resource, so a literal? or another description?
-                             (add-value (cadr elt) about property))
+			     (let ((datatype (lxml-attribute elt '|rdf|::|datatype|))
+				   (value (cadr elt)))
+			       ;; +++ highly incomplete list of datatypes, but enough to get unit test working.
+			       ;; see: http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#built-in-datatypes
+			       (cond ((member datatype '("http://www.w3.org/2001/XMLSchema#int"
+							 "http://www.w3.org/2001/XMLSchema#double")
+					      :test #'equal)
+				      (setq value (read-from-string value))))
+			       (add-value value about property)))
                             (t (dolist (sub (lxml-all-subelements elt))
                                  (add-value (process-description sub) about property)))
                                         ;                            (t (error "Cant figure out what to do with ~A" elt))

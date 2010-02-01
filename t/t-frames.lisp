@@ -13,7 +13,7 @@
 	    (v (if (> (random 10) 5)
 		   (random 100)
 		   (gen-test-frame))))
-	(setf (ssv f s) (fast-string v)))) ;uses strings because numbers break
+	(setf (ssv f s) (fast-string v)))) ;uses strings because numbers break +++
     f))
 
 (define-test intern

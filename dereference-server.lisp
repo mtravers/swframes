@@ -83,11 +83,11 @@ as(rdf, "data.frame")
   (and (> *dereference-depth* 0)
        (not (member f *dereference-frames*))))
 
-
+;;; Re: types, see: http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#built-in-datatypes
 (defun slot-description-xml (slot value)
   (let ((datatype 
 	 (typecase value
-	   (fixnum "http://www.w3.org/2001/XMLSchema#long")
+	   (fixnum "http://www.w3.org/2001/XMLSchema#int")
 	   (float "http://www.w3.org/2001/XMLSchema#double")
 	   (t nil)
 	   )))
