@@ -46,7 +46,8 @@ could do it.
   (get (class-name class) :frame))
 
 (defun frame-as-symbol (frame)
-  (keywordize (frame-name frame)))
+  ;; Was frame-name, which looks better, but then things become namespace dependent
+  (keywordize (frame-uri frame)))
 
 (defun defclass-form (frame supertypes)
   `(defclass ,(frame-as-symbol frame)

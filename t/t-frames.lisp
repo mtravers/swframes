@@ -70,7 +70,7 @@ Lisp slots handle any printable Lisp object,
 		   (test-slot-1 ls v nil)
 		   (test-slot-1 ls v t)))
 	       (test-slot-1 (s v db)
-		 (print `(test ,v ,s ,db))
+;		 (print `(test ,v ,s ,db))
 		 (setf (msv f s) v)
 		 (when db (forget))
 		 (assert-slotv-equal v (msv f s))
