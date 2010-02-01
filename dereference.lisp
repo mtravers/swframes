@@ -2,6 +2,32 @@
 
 (export '(dereference))
 
+;;; Singleton class to represent frames obtained through dereferencing.
+
+(defclass dereference-source (frame-source) 
+  ())
+
+(defvar *dereference-source* (make-instance 'dereference-source))
+
+;;; Done in memory, so nothing more to do
+;;; +++ alternative: make this an error.
+(defmethod delete-triple ((source dereference-source) s p o &key write-graph)
+  )
+
+(defmethod write-triple ((source dereference-source) s p o &key write-graph)
+  )
+
+(defmethod fill-frame-from (frame (source dereference-source) &key inverse?)
+  (dereference frame t)
+  )
+
+;;; sort-of back compatability
+(defun frame-dereferenced? (frame)
+  (eq *dereference-source*
+      (frame-source frame)))
+
+;;;
+
 ;;; try to standardize the call to this, since there are a few random things we need to do often.
 (defun parse-xml (source)
   (let* (; (s-xml::*ignore-namespaces* t)
@@ -21,79 +47,10 @@ Some servers respond with HTML containing RDFa encoded information. Unfortunatel
 can't usually deal with typical syntactically sloppy HTML.
 
 Dereferencing piecemeal is going to be too slow.  Probably this should be part of a crawler that
-dereferences things en masse and brings them into a local store...
-
-Here we'll keep track of some of the available data sources:
-
-; This one works at least some of the time.
-; #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00022
-
-;#$http://dbpedia.org/page/Aminophyllinen
-;  returns HTML with embedded RDFa(?) but it can't be XML parsed.
-; But you can substitute in
-; (dereference #$http://dbpedia.org/resource/Panitumumab)
-; and apparently:
-;  http://dbpedia.org/data/Panitumumab.rdf
-;  http://dbpedia.org/data/Panitumumab.n3
-
-
-;;; Times out
-;(dereference #$http://bio2rdf.org/proteinlinks/cas:317-34-0)
-
-Many linked data sets here:
-http://esw.w3.org/topic/TaskForces/CommunityProjects/LinkingOpenData/DataSets
-
-http://www.rdfabout.com/rdf/usgov/sec/id/cik0001308161
-- Returns XML prefaced by two garbage chars (fixed by improving adjust-sparql-string)
-- Has some blank nodes, so deal with them now.
-
-http://www.rdfabout.com/rdf/usgov/geo/us
-
-- Returns headers like this:
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?xml-stylesheet type="text/xsl" href="http://sw.opencyc.org/xsl/OpenCycOWLCollectionDisplayLatest.xsl"?>
-
-<!DOCTYPE rdf:RDF [
-     <!ENTITY ocyc "http://sw.opencyc.org/concept/" >
-     <!ENTITY cyc  "http://sw.cyc.com/concept/" >
-     <!ENTITY rdf  "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
-
-Which our XML parser can't handle.  Forget it.
-
-http://www4.wiwiss.fu-berlin.de/bookmashup/books/006251587X
-- Works!
-
-#$http://rdf.freebase.com/ns/en.blade_runner
-- Works!
-- unfortunately freebase doesn't seem to provide a SPARQL endpoint, sigh.
-
-#$diseasome:diseases
-- Works (not any more)
-
-
-NOT WORKING
-#$http://www.bbc.co.uk/music/artists/5f6ab597-f57a-40da-be9e-adad48708203#artist
-
-returns some RDF but it gets applied to the wrong frame. Namespace problem?
-
-
-#$http://wiki.rkbexplorer.com/id/resist
--- gets entity error because of that annoying syntax.
-
- #$http://www.geonames.org/2950159/about.rdf
--- NS-2 error
-
-http://data.linkedmdb.org/all/director
--- gets data but ins't handled proplery, mot suure why...
-  ah, its data is not about itself!  Odd.
-
+dereferences things en masse and brings them into a local store.
 |#
 
-
 (defpackage :|rdf|)
-
-;;; An incomplete parser of RDF/XML
 
 (defmethod dereference ((frame frame) &optional force?)
   #.(doc
@@ -103,8 +60,7 @@ http://data.linkedmdb.org/all/director
      "See http://www4.wiwiss.fu-berlin.de/bizer/pub/LinkedDataTutorial/ for more information")
   (when (or force? (not (frame-dereferenced? frame)))
     (when (string-prefix-equals (frame-uri frame) "http")
-      (dereference-1 frame)
-      (setf (frame-dereferenced? frame) t)))
+      (dereference-1 frame)))
   frame)
 
 (defmethod dereference-1 ((frame frame) &optional (url (frame-uri frame)))
@@ -118,7 +74,7 @@ http://data.linkedmdb.org/all/director
 	(unless (= response-code 200)
 	  (error "Failed to dereference ~A, response code ~A" frame response-code))
 	(let ((xml (parse-xml body)))
-	  (process-rdf-xml xml)))
+	  (process-rdf-xml xml :source *dereference-source*)))
     ;; +++ actually could parse rdf out of html if we were ambitious
     (s-xml:xml-parser-error (e)
       (declare (ignore e))
@@ -130,6 +86,7 @@ http://data.linkedmdb.org/all/director
       nil)
     ))
 
+;;; An incomplete parser of RDF/XML
 ;;; can get RSS feeds, ie
 (defun process-rdf-url (url)
   (multiple-value-bind (body response-code response-headers uri)
@@ -158,18 +115,21 @@ http://data.linkedmdb.org/all/director
       (error "Unknown XML namespspace for ~A" identifier))
     (string+ namespace-uri name)))
 
-(defun process-rdf-xml (xml &key base)
+(defun process-rdf-xml (xml &key base (source *default-frame-source*))
   (assert xml)
   ;; base can be set as an argument or from the header attributes
   (let ((top-frames nil))
-    (labels ((symbol->frame (symbol)
-	       (intern-uri (translate-symbol symbol)))
+    (labels ((->frame (thing)
+	       (when (symbolp thing)
+		 (setf thing (translate-symbol thing)))
+	       (intern-uri thing :source source))
              (add-value (v frame slot)
+;;;	       (print `(add-triple ,frame ,slot ,v))
                (add-triple frame slot v)
                )
              ;; +++ probably wants to be pulled out, this is a fundamental piece of RDF unfortunately
              (make-blank-node (type)
-               (intern-uri (format nil "bnode:~A" (gensym (symbol-name type)))))
+               (->frame (format nil "bnode:~A" (gensym (symbol-name type)))))
 	     ;; no idea if this is to spec...
 	     (full-uri (thing)
 	       (cond ((position #\: thing)
@@ -185,7 +145,7 @@ http://data.linkedmdb.org/all/director
                                        base
                                        (full-uri (lxml-attribute desc '|rdf|::|ID|)))))
                       (about (if (and about0 (not (equal "" about0)))
-                                 (intern-uri about0)
+                                 (->frame about0)
                                  (make-blank-node (lxml-tag desc))
                                  )))
                  (when top
@@ -193,7 +153,7 @@ http://data.linkedmdb.org/all/director
 ;;;		   (print `(about ,about))
                    )
                  (unless (eq (lxml-tag desc) '|rdf|::|Description|)
-                   (add-value (symbol->frame (lxml-tag desc)) about (symbol->frame '|rdf|::|type|)))
+                   (add-value (->frame (lxml-tag desc)) about (->frame '|rdf|::|type|)))
                  (dolist (elt (lxml-all-subelements desc))
                    ;; stupid dbpedia defines namespaces in the element they it is used in!
                    (do ((rest (lxml-attributes elt) (cddr rest)))
@@ -201,22 +161,27 @@ http://data.linkedmdb.org/all/director
                      (when (string-prefix-equals (symbol-name (car rest)) "xmlns")
                        (register-namespace (cadr (string-split (symbol-name (car rest)) #\:  ))
 					   (cadr rest))))
-                   (let ((property (symbol->frame (lxml-tag elt)))
+                   (let ((property (->frame (lxml-tag elt)))
                          )
                      (acond ((lxml-attribute elt '|rdf|::|resource|)
-                             (add-value (intern-uri (full-uri it)) about property))
+                             (add-value (->frame (full-uri it)) about property))
                             ((symbolp elt)
                              (warn "Empty elt ~A" elt))
                             ((stringp (cadr elt))
                              ;; no resource, so a literal? or another description?
 			     (let ((datatype (lxml-attribute elt '|rdf|::|datatype|))
 				   (value (cadr elt)))
+			       (when datatype (setq datatype (intern-uri datatype))) ;need to do this because namespaces apply
+;;;			       (print `(value ,value datataype ,datatype))
 			       ;; +++ highly incomplete list of datatypes, but enough to get unit test working.
 			       ;; see: http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#built-in-datatypes
-			       (cond ((member datatype '("http://www.w3.org/2001/XMLSchema#int"
-							 "http://www.w3.org/2001/XMLSchema#double")
-					      :test #'equal)
-				      (setq value (read-from-string value))))
+			       (cond ((null datatype))
+				     ((member datatype '(#$xsd:integer #$xsd:int #$xsd:long #$xsd:double #$xsd:float))
+				      (setq value (read-from-string value)))
+				     ((member datatype '(#$xsd:string)))
+				     (datatype ;good to know about
+				      (warn "Dereference found unknown datatype ~A" datatype)
+				      ))
 			       (add-value value about property)))
                             (t (dolist (sub (lxml-all-subelements elt))
                                  (add-value (process-description sub) about property)))

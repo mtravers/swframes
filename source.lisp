@@ -17,6 +17,12 @@ Dereferencing is a "frame source" of sorts...
 (defgeneric writeable? (frame-source)
   (:documentation "True if the source is capable of being written to."))
   
+(defmethod uri-used? ((source frame-source) uri)
+  (frame-named (expand-uri uri)))
+
+(defmethod do-write-group ((source frame-source) async? proc)
+  (funcall proc))
+
 (defmacro with-frame-source ((source) &body body)
   "Execute BODY with *default-frame-source* set to SOURCE"
   `(let ((*default-frame-source* ,source))

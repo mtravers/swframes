@@ -10,9 +10,8 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (inverse-slots nil)
   ;; Below here is various state-manipulation info; very in flux
   source
-   (loaded? nil)				;T if slots have been loaded
-   (dirty? nil)				;T if needs to be written back out, or list of preds to write out.
-   (dereferenced? nil) 
+   (loaded? nil)		  ;T if slots have been loaded
+   (dirty? nil)			  ;T if needs to be written back out, or list of preds to write out. (+++ very few things pay attetion to this, may flush)
   )
   (:initable-instance-variables uri source)
   :writable-instance-variables		;trim down CCC
@@ -84,7 +83,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
     (string (intern-uri thing :source source))))
 
 ;;; mark-loaded? arg is not presently used.
-(defun intern-uri (uri &key (source *default-frame-source*) mark-loaded? (class 'frame))
+(defun intern-uri (uri &key source mark-loaded? (class 'frame))
   #.(doc
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists.")
@@ -94,13 +93,17 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (assert (stringp uri))
   (setf uri (expand-uri uri))	
   (assert (> (length uri) 0))
-  (or (frame-named uri)
-      (intern-frame
-       (make-instance class
-		      :uri uri 
-		    :source source
+  (aif (frame-named uri)
+       (progn
+	 (when (and source (null (frame-source it)))
+	   (setf (frame-source it) source))
+	 it)
+       (intern-frame
+	(make-instance class
+		       :uri uri 
+		       :source source
 ;CCC		      :loaded? mark-loaded?
-		    ))))
+		       ))))
 
 ;;; Would be nice if this were weak, but only EQ hashtables support that in CCL.
 ;;; Change equal to equalp for case-insensitve URLs (won't work with SPARQL though)

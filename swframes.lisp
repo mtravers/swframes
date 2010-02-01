@@ -180,7 +180,7 @@ An RDF-backed frame system
     (let ((*fill-by-default?* nil))	;prevent recursion
       (if source
 	  (progn (fill-frame-from frame source :inverse? inverse?)
-		 ;; if nothing from db, try dereferncing
+		 ;; if nothing from db, try dereferencing
 		 (unless (frame-loaded? frame)
 		   (progn		;was report-and-ignore-errors
 		    (setf (frame-source frame) nil)
