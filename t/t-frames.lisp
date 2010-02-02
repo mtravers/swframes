@@ -3,8 +3,8 @@
 
 (use-package :lisp-unit)
 
-(defun gen-test-frame (&optional (root "crx:test"))
-  (make-frame (format nil "~A~A" root (gensym)) :source *code-source*))
+(defun gen-test-frame (&optional (root "test") (source *code-source*))
+  (make-frame (format nil "crx:~A~A" root (gensym)) :source source))
 
 (defun gen-random-frame ()
   (let ((f (gen-test-frame)))
@@ -106,8 +106,8 @@ Lisp slots handle any printable Lisp object,
 	)))
 
 (define-test unwriteable 
-    (let ((f (gen-test-frame))
-	  (s (gen-test-frame "slot")))
+    (let ((f (gen-test-frame "f" *default-frame-source*))
+	  (s (gen-test-frame "slot" *default-frame-source*)))
       (setf (slotv f s) (list #'(lambda () (not 'serializable))))
       (assert-error 'error
 		    (write-frame f))

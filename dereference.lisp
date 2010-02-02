@@ -122,7 +122,7 @@ dereferences things en masse and brings them into a local store.
     (labels ((->frame (thing)
 	       (when (symbolp thing)
 		 (setf thing (translate-symbol thing)))
-	       (intern-uri thing :source source))
+	       (intern-uri (full-uri thing) :source source))
              (add-value (v frame slot)
 ;;;	       (print `(add-triple ,frame ,slot ,v))
                (add-triple frame slot v)
