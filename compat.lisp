@@ -8,9 +8,8 @@ If you patch the web code by hand (see the end of this file) it works well enoug
 to run
 |#
 
-(defun frames::%make-frame (&rest args)
-  (warn "frames::%make-frame called with ~A" args)
-  (%make-frame))
+(defun frames::make-frame (string)
+  (make-frame string))
 
 ;; hook into old code, including listener
 (defun frames::frame-fnamed (name &optional force?)

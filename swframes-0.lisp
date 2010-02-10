@@ -10,8 +10,8 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (inverse-slots nil)
   ;; Below here is various state-manipulation info; very in flux
   source
-   (loaded? nil)		  ;T if slots have been loaded
-   (dirty? nil)			  ;T if needs to be written back out, or list of preds to write out. (+++ very few things pay attetion to this, may flush)
+  (loaded? nil)		  ;T if slots have been loaded
+  (dirty? nil)			  ;T if needs to be written back out, or list of preds to write out. (+++ very few things pay attetion to this, may flush)
   )
   (:initable-instance-variables uri source)
   :writable-instance-variables		;trim down CCC
