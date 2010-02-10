@@ -140,9 +140,12 @@ could do it.
 
 ;;; handle full range of defmethod hair +++
 (defmacro defmethod$ (name args &body body)
-  (let ((trans-args (mapcar #'(lambda (arg)
-			       (if (listp arg)
-				   (list (car arg) (class-name (sw::rdfs-clos-class (cadr arg) :force? t)))
-				   arg))
-		     args)))
-    `(defmethod ,name ,trans-args ,@body)))
+  (let* ((&pos (position #\& args :key #'(lambda (arg) (and (symbolp arg) (char (symbol-name arg) 0)))))
+	 (qualified-args (subseq args 0 &pos))
+	 (rest-args (and &pos (subseq args &pos)))
+	 (trans-args (mapcar #'(lambda (arg)
+				 (if (listp arg)
+				     (list (car arg) (class-name (sw::rdfs-clos-class (cadr arg) :force? t)))
+				     arg))
+			     qualified-args)))
+    `(defmethod ,name ,(nconc trans-args rest-args) ,@body)))
