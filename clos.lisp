@@ -1,39 +1,28 @@
 (in-package :sw)
 
-(export '(defmethod$))
+(export '(defmethod$ make-instance$))
 
 #|
 Theory:
-- need a mapping from URIs to class names.
-- rdfs-def-class should be extended
 
-- top goal is to get rid of our crappy method dispatch and use CLOSs
+- Maps RDFS classes to CLOS classes
+- Lisp class names are the URI keywordified. 
+- $-versions of standard Lisp functions work on URIs
 
-- 2-way connection between CLOS class and RDFS?
 
+Todo:
+
+- rdfs-def-class should be extended (rename defclass$ for consistency)
 - metaclass?
-- classes could 
-
-- steal from activerdf
+- SPARQL endpoint schema snarfer.
+- maintain relation between URI/frame/symbol/class in organized way
 
 Notes:
-- having frames of different classes means that our straightforward uri->frame map could be compromised.
 
-- maintain relations between:
-  - URI
-  - frame (which is an instance of FRAME and possibly other classes)
-  - symbol
-  - CLOS class
-  
-
-OK -- when a frame is read from a sparql query, we have to check its class before
-making a frame (or use change-class when it is determined).  I suppose fill-frame 
-could do it.
 
 
 |#
 
-;;; New CLOS stuff
 (defclass rdfs-class (frame)
   ())
 
@@ -46,7 +35,6 @@ could do it.
   (get (class-name class) :frame))
 
 (defun frame-as-symbol (frame)
-  ;; Was frame-name, which looks better, but then things become namespace dependent
   (keywordize (frame-uri frame)))
 
 (defun defclass-form (frame supertypes)
@@ -55,22 +43,20 @@ could do it.
 		(list 'rdfs-class))
      ()))
 
-;;; older, doesnt force
-'(defun rdfs-clos-class (frame &optional (error? t))
-  (let ((sym (frame-as-symbol frame)))
-    (find-class sym error?)))
-
-;;; newer
-(defun rdfs-clos-class (frame &key force? (error? t))
-  (let ((sym (frame-as-symbol frame)))
-    (acond ((find-class sym nil)
-	    it)
-	   (force?
-	    (eval (defclass-form frame nil))
-	    (find-class sym t))
-	   (error?
-	    (error "Can't turn ~A into class" frame))
-	   (t nil))))
+;;; Convert a RDFS class frame into a CLOS class
+(defun rdfs-clos-class (frame &key (force? t) (error? t))
+  (let* ((sym (frame-as-symbol frame))
+	 (class (find-class sym nil)))
+    (cond ((and class 
+		  ;; +++ I'm not sure how to do this in an implementation-indepent way. 
+		  (not (typep class 'ccl:forward-referenced-class)))
+	   class)
+	  (force?
+	   (eval (defclass-form frame (slotv frame #$rdfs:subClassOf)))
+	   (find-class sym t))
+	  (error?
+	   (error "Can't turn ~A into class" frame))
+	  (t nil))))
 
 (defun ensure-clos-class (frame)
   (rdfs-clos-class frame :force? t :error? t))
@@ -97,7 +83,6 @@ could do it.
 	(if error?
 	    (error "Can't set class for ~A, no class found" frame)))
     frame))
-
 
 ;;; Make instance
 
@@ -126,18 +111,6 @@ could do it.
 	    uri)))))
 
 
-#|  has to be later
-;;; Discovery!
-
-;;; code-created classes are not in the db, so need to this (or write them out)
-; (slotv-inverse  #$rdfs:Class #$rdf:type)
-
-(defmethod discover-classes ((ep sparql-endpoint))
-  (let ((classes (rdfs-find :all :class #$rdfs:Class :source ep)))
-    (mapcar #'frame-class classes)))
-
-|#
-
 ;;; handle full range of defmethod hair +++
 (defmacro defmethod$ (name args &body body)
   (let* ((&pos (position #\& args :key #'(lambda (arg) (and (symbolp arg) (char (symbol-name arg) 0)))))
@@ -149,3 +122,6 @@ could do it.
 				     arg))
 			     qualified-args)))
     `(defmethod ,name ,(nconc trans-args rest-args) ,@body)))
+
+(defun make-instance$ (class &rest args)
+  (apply #'rdfs-make-instance class args))

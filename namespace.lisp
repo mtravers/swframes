@@ -62,11 +62,6 @@
 	 (namespace (namespace-expand prefix))
 	 (suffix (if prefix (subseq uri (1+ colonpos)) uri)))
     (cond 
-      #|
-      ;; special case for parsing BioPax
-      ((char= (char uri 0) #\#)
-       (string+ (namespace-expand "NS-0") (subseq uri 1)))
-      |#
       ((null namespace)
        (if no-error?
 	   uri

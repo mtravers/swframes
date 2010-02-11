@@ -46,8 +46,6 @@
                  (value-elt (car (lxml-subelements binding t)))
                  (value
                   (cond ((or (eq (car value-elt) ':|uri|)
-                          ;; virtuoso hands back these as <literals>, but they act like URIs
-                          ;; actually, now they are <bnode>s...should handle those specially (optional arg to uri constructor maybe) +++
 			     (string-prefix-equals (cadr value-elt) "nodeID:")
 			     (and eager-make-uri?
 				  (string-prefix-equals (cadr value-elt) "http://")))
@@ -61,6 +59,9 @@
 				     "http://www.w3.org/2001/XMLSchema#double"))
 			 (read-from-string (cadr value-elt)))
 			;; +++ other datatypes?
+			((eq (car value-elt) ':|bnode|)
+			 ;; we do this for bnodes, although it's not really correct -- you could have two colliding. +++
+			 (funcall make-uri (string+ "bnode:" (cadr value-elt))))
 			(t
 			 (cadr value-elt)))))
             (push (list name value) row-result)))

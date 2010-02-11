@@ -201,9 +201,6 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defmacro rdfs-call (name &rest args)
   `(,name ,@(mapcar #'(lambda (arg) `(classify-arg ,arg)) args)))
 
-;;; temp broken by #^ stuff
-;;; no ordering, blah
-;;; this version fills which can cause loops, bleah
 (defun rdfs-classes (thing &optional order?)
   "Returns all classes of THING."
   ;; try to avoid filling

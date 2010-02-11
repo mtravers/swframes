@@ -35,6 +35,7 @@
    (:file "k-sparql")
    (:file "lsparql")
    (:file "sparul")
+   (:file "discovery")
    (:file "files")
    )
 )

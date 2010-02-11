@@ -98,9 +98,7 @@
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))
 ;  (print command)
   (run-sparql url command 
-	      ;; +++ if we get back bad URIs, leave them as strings.  Should be an option I suppose
-	      :make-uri #'(lambda (u) (or (ignore-errors (intern-uri u :source sparql))
-					  u))
+	      :make-uri #'(lambda (u) (intern-uri u :source sparql))
 	      ;; this suddenly became necessary since I was geting literals back...no idea why 
 	      :eager-make-uri? t
 	      :timeout timeout
