@@ -450,6 +450,13 @@
 		(declare (ignore frame value))
 		nil)
 
+(rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
+
+;;; Sometimes these unserializable slots get serialized, so ignore them
+(rdfs-defmethod deserialize-slot ((p #$crx:slots/TransientSlot) frame value)
+		(declare (ignore frame value))
+		nil)
+
 ;;; +++ this can time out without the limit, but of course it produces incorrect results.  Maybe ths should only be done on demand.
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
   (unless (frame-inverse-slots frame)
@@ -458,10 +465,11 @@
     (dolist (binding (do-sparql 
 			 source
 		       `(:select (?s ?p) (:limit 100) (?s ?p ,frame))))
-      (add-triple (sparql-binding-elt binding "s") 
-		  (sparql-binding-elt binding "p")
-		  frame)
-      )))
+      (let ((p (sparql-binding-elt binding "p"))
+	    (s (sparql-binding-elt binding "s")))
+	(when (and s p)			;+++ shouldn't be necessary but some SPARQL endpoints have missing results (dbpedia)
+	  (add-triple s p frame))
+      ))))
 
 (defmethod uri-used? ((source sparql-endpoint) uri)
   (do-sparql 
