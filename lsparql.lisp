@@ -98,9 +98,7 @@
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))
 ;  (print command)
   (run-sparql url command 
-	      ;; +++ if we get back bad URIs, leave them as strings.  Should be an option I suppose
-	      :make-uri #'(lambda (u) (or (ignore-errors (intern-uri u sparql))
-					  u))
+	      :make-uri #'(lambda (u) (intern-uri u :source sparql))
 	      ;; this suddenly became necessary since I was geting literals back...no idea why 
 	      :eager-make-uri? t
 	      :timeout timeout
@@ -191,10 +189,11 @@
 	     )))
       (:insert 
        (destructuring-bind (triple (&key (into write-graph)) &rest clauses) (cdr form)
+	 (assert into nil "No write graph")
 	 (with-output-to-string (s) 
 	   (format s
 		   "INSERT INTO GRAPH ~A { ~A ~A ~A }"
-		   (sparql-term (make-frame into))
+		   (sparql-term into)
 		   (sparql-term (first triple))
 		   (sparql-term (second triple))
 		   (sparql-term (third triple)))
@@ -205,10 +204,11 @@
 	     (write-string " }" s)))))
       (:delete 
        (destructuring-bind ((s p o) (&key (from write-graph)) &rest clauses) (cdr form)
+	 (assert from nil "No write graph")
 	 (with-output-to-string (str) 
 	   (format str
 		   "DELETE FROM GRAPH ~A { ~A ~A ~A }"
-		   (sparql-term (make-frame from))
+		   (sparql-term from)
 		   (sparql-term s)
 		   (sparql-term p)
 		   (sparql-term o))
@@ -409,7 +409,10 @@
   (when inverse?
     (fill-frame-inverse-sparql frame source))
   (let ((*fill-by-default?* nil))
-    (rdfs-call-if post-fill frame)))
+    (rdfs-call post-fill frame)))
+
+(rdfs-defmethod post-fill (frame)
+		)
 
 (defmethod fill-frame-sparql ((frame frame) (source sparql-endpoint))
   (let* ((*default-frame-source* source) ;not sure
@@ -419,11 +422,18 @@
     (dolist (binding results)
       (let ((p (sparql-binding-elt binding "p"))
 	    (o (sparql-binding-elt binding "o")))
-	(add-triple frame p (process-value p o)))
+	(when (and p o)			;+++ shouldn't be necessary but some SPARQL endpoints have missing results (dbpedia)
+	  (add-triple frame p (process-value p o))))
       )
     (when results
       (set-frame-loaded? frame))
     ))
+
+(rdfs-def-class #$rdf:Property ())
+
+(rdfs-def-class #$crx:slots/specialSlot (#$rdf:Property))
+
+(rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
 
 ;;; Maybe this should be folded into add-triple
 (defun process-value (slot value)
@@ -436,6 +446,13 @@
 		    (read-from-string value)
 		    value))
 
+(rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
+
+;;; Sometimes these unserializable slots get serialized, so ignore them
+(rdfs-defmethod deserialize-slot ((p #$crx:slots/TransientSlot) frame value)
+		(declare (ignore frame value))
+		nil)
+
 ;;; +++ this can time out without the limit, but of course it produces incorrect results.  Maybe ths should only be done on demand.
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
   (unless (frame-inverse-slots frame)
@@ -444,10 +461,11 @@
     (dolist (binding (do-sparql 
 			 source
 		       `(:select (?s ?p) (:limit 100) (?s ?p ,frame))))
-      (add-triple (sparql-binding-elt binding "s") 
-		  (sparql-binding-elt binding "p")
-		  frame)
-      )))
+      (let ((p (sparql-binding-elt binding "p"))
+	    (s (sparql-binding-elt binding "s")))
+	(when (and s p)			;+++ shouldn't be necessary but some SPARQL endpoints have missing results (dbpedia)
+	  (add-triple s p frame))
+      ))))
 
 (defmethod uri-used? ((source sparql-endpoint) uri)
   (do-sparql 
