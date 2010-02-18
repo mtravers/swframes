@@ -189,6 +189,7 @@
 	     )))
       (:insert 
        (destructuring-bind (triple (&key (into write-graph)) &rest clauses) (cdr form)
+	 (assert into nil "No write graph")
 	 (with-output-to-string (s) 
 	   (format s
 		   "INSERT INTO GRAPH ~A { ~A ~A ~A }"
@@ -203,6 +204,7 @@
 	     (write-string " }" s)))))
       (:delete 
        (destructuring-bind ((s p o) (&key (from write-graph)) &rest clauses) (cdr form)
+	 (assert from nil "No write graph")
 	 (with-output-to-string (str) 
 	   (format str
 		   "DELETE FROM GRAPH ~A { ~A ~A ~A }"
@@ -420,7 +422,8 @@
     (dolist (binding results)
       (let ((p (sparql-binding-elt binding "p"))
 	    (o (sparql-binding-elt binding "o")))
-	(add-triple frame p (process-value p o)))
+	(when (and p o)			;+++ shouldn't be necessary but some SPARQL endpoints have missing results (dbpedia)
+	  (add-triple frame p (process-value p o))))
       )
     (when results
       (set-frame-loaded? frame))
@@ -442,13 +445,6 @@
 		(if (stringp value)
 		    (read-from-string value)
 		    value))
-
-(rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
-
-;;; Sometimes these unserializable slots get serialized, so ignore them
-(rdfs-defmethod deserialize-slot ((p #$crx:slots/TransientSlot) frame value)
-		(declare (ignore frame value))
-		nil)
 
 (rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
 
