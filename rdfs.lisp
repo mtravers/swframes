@@ -114,7 +114,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
   "Make an instance of CLASS.  Slots are alternating frame/values.  The URI is generated automatically."
   (flet ((check-class (thing class)
 	   (when class
-	     (assert (rdfs-classp thing class)))))
+	     (assert (rdfs-classp thing class) nil "~A is not of rdfs-class ~A" thing class))))
     (check-class class #$rdfs:Class)
     (let ((frame (intern-uri (gensym-instance-uri class :fast? *fast-instances?*))))
       (setf (ssv frame #$rdf:type) class)
