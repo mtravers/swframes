@@ -33,7 +33,9 @@
 		 (>= (length uri) (length full))
 		 (string= uri full :end1 (length full)))
 	(return-from namespacify (values (car namespace)
-					 (subseq uri (length full))))))))
+					 (subseq uri (length full)))))))
+  (values nil uri))
+  
 
 (defun abbreviate-uri (uri)
   "Given a full URI as a string, attempt to abbreviate it using known namespaces."
