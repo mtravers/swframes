@@ -170,7 +170,10 @@ An RDF-backed frame system
 (defparameter *dereference?* nil)
 
 (defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)) (inverse? t) reset?)
-  (when (or force? (not (frame-loaded? frame)))
+  (when (or force?
+	    (not (frame-loaded? frame))
+	    (not (equal source (frame-source frame)))
+	    )
     (setf (frame-loaded? frame) nil)
     ;; dangerous
     (when reset?
@@ -215,9 +218,22 @@ An RDF-backed frame system
 (defun %set-slotv (frame slot value)
   (setf (gethash slot (frame-slots-force frame)) value))  
 
+;;; This is slow, but makes for convenient code
+;;; +++ should disambiguate
+(defun coerce-slot (slot frame)
+  (when (frame-p slot) (return-from coerce-slot slot))
+  (let ((s (fast-string slot)))
+    (for-frame-slots (frame aslot value)
+      (declare (ignore value))
+      (when (equalp (most-significant-name (frame-uri aslot)) s)
+	(return-from coerce-slot aslot)))
+    (error "Cannot coerce ~A to a slot of ~A" slot frame)
+    ))
+
 ;;; optional argument doesn't play well with setf.
 (defun slotv (frame slot &optional (fill? *fill-by-default?*))
   "Returns the value of SLOT in FRAME (will always be a list)"
+  (setf slot (coerce-slot slot frame))
   (if (eq fill? t) (fill-frame frame))
   (let ((v  (or (%slotv frame slot)
 		(when (eq fill? :if)
@@ -233,6 +249,7 @@ An RDF-backed frame system
 ;;; note that this and set-slotv-inverse never do fills
 ;;; this can't really do inverses, can it? we'd have to a difference...
 (defun set-slotv (frame slot value)
+  (setf slot (coerce-slot slot frame))
   (if (%slotv slot #$crx:specialhandling)
       (%set-slotv frame slot value)
       (progn
@@ -280,6 +297,7 @@ An RDF-backed frame system
 (defsetf %slotv-inverse set-slotv-inverse)
 
 (defun set-slotv-inverse (frame slot value)
+;+++ need an inverse form  (setf slot (coerce-slot slot frame))	;
   (unless (frame-inverse-slots frame)
     (setf (frame-inverse-slots frame) (make-slot-hashtable)))
   (setf (gethash slot (frame-inverse-slots frame)) value))
@@ -297,6 +315,7 @@ An RDF-backed frame system
 
 (defun slot-accessor (slot &optional fill?)
   "Returns a one-argument function that accepts a frame and returns the contents of SLOT on that frame."
+  (setf slot (coerce-slot slot frame))
   #'(lambda (f) 
       (slotv f slot fill?)))
 

@@ -27,6 +27,15 @@
   (:documentation "A FRAME-SOURCE that represents a SPARQL endpoint, optionally with given named graphs for reading and writing.")
   )
 
+;;; Coerce strings to frames and otherwise be reasonable.
+(defmethod* initialize-instance :after ((sparql-endpoint sparql-endpoint) &rest ignore)
+	    (when (stringp read-graph)
+	      (setf read-graph (make-frame read-graph)))
+	    (when (stringp write-graph)
+	      (setf write-graph (make-frame write-graph)))
+	    (when write-graph
+	      (setf writeable? t)))
+
 (defmethod* print-object ((sparql sparql-endpoint) stream)
   (format stream "#<~A ~A ~A ~A>" 
 	  (type-of sparql)

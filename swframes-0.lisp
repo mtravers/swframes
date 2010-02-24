@@ -39,7 +39,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
 
 (defun make-reader-frame (s)
-  (make-frame s :source *code-source*))	
+  (make-frame s :source *default-frame-source*)) ;+++ was code-source, but that causes bad listener behavior. current theory is use code-source for actual code.
 
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
