@@ -95,6 +95,7 @@ An RDF-backed frame system
   (setf (frame-inverse-slots frame) nil))
 
 ;;; Just clear out special frames, since equality doesn't work on them
+;;; No longer used, I was apparently brain damaged.
 (defmethod reset-frame-limited ((frame frame))
   (for-frame-slots (frame slot value)
 		   (when (%slotv slot #$crx:specialhandling)
@@ -315,7 +316,6 @@ An RDF-backed frame system
 
 (defun slot-accessor (slot &optional fill?)
   "Returns a one-argument function that accepts a frame and returns the contents of SLOT on that frame."
-  (setf slot (coerce-slot slot frame))
   #'(lambda (f) 
       (slotv f slot fill?)))
 
