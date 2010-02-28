@@ -75,6 +75,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	     ;; +++ experimental feature, not in use yet
 	     (gen-slot-name (class slot)
 	       (intern-uri (string+ (frame-uri class) "/s/" (string-downcase (fast-string slot))))) 
+	     (coerce-slot (frame slot-designator
 	     )
       (a! class  #$rdf:type #$rdfs:Class)
       (mapc #'(lambda (superclass)
@@ -82,6 +83,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	    superclasses)
       (mapc #'(lambda (slotdef)
 		(unless (listp slotdef) (setf slotdef (list slotdef)))
+		(setf slotdef
+		      (cons (coerce-slot class (car slotdef))
+			    (cdr slotdef)))
 		(macrolet ((handle-slot-property (sprop &body body)
 			     `(awhen (member ,sprop (cdr slotdef))
 				     ,@body
