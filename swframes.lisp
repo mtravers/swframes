@@ -32,6 +32,8 @@ An RDF-backed frame system
 ;;; Could logically use all subPropertys of rdfs:label, obtainable through:
 ;;; (do-sparql-one-var nil '(:select * nil (?p #$rdfs:subPropertyOf #$rdfs:label)))
 (defun frame-label (frame &optional fill?)
+  (unless (frame-p frame)
+    (return-from frame-label (fast-string frame)))
   "Returns the preferred human-readable label of a frame"
   (labels ((ssv-safe (frame slot)
 	     (car (slotv frame slot fill?))))
@@ -221,15 +223,27 @@ An RDF-backed frame system
 
 ;;; This is slow, but makes for convenient code
 ;;; +++ should disambiguate
-(defun coerce-slot (slot frame)
+(defun coerce-slot (slot frame &key (error? t))
   (when (frame-p slot) (return-from coerce-slot slot))
   (let ((s (fast-string slot)))
     (for-frame-slots (frame aslot value)
       (declare (ignore value))
       (when (equalp (most-significant-name (frame-uri aslot)) s)
 	(return-from coerce-slot aslot)))
-    (error "Cannot coerce ~A to a slot of ~A" slot frame)
+    ;; No existing slot, try classes
+    ;; +++ with current way coerce-slot-for-class works, always will use the first class
+    (dolist (class (rdfs-classes frame))
+      (awhen (coerce-slot-for-class slot class)
+	(return-from coerce-slot it)))
+    (if error?
+	(error "Cannot coerce ~A to a slot of ~A" slot frame)
+	nil)
     ))
+
+(defun coerce-slot-for-class (slot class)
+  (when (frame-p slot) (return-from coerce-slot-for-class slot))
+  ;; +++ some check to see if it's there
+  (intern-uri (string+ (frame-name class) "/s/" (fast-string slot))))
 
 ;;; optional argument doesn't play well with setf.
 (defun slotv (frame slot &optional (fill? *fill-by-default?*))
