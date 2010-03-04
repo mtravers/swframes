@@ -240,9 +240,9 @@ An RDF-backed frame system
 		(when (eq fill? :if)
 		  (fill-frame frame)
 		  (%slotv frame slot)))))
-    (dolist (v-elt v)			;CCC do a classify here.  Will only work if fill has happened.
-      (when (frame-p v-elt)
-	(classify-frame v-elt)))
+    ;; (dolist (v-elt v)			;CCC do a classify here.  Will only work if fill has happened.
+;;       (when (frame-p v-elt)
+;; 	(classify-frame v-elt)))
     v))
 
 (defvar *check-slot-domains?* nil)
