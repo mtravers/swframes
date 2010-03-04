@@ -82,6 +82,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	    superclasses)
       (mapc #'(lambda (slotdef)
 		(unless (listp slotdef) (setf slotdef (list slotdef)))
+		(setf slotdef
+		      (cons (coerce-slot-for-class (car slotdef) class)
+			    (cdr slotdef)))
 		(macrolet ((handle-slot-property (sprop &body body)
 			     `(awhen (member ,sprop (cdr slotdef))
 				     ,@body
@@ -122,7 +125,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
       (set-frame-class frame class t)
       (do ((rest slots (cddr rest)))
 	  ((null rest) frame)
-	(let ((slot (car rest)))
+	(let ((slot (or (coerce-slot (car rest) frame :error? nil)
+			(coerce-slot-for-class (car rest) class)
+			)))
 	  (check-class frame (#^rdfs:domain slot)) 
 	  (check-class (cadr rest) (#^rdfs:range slot)) 
 	  (if (rdfs-classp slot #$crx:slots/LispValueSlot)
@@ -198,6 +203,8 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
     (classify-frame arg))
   arg)
 
+;;; +++ not sure I like this, it means that ordinary calls won't necessarily get the proper classes.
+;;; +++ an :around method would be better but I assume it doesn't work to change classes mid-method!
 (defmacro rdfs-call (name &rest args)
   `(,name ,@(mapcar #'(lambda (arg) `(classify-arg ,arg)) args)))
 

@@ -417,17 +417,19 @@
   (when inverse?
     (fill-frame-inverse-sparql frame source))
   (let ((*fill-by-default?* nil))
-    (rdfs-call post-fill frame))
+    (rdfs-call post-fill frame))	;+++ should be done at higher level for non-sparql sources
   )
 
+;;; Hack
 (rdfs-defmethod post-fill (frame)
 		)
 
 (defmethod fill-frame-sparql ((frame frame) (source sparql-endpoint))
   (let* ((*default-frame-source* source) ;not sure
-	 (results  (do-sparql 
+	 (results (do-sparql 
 		       source
-		     `(:select (?p ?o) () (,frame ?p ?o)))))
+		     `(:select (?p ?o) () 
+			       (,frame ?p ?o)))))
     (dolist (binding results)
       (let ((p (sparql-binding-elt binding "p"))
 	    (o (sparql-binding-elt binding "o")))
@@ -437,6 +439,24 @@
     (when results
       (set-frame-loaded? frame))
     ))
+
+;;; Special hack to fill tuplesets efficiently.  Fill-frame is not cutting it.
+(defun fill-tupleset (frame)
+  (let ((tuples (make-hash-table :test #'eq)))
+    (dolist (bindingset
+	    (do-sparql (frame-source frame)
+	      `(:select * ()
+			(,frame #$crx:slots/includes-tuple ?tuple)
+			(?tuple ?tprop ?value))))
+      (setf (gethash (sparql-binding-elt bindingset '?tuple) tuples) t)
+      (setf (ssv (sparql-binding-elt bindingset '?tuple)
+		 (sparql-binding-elt bindingset '?tprop))
+	    (sparql-binding-elt bindingset '?value)))
+    (setf (slotv frame  #$crx:slots/includes-tuple)
+	  (hash-keys tuples)
+	  (frame-loaded? frame)
+	  t)))
+	       
 
 (rdfs-def-class #$rdf:Property ())
 
@@ -553,7 +573,9 @@
   query)
 
 ;;; An extension to do this to n levels might be useful.
-(defun bulk-load-query (source query &key (var (car (second query))))
+;;; Fill-frame is n=0.  
+;;; return-all-results? is not currently used
+(defun bulk-load-query (source query &key (var (car (second query))) return-all-results?)
   #.(doc
      "Given a SPARQL query and a VAR extend the query to load all slots and inverse-slots of frames that match VAR, and mark them as loaded."
      "This function actually peforms the query and returns the list of frames matching VAR.")
@@ -564,32 +586,36 @@
   (push-end '?bl_p (second query))
   (push-end '?bl_o (second query))
   (push-end '?bl_s (second query))
-  (let ((res (do-sparql source query))
-	(processed? nil))
-    (collecting
-     (dolist (bind res)
-	(let ((sm (sparql-binding-elt bind var))
-	      (s (sparql-binding-elt bind "bl_s"))
-	      (p (sparql-binding-elt bind "bl_p"))
-	      (o (sparql-binding-elt bind "bl_o")))
-	  ;; do a reset on frames we bring in
-	  (unless (member sm processed?)
-	    (reset-frame sm)
-	    (push sm processed?))
-	  (when o
-	    (add-triple sm p (process-value p o)))
-	  (when s
-	    (add-triple s p sm))
-	  (collect-new sm)
-	  (set-frame-loaded? sm)
-	  (setf (frame-source sm) source)
-	  (when (and (frame-p o)		;not sure about this, but for now
-		     (null (frame-source o)))
-	    (setf (frame-source o) source))
-	  (when (and (frame-p s)		;not sure about this, but for now
-		     (null (frame-source s)))
-	    (setf (frame-source s) source))
-	  )))))
+  (let* ((res (do-sparql source query))
+	 (processed? nil)
+	 (frames
+	  (collecting
+	    (dolist (bind res)
+	      (let ((sm (sparql-binding-elt bind var))
+		    (s (sparql-binding-elt bind "bl_s"))
+		    (p (sparql-binding-elt bind "bl_p"))
+		    (o (sparql-binding-elt bind "bl_o")))
+		;; do a reset on frames we bring in
+		(unless (member sm processed?)
+		  (reset-frame sm)
+		  (push sm processed?))
+		(when o
+		  (add-triple sm p (process-value p o)))
+		(when s
+		  (add-triple s p sm))
+		(collect-new sm)
+		(set-frame-loaded? sm)
+		(setf (frame-source sm) source)
+		(when (and (frame-p o)	;not sure about this, but for now
+			   (null (frame-source o)))
+		  (setf (frame-source o) source))
+		(when (and (frame-p s)	;not sure about this, but for now
+			   (null (frame-source s)))
+		  (setf (frame-source s) source))
+		)))))
+    (if return-all-results?
+	res 
+	frames)))
 
 (defun augment-query (source query &key (var (car (second query))) slots &aux slot-vars)
   "Add some slots to a one-variable query (like bulk-load-query but selective rather than loading everything)"
