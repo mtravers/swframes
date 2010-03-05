@@ -117,7 +117,7 @@ Notes:
 	 (qualified-args (subseq args 0 &pos))
 	 (rest-args (and &pos (subseq args &pos)))
 	 (trans-args (mapcar #'(lambda (arg)
-				 (if (listp arg)
+				 (if (and (listp arg) (frame-p (cadr arg)))
 				     (list (car arg) (class-name (sw::rdfs-clos-class (cadr arg) :force? t)))
 				     arg))
 			     qualified-args)))

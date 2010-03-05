@@ -417,7 +417,7 @@
   (when inverse?
     (fill-frame-inverse-sparql frame source))
   (let ((*fill-by-default?* nil))
-    (rdfs-call post-fill frame))
+    (rdfs-call post-fill frame))	;+++ should be done at higher level for non-sparql sources
   )
 
 (rdfs-defmethod post-fill (frame)
