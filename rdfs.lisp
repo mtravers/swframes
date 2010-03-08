@@ -203,6 +203,8 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
     (classify-frame arg))
   arg)
 
+;;; +++ not sure I like this, it means that ordinary calls won't necessarily get the proper classes.
+;;; +++ an :around method would be better but I assume it doesn't work to change classes mid-method!
 (defmacro rdfs-call (name &rest args)
   `(,name ,@(mapcar #'(lambda (arg) `(classify-arg ,arg)) args)))
 
