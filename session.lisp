@@ -22,7 +22,7 @@
 ;;; fast? mode does not go to the database each time, and is suitable for when there is a single lisp server.  
 (defvar gensym-lock (acl-compat.mp:make-process-lock))
 
-(defun gensym-instance-frame (class &key start (fast? t) (source *default-frame-source*) base)
+(defun gensym-instance-frame (class &key start (fast? t) (source *default-frame-source*) base uri-only?)
   (if (eq (frame-source class) *code-source*)
       (setf (frame-source class) source)
       ;; Here we might want to do an initial write of frame to db
@@ -43,6 +43,9 @@
 	  (gensym-instance-frame class :start next :fast? fast?)
 	  (progn
 	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
-	    (intern-uri uri :class class))))))
+	    (if uri-only?
+		uri
+		(intern-uri uri :class class)))))))
+
 
 (defgeneric uri-used? (source uri))

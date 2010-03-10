@@ -119,7 +119,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	   '(when class
 	     (assert (rdfs-classp thing class) nil "~A is not of rdfs-class ~A" thing class))))
     (check-class class #$rdfs:Class)
-    (let ((frame (intern-uri (gensym-instance-uri class :fast? *fast-instances?*))))
+    (let ((frame (gensym-instance-frame class :fast? *fast-instances?*)))
       (setf (ssv frame #$rdf:type) class)
       (setf (frame-loaded? frame) t)	;if we are consing this from scratch in memory, it is considered loaded
       (set-frame-class frame class t)
