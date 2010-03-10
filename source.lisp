@@ -20,6 +20,9 @@ Dereferencing is a "frame source" of sorts...
 (defmethod uri-used? ((source frame-source) uri)
   (frame-named (expand-uri uri)))
 
+(defmethod do-write-group ((source null) async? proc)
+  (do-write-group *default-frame-source* async? proc))
+
 (defmethod do-write-group ((source frame-source) async? proc)
   (funcall proc))
 

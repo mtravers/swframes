@@ -31,6 +31,7 @@
   (acl-compat.mp:with-process-lock (gensym-lock)	;+++ I hope this won't slow down the world too much.
     (unless (and fast?
 		 (msv class #$crx:last_used_id))
+      (setf (slotv class #$crx:last_used_id) nil) ;in lieu of a full reset
       (fill-frame class :force? t :inverse? nil))
     (let* ((last (or start (ssv class #$crx:last_used_id)))
 	   (next (if last
