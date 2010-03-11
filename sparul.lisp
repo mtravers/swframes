@@ -113,6 +113,7 @@
    #.(doc "Write a single slot of a single frame to SOURCE."
 	  "VALUE if provided is a single value to set the slot to.")))
 
+;;; Value is a singleton.
 (defmethod write-slot (frame slot &key (source (frame-source frame)) no-delete? (value nil value-provided?))
   (when value-provided?
     (setf (ssv frame slot) value))
