@@ -177,7 +177,6 @@ An RDF-backed frame system
 	    (not (frame-loaded? frame))
 	    (not (equal source (frame-source frame)))
 	    )
-    (setf (frame-loaded? frame) nil)
     ;; dangerous
     (when reset?
       (clrhash (frame-slots frame))
@@ -194,7 +193,7 @@ An RDF-backed frame system
 		      (dereference frame force?))))) ;+++
 	  (when *dereference?* (dereference frame force?)))		;+++
       (classify-frame frame)		
-      (set-frame-loaded? frame)))
+      (set-frame-loaded? frame t source)))
   frame)
 
 ;;; Gets overwritten later, here to support load, probably not the right solution +++
@@ -243,7 +242,7 @@ An RDF-backed frame system
 (defun coerce-slot-for-class (slot class)
   (when (frame-p slot) (return-from coerce-slot-for-class slot))
   ;; +++ some check to see if it's there
-  (intern-uri (string+ (frame-name class) "/s/" (fast-string slot))))
+  (intern-uri (string+ (frame-name class) "/s/" (string-downcase (fast-string slot)))))
 
 ;;; optional argument doesn't play well with setf.
 (defun slotv (frame slot &optional (fill? *fill-by-default?*))

@@ -2,7 +2,10 @@
 
 (export '(rdfs-def-class rdfs-make-instance 
 	  rdfs-classes rdfs-classp rdfs-subclasses
-	  rdfs-defmethod rdfs-call rdfs-find))
+	  rdfs-defmethod rdfs-call rdfs-find
+
+	  defclass$ defmethod$ make-instance$
+	  ))
 
 #|
 Notes:
@@ -48,7 +51,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defun frame-supertypes (frame)
   (slotv frame #$rdfs:subClassOf))
 
-(defmacro rdfs-def-class (class superclasses &body slots)
+(defmacro defclass$ (class superclasses &body slots)
   #.(doc
      "Define an RDFS class.  CLASS is a frame SUPERCLASSES is a list of frames."
      "SLOTS is a list of slot defining forms, which are of the form:"
@@ -72,9 +75,6 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		       ((null old)
 			(a! s p o))
 		       (t (error "~A already has ~A ~A, can't set to ~A" s p old o)))))
-	     ;; +++ experimental feature, not in use yet
-	     (gen-slot-name (class slot)
-	       (intern-uri (string+ (frame-uri class) "/s/" (string-downcase (fast-string slot))))) 
 	     )
       (a! class  #$rdf:type #$rdfs:Class)
       (mapc #'(lambda (superclass)
@@ -90,8 +90,6 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 				     ,@body
 				     (setf slotdef (remove (cadr it) (remove (car it) slotdef))))))
 		  (let ((slot (car slotdef)))
-		    (unless (frame-p slot)
-		      (setf slot (gen-slot-name class slot)))
 		    (a! slot #$rdf:type #$rdf:Property)
 		    (a!x slot #$rdfs:domain class)
 		    (handle-slot-property :range (a!x slot #$rdfs:range (cadr it)))
@@ -108,15 +106,19 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	 ,(defclass-form class superclasses)
 	      ,class))))
 
+;;; Support older name (deprecated, I guess)
+(defmacro rdfs-def-class (&rest rest)
+  `(defclass$ ,@rest))
+
 ;;; Put in some checking;  should be under a flag. 
 ;;; Also option for specifying a name or partial name.
 (defvar *fast-instances?* t)
 
 ;;; +++ should have an optional frame arg, when we know the name
-(defun rdfs-make-instance (class &rest slots)
+(defun make-instance$ (class &rest slots)
   "Make an instance of CLASS.  Slots are alternating frame/values.  The URI is generated automatically."
   (flet ((check-class (thing class)
-	   '(when class
+	   (when class
 	     (assert (rdfs-classp thing class) nil "~A is not of rdfs-class ~A" thing class))))
     (check-class class #$rdfs:Class)
     (let ((frame (intern-uri (gensym-instance-uri class :fast? *fast-instances?*))))
@@ -133,6 +135,10 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	  (if (rdfs-classp slot #$crx:slots/LispValueSlot)
 	      (setf (ssv frame slot) (cadr rest))
 	      (setf (msv frame slot) (cadr rest))))))))
+
+;;; Older form (deprecated)
+(defun rdfs-make-instance (class &rest slots)
+  (apply #'make-instance$ class slots))
 
 (defun rdfs-find (value &key slot class (source *default-sparql-endpoint*) word? fill? case-insensitize? limit from)
   #.(doc

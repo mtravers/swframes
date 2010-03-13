@@ -1,6 +1,6 @@
 (in-package :sw)
 
-(export '(defmethod$ make-instance$))
+(export '(defmethod$))
 
 #|
 Theory:
@@ -110,7 +110,6 @@ Notes:
 	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
 	    uri)))))
 
-
 ;;; handle full range of defmethod hair +++
 (defmacro defmethod$ (name args &body body)
   (let* ((&pos (position #\& args :key #'(lambda (arg) (and (symbolp arg) (char (symbol-name arg) 0)))))
@@ -123,5 +122,4 @@ Notes:
 			     qualified-args)))
     `(defmethod ,name ,(nconc trans-args rest-args) ,@body)))
 
-(defun make-instance$ (class &rest args)
-  (apply #'rdfs-make-instance class args))
+
