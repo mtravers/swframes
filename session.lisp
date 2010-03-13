@@ -33,7 +33,9 @@
 		 (msv class #$crx:last_used_id))
       (setf (slotv class #$crx:last_used_id) nil) ;in lieu of a full reset
       (fill-frame class :force? t :inverse? nil))
-    (let* ((last (or start (ssv class #$crx:last_used_id)))
+    (let* ((v (slotv class #$crx:last_used_id))
+	   (last (or start
+		     (if (listp v) (first (last v)) v)))
 	   (next (if last
 		     (1+ (coerce-number last))
 		     0))
