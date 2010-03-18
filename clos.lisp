@@ -10,16 +10,11 @@ Theory:
 - $-versions of standard Lisp functions work on URIs
 
 
-Todo:
+Todo +++:
 
 - rdfs-def-class should be extended (rename defclass$ for consistency)
 - metaclass?
-- SPARQL endpoint schema snarfer.
 - maintain relation between URI/frame/symbol/class in organized way
-
-Notes:
-
-
 
 |#
 
@@ -29,7 +24,7 @@ Notes:
 (defmethod initialize-instance :after ((f rdfs-class) &rest ignore)
   (with-slots (uri) f
     (unless uri
-      (setf uri (gensym-instance-uri (class-frame (class-of f)))))))
+      (setf uri (gensym-instance-frame (class-frame (class-of f)) :uri-only? t)))))
 
 (defun class-frame (class)
   (get (class-name class) :frame))
@@ -83,32 +78,6 @@ Notes:
 	(if error?
 	    (error "Can't set class for ~A, no class found" frame)))
     frame))
-
-;;; Make instance
-
-;;; based on gensym-instance-frame, but that's not modularized right
-(defun gensym-instance-uri (class &key start (fast? t) (source *default-frame-source*) base)
-  (if (eq (frame-source class) *code-source*)
-      (setf (frame-source class) source)
-      ;; Here we might want to do an initial write of frame to db
-      )
-  (unless base (setq base (frame-uri class)))
-  (acl-compat.mp:with-process-lock (gensym-lock)	
-    (unless (and fast?
-		 (msv class #$crx:last_used_id))
-      (fill-frame class :force? t :inverse? nil))
-    (let* ((last (or start (ssv class #$crx:last_used_id)))
-	   (next (if last
-		     (1+ (coerce-number last))
-		     0))
-	   (uri (string+ base "/"
-			 (if fast? (string+ (frame-label (unique-session)) "/") "")
-			 (fast-string next))))
-      (if (and (not fast?) (uri-used? source uri))
-	  (gensym-instance-frame class :start next :fast? fast?)
-	  (progn
-	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
-	    uri)))))
 
 ;;; handle full range of defmethod hair +++
 (defmacro defmethod$ (name args &body body)
