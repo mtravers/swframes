@@ -29,6 +29,7 @@
    (:file "rdfs")
    (:file "session")
    (:file "dump")
+   (:file "versioning")
    ;; sources
    (:file "dereference")
    (:file "dereference-server")
