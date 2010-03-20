@@ -19,11 +19,11 @@ Alternate idea: do it all in the db with a wildcard insert...much faster, not as
 ;;; No db writes
 (defun version-frame (frame)
   (let* ((last-version (ssv frame #$crx:previous_version))
-	 (version-number (if last-version (1+ (ssv last-version #$crx:version)) 1))
+	 (version-number (if last-version (1+ (ssv last-version #$crx:version)) 0))
 	 (version-uri (string+ (frame-name frame) "/v/" (fast-string version-number)))
 	 (version-frame (intern-uri version-uri)))
     (frame-copy frame :new-frame version-frame)
-    (frame-delete-slot frame #$rdf:type)
+    (frame-delete-slot version-frame #$rdf:type)
     (setf (ssv version-frame #$crx:version_of) frame)
     (setf (ssv version-frame #$crx:version) version-number)
     (setf (ssv version-frame #$crx:timestamp) (utils::now))
