@@ -13,6 +13,8 @@ Versioning theory:
 
 Alternate idea: do it all in the db with a wildcard insert...much faster, not as clean but a good trick I guess
 
+Caveats:  only works if you use write-frame-versioned.  Other ways of writing content like write-slot won't make a version.
+
 |#
 
 ;;; Spawn a version frame (copying the contents of FRAME)
