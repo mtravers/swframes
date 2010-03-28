@@ -1,9 +1,5 @@
 (in-package :swframes)
 
-#|
-An RDF-backed frame system
-|#
-
 (export '(make-frame
 	  *default-frame-source* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri

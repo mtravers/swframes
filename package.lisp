@@ -14,7 +14,7 @@
 	  :biolisp)
 
 (defpackage :swframes
-  (:use :blisp :mt :clos* :3utils :lisp-unit)
+  (:use :blisp :mt :clos* :lisp-unit :3utils)
   (:nicknames :sw)
   (:import-from #+BIOLISP :wb "HTML")
   (:shadowing-import-from :mt "SET-EQUAL")

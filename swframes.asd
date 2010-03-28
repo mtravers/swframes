@@ -6,7 +6,7 @@
   :author "Mike Travers"
   :serial t
   :depends-on
-  (:mtlisp :3utils :s-xml) ;   :cl-json - I don't think we need it any more +++
+  (:mtlisp :3utils :s-xml) 
   :components
   (;; setup and utilities
    ;; basics
