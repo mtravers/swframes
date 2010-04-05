@@ -7,7 +7,7 @@ An RDF-backed frame system
 (export '(make-frame
 	  *default-frame-source* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
-	  most-significant-name 
+	  most-significant-name frame-id-suffix
 	  %frame-slots %frame-inverse-slots
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse frame-loaded?
@@ -47,6 +47,10 @@ An RDF-backed frame system
 
 (defun most-significant-name (string)
   (car (last (string-split string #\/))))
+
+(defun frame-id-suffix (frame)
+  (format nil "~{_~a~}" (last (puri:uri-parsed-path (puri:parse-uri (frame-uri frame)))
+			      2)))
 
 ;;; names should be reversed
 (defun %frame-slots (frame)
