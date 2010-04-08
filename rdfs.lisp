@@ -115,30 +115,39 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 ;;; Also option for specifying a name or partial name.
 (defvar *fast-instances?* t)
 
-;;; +++ should have an optional frame arg, when we know the name
-(defun make-instance$ (class &rest slots)
-  "Make an instance of CLASS.  Slots are alternating frame/values.  The URI is generated automatically."
-  (flet ((check-class (thing class)
-	   (when class
-	     (dolist (elt (listify thing))
-	       (assert (rdfs-classp elt class) nil "~A is not of rdfs-class ~A" elt class)))))
-    (check-class class #$rdfs:Class)
-    (let ((frame (gensym-instance-frame class :fast? *fast-instances?*)))
-      (setf (ssv frame #$rdf:type) class)
-      (setf (frame-loaded? frame) t)	;if we are consing this from scratch in memory, it is considered loaded
-      (set-frame-class frame class t)
-      (do ((rest slots (cddr rest)))
-	  ((null rest) frame)
-	(let* ((slot (or (coerce-slot (car rest) frame :error? nil)
-			 (coerce-slot-for-class (car rest) class)
-			 ))
-	       (lisp-slot? (rdfs-classp slot #$crx:slots/LispValueSlot)))
-	  (check-class frame (#^rdfs:domain slot)) 
-	  (if lisp-slot?
-	      (setf (ssv frame slot) (cadr rest))
-	      (progn
-		(check-class (cadr rest) (#^rdfs:range slot)) 
-		(setf (msv frame slot) (cadr rest)))))))))
+(defun make-instance$ (class-or-class-options &rest slots)
+  #.(doc
+     "Make an instance of CLASS.  SLOTS are alternating frame/values."
+     "CLASS-OR-CLASS-OPTIONS is either a class frame or a list (class-frame :key1 val1 ...)"
+     "Options:"
+     "  :URI  - use given URI instead of generating one"
+     )
+  (let ((class (if (listp class-or-class-options) (car class-or-class-options) class-or-class-options))
+	(options (if (listp class-or-class-options) (cdr class-or-class-options))))
+    (destructuring-bind (&key uri) options
+      (flet ((check-class (thing class)
+	       (when class
+		 (dolist (elt (listify thing))
+		   (assert (rdfs-classp elt class) nil "~A is not of rdfs-class ~A" elt class)))))
+	(check-class class #$rdfs:Class)
+	(let ((frame (if uri
+			 (intern-uri uri)
+			 (gensym-instance-frame class :fast? *fast-instances?*))))
+	  (setf (ssv frame #$rdf:type) class)
+	  (setf (frame-loaded? frame) t) ;if we are consing this from scratch in memory, it is considered loaded
+	  (set-frame-class frame class t)
+	  (do ((rest slots (cddr rest)))
+	      ((null rest) frame)
+	    (let* ((slot (or (coerce-slot (car rest) frame :error? nil)
+			     (coerce-slot-for-class (car rest) class)
+			     ))
+		   (lisp-slot? (rdfs-classp slot #$crx:slots/LispValueSlot)))
+	      (check-class frame (#^rdfs:domain slot)) 
+	      (if lisp-slot?
+		  (setf (ssv frame slot) (cadr rest))
+		  (progn
+		    (check-class (cadr rest) (#^rdfs:range slot)) 
+		    (setf (msv frame slot) (cadr rest)))))))))))
 
 ;;; Older form (deprecated)
 (defun rdfs-make-instance (class &rest slots)
