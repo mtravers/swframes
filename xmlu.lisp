@@ -54,20 +54,6 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
 	  (eq tag (caar elt))
 	  (eq tag (car elt)))))
 
-;;; these are from LSW, I think.
-(defun lxml-find-element-with-tag (element tag &rest more-tags)
-  (let ((found
-         (loop with q = (list element)
-            for this = (pop q)
-            if (eq tag (lxml-tag this))
-            do (return this)
-            else do (when (listp children) (setq q (nconc q (remove-if-not 'consp children))))
-            while q)))
-    (if (and found more-tags)
-        (apply 'lxml-find-element-with-tag found more-tags)
-        found)))
-
-;;; rewrite -- need to test it thoroughly +++
 (defun lxml-find-element-with-tag (element tag &rest more-tags)
   (if (eq tag (lxml-tag element))
       (if more-tags

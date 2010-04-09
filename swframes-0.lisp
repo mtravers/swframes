@@ -10,11 +10,11 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (inverse-slots nil)
   ;; Below here is various state-manipulation info; very in flux
   source
-  (loaded? nil)		  ;T if slots have been loaded
-  (dirty? nil)			  ;T if needs to be written back out, or list of preds to write out. (+++ very few things pay attetion to this, may flush)
+  (loaded? nil)				;T if slots have been loaded
+;;;  (dirty? nil) ;T if needs to be written back out, or list of preds to write out. (++ not used yet)
   )
   (:initable-instance-variables uri source)
-  :writable-instance-variables		;trim down CCC
+  :writable-instance-variables		
   :readable-instance-variables)
 
 (defmethod print-object ((frame frame) stream)
@@ -39,13 +39,13 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
 
 (defun make-reader-frame (s)
-  (make-frame s :source *default-frame-source*)) ;+++ was code-source, but that causes bad listener behavior. current theory is use code-source for actual code.
+  (make-frame s :source *default-frame-source*)) 
 
 (defun pound-dollar-frame-reader (stream char arg)
   (declare (ignore char arg))
   (make-reader-frame (read-fname stream)))
 
-;;; +++ would be good to allow #$"sdasdad" for hard to parse names
+;;; ++ would be good to allow #$"sdasdad" for hard to parse names
 (defun read-fname (stream)
   (let ((name
 	 (read-until 
@@ -70,7 +70,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (let* ((slot (make-reader-frame (read-fname stream))))
     `(lambda (f) (msv-inverse f ,slot))))
 
-;;; CCC needs to default to something reasomable for templates
+;;; +++ needs to default to something reasomable for templates
 (defvar *default-frame-source* *code-source* "A FRAME-SOURCE used by default when frames are created.  Can by dynamically bound.")
 
 (defun make-frame (thing &key (source *default-frame-source*))
@@ -82,8 +82,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
     (frame thing)
     (string (intern-uri thing :source source))))
 
-;;; mark-loaded? arg is not presently used.
-(defun intern-uri (uri &key source mark-loaded? (class 'frame))
+(defun intern-uri (uri &key source (class 'frame))
   #.(doc
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists.")
@@ -102,7 +101,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
 	(make-instance class
 		       :uri uri 
 		       :source source
-;CCC		      :loaded? mark-loaded?
 		       ))))
 
 ;;; Would be nice if this were weak, but only EQ hashtables support that in CCL.

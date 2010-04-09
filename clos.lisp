@@ -7,15 +7,11 @@ Theory:
 
 - Maps RDFS classes to CLOS classes
 - Lisp class names are the URI keywordified. 
-- $-versions of standard Lisp functions work on URIs
+- $-versions of standard Lisp functions work on frames (defmethod$, defclass$, make-instance$)
 
-
-Todo +++:
-
-- rdfs-def-class should be extended (rename defclass$ for consistency)
+Todos:
 - metaclass?
 - maintain relation between URI/frame/symbol/class in organized way
-
 |#
 
 (defclass rdfs-class (frame)
@@ -43,8 +39,12 @@ Todo +++:
   (let* ((sym (frame-as-symbol frame))
 	 (class (find-class sym nil)))
     (cond ((and class 
-		  ;; +++ I'm not sure how to do this in an implementation-indepent way. 
-		  (not (typep class 'ccl:forward-referenced-class)))
+		;; +++ I'm not sure how to do this in an implementation-indepent way. 
+		#+:CCL
+		(not (typep class 'ccl:forward-referenced-class))
+		#+:SBCL			;untested
+		(not (type class 'sb-mop:forward-referenced-class))
+		)
 	   class)
 	  (force?
 	   (eval (defclass-form frame (slotv frame #$rdfs:subClassOf)))

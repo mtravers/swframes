@@ -1,3 +1,22 @@
+Todos:
+
+Key:
++++ things that should really be fixed for a release
+++ good ideas
+CCC Clos conversion related
+PPP performance related
+
+Conceptual cleanups:
+- coerce-slot needs to firmed up, worked for inverses
+- how do add-triple etc related to the slot-level functions, sources, etc
+- dereferencing
+- fill-frame
+- sources, especially code-source
+- classify, when does it happen
+
+Random cleanups:
+- get consistent with defmethod$ over rdfs-defmethod, etc.
+
 Ideas.
 
 In-memory and SPARQL endpoints should have a common (or partially common) API.  
@@ -33,16 +52,3 @@ Slot properties:
   - dependent
 - ordered/nonordered
 
-----------------------------------------------------------------------------------
-
-History Structure:
-
-- Linear list of chunks
-- chunks can have subchunks
-  - so a function and its response are separate related chunks
-- chunks can be typed
-   - use rdfs types?  probably, maybe chunk -> content -> typed thing
-- SEXP chunks - get evaluated
-- ASK chunks - get sent to the collective Oracle
-- FORM chunks - also get evaluated
-others?

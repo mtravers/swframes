@@ -57,7 +57,6 @@ as(rdf, "data.frame")
     (let ((xml (frame-description-xml-1 frame))
 	  (namespace-terms 
 	   (mt:collecting
-	    (print *dereference-namespaces*)
 	    (dolist (ns *dereference-namespaces*)
 	      (mt:collect (string+ "xmlns:" ns))
 	      (mt:collect (namespace-expand ns))))))
@@ -98,7 +97,6 @@ as(rdf, "data.frame")
 	      (princ-to-string value))))
     ))
 
-
 (defun frame-xml-tag (frame)
   (multiple-value-bind (uri namespace) (abbreviate-uri (frame-uri frame))
     (unless (and namespace
@@ -107,7 +105,6 @@ as(rdf, "data.frame")
       (setf namespace (generate-namespace frame)
 	    uri (abbreviate-uri (frame-uri frame))) ;redo
       )
-;;;    (print `(ns ,namespace ,*dereference-namespaces*))
     (pushnew namespace *dereference-namespaces* :test #'equal)
     uri))	
 

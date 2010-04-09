@@ -221,7 +221,6 @@
   (setf (gethash slot (frame-slots-force frame)) value))  
 
 ;;; This is slow, but makes for convenient code
-;;; +++ should disambiguate
 (defun coerce-slot (slot frame &key (error? t))
   (when (frame-p slot) (return-from coerce-slot slot))
   (let ((s (fast-string slot)))
@@ -393,7 +392,7 @@
 
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
   (if (%slotv p #$crx:specialhandling)
-      (add-triple-special s p o)	;+++ forward call
+      (add-triple-special s p o)	
       (progn
 	(when remove-old
 	  (remove-triple s p '?o :to-db to-db :test test))
@@ -410,7 +409,7 @@
 	    (write-triple source s p o)))
 	nil)))
 
-;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet
+;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet (+++)
 (defun add-triple-special (s p o)
   (pushnew o (%slotv s p)))
 
@@ -521,7 +520,6 @@
 	  (for-frame-slots (f s v)
 			   (dolist (elt v)
 			     (when  (and (frame-p elt) (not (member elt done)))
-			       (print elt)
 			       (aif (slotv f #$rdfs:label t)
 				    (return-from find-label (format nil "~A of ~A" (frame-label s) it))
 				    (pushnew elt fringe)))))))))
@@ -540,7 +538,7 @@
 
 ;;; Write classes defined in code to a database.  This is only called by hand at the moment.
 (defun write-code-source-classes (to)
-  (with-write-group (to)		;+++ this needs to be moved after definition
+  (with-write-group (to)
     (dolist (class (slotv-inverse #$rdfs:Class #$rdf:type))
       (when (eq *code-source* (frame-source class))
 	(write-frame class :source to)))))
