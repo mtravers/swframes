@@ -41,12 +41,13 @@ as(rdf, "data.frame")
 		    :function 'dereference-server)
 
 (defun dereference-server (req ent)
-  (wb::with-http-response-and-body (req ent) 
-    (let* ((uri (net.aserve:request-query-value "uri" req))
-	   (frame (make-frame uri)))
-      (s-xml:print-xml (frame-description-xml frame) 
-		       :stream net.aserve::*html-stream*
-		       :pretty t))))
+  (net.aserve:with-http-response (req ent)
+    (net.aserve:with-http-body (req ent) 
+      (let* ((uri (net.aserve:request-query-value "uri" req))
+	     (frame (make-frame uri)))
+	(s-xml:print-xml (frame-description-xml frame) 
+			 :stream net.aserve::*html-stream*
+			 :pretty t)))))
 
 (defun frame-description-xml (frame)
   (let ((*dereference-depth* 3)

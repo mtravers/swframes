@@ -15,6 +15,8 @@
 	    :components 
 	    ((:file "package")
 	     (:file "redefinitions")))
+   #+BIOLISP
+   (:file "bio-package")
    (:file "package")
    (:file "xmlu")
    (:file "source")
@@ -29,6 +31,7 @@
    (:file "rdfs")
    (:file "session")
    (:file "dump")
+   (:file "homology")
    ;; sources
    (:file "dereference")
    (:file "dereference-server")

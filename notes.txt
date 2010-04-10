@@ -16,6 +16,7 @@ Conceptual cleanups:
 
 Random cleanups:
 - get consistent with defmethod$ over rdfs-defmethod, etc.
+- remove most references to collabrx and crx:
 
 Ideas.
 
