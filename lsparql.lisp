@@ -5,10 +5,7 @@
 	  bulk-load-query augment-query
  	  case-insensitize case-insensitize-2 
 	  post-fill
-	  *default-sparql-endpoint*
 	  *default-sparql-timeout*))
-
-(defvar *default-sparql-endpoint* nil "The SPARQL-ENDPOINT used by default if none is specified.")
 
 ;;; might want to register these somewhere
 (defun make-sparql-source (url &key writeable?)
@@ -99,9 +96,9 @@
   (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout))
 
 (defmethod do-sparql ((sparql null) (command t) &key (timeout *default-sparql-timeout*))
-  (unless *default-sparql-endpoint*
+  (unless (typep *default-frame-source* 'sparql-endpoint)
     (error "No default SPARQL endpoint defined"))
-  (do-sparql *default-sparql-endpoint* command :timeout timeout))
+  (do-sparql *default-frame-source* command :timeout timeout))
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))

@@ -22,10 +22,7 @@
 ;;; Now prepends a null so that single char names work (and start of term 
 ;;; is more significant.)
 
-;;; +++ ought to regularize this or at least eval-when it
-(defun optimization-declaration ()
-  `(declare (ccl::ignore-if-unused ignore))
-  )
+
 
 (defconstant null-char (code-char 0) "#\Null, except it's not portable")
 

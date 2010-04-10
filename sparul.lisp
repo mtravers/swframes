@@ -1,6 +1,5 @@
 (in-package :swframes)
 
-;;; see /misc/sourceforge/hg/crx_rails/lib/active_rdf_patches/active_rdf_sparul.rb
 ;;; transactions
 
 (defvar *sparul-group* nil)
@@ -49,8 +48,8 @@
       (do-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
       )))
 
-(defmethod %write-triple ((sparql t) s p o &key write-graph)
-  (%write-triple *default-sparql-endpoint* s p o :write-graph write-graph)
+(defmethod %write-triple ((sparql null) s p o &key write-graph)
+  (%write-triple *default-frame-source* s p o :write-graph write-graph)
   )
 
 ;;; +++ this isn't parallel with add-triple, so rethink names
@@ -76,7 +75,7 @@
 
 (defmethod write-frame ((frame frame) &key source (async? nil) (no-delete? nil) )
   (unless source
-    (setf source (or (frame-source frame) *default-sparql-endpoint*)))
+    (setf source (or (frame-source frame) *default-frame-source*)))
   (setf (frame-source frame) source)
   (let ((dependents (frame-dependents frame)))
     (with-write-group (source :async? async?)
@@ -109,8 +108,6 @@
 	  (rdfs-call write-triple-special slot frame val source)
 	  (write-triple source frame slot val)))))
 
-(rdfs-def-class #$crx:slots/specialSlot ())
-
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
 (defun declare-special-slot (slot type)
@@ -128,8 +125,6 @@
   (setf (slotv slot #$rdf:type) nil
         (slotv slot #$crx:specialhandling) nil)  )
 
-(rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
-
 (rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
 		(with-standard-io-syntax ;aka print-readably
 		  (let ((oo (typecase o
@@ -142,7 +137,6 @@
 			(error "Can't save nonreadable object ~A in ~A / ~A" o s p)
 			)))))
 
-(rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
 (rdfs-defmethod write-triple-special ((p #$crx:slots/TransientSlot) s o sparql)
 		(declare (ignore s o sparql))
 		)
@@ -166,7 +160,7 @@
       "Deletes frame from database, then calls DELETE-FRAME to remove from memory.")))
 
 ;;; Nuke frame from db
-(defmethod destroy-frame ((frame frame) &optional (sparql (or (frame-source frame) *default-sparql-endpoint*)))
+(defmethod destroy-frame ((frame frame) &optional (sparql (or (frame-source frame) *default-frame-source*)))
   (let ((dependents (frame-dependents frame)))
     (with-write-group (sparql)
       (delete-triple sparql frame '?p '?o)

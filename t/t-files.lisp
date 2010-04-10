@@ -48,9 +48,9 @@ Patch this into xml.lisp, long term fix is to smarten up the parser
     (setf (gethash (car e) ht) (cadr e))))
 
 ;;; try this (works with new sparql limit hack). But easier to load through virtuoso.
-(with-write-group (*default-sparql-endpoint*)
+(with-write-group (*default-frame-source*)
   (dolist (s (cdr sos))
-    (write-frame s :source *default-sparql-endpoint* :no-delete? t)))
+    (write-frame s :source *default-frame-source* :no-delete? t)))
 
 (owl-file-to-virtuoso "/misc/kbs/swan.owl" "http://collabrx.com/graphs/swan")
 (local-term-query "Journal Article")	;see if it wrote it...

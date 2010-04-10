@@ -22,10 +22,10 @@
   "Parse an OWL file into frames"
   (parse-rdf-xml-file file))		;for now
 
-(defun owl-file-to-virtuoso (file graph)
+(defun owl-file-to-virtuoso (file graph &key (source *default-frame-source*))
   (let ((frames (parse-owl-file file))
 	(writer (make-instance 'sparql-endpoint
-			       :url (sparql-endpoint-url *default-sparql-endpoint*)
+			       :url (sparql-endpoint-url source)
 			       :writeable? t
 			       :write-graph graph)))
     (dolist (f frames)

@@ -11,8 +11,10 @@ Conceptual cleanups:
 - how do add-triple etc related to the slot-level functions, sources, etc
 - dereferencing
 - fill-frame
+- default-sparql-endpoint vs default-frame-source
 - sources, especially code-source
 - classify, when does it happen
+
 
 Random cleanups:
 - get consistent with defmethod$ over rdfs-defmethod, etc.
