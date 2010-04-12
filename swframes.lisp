@@ -1,13 +1,9 @@
 (in-package :swframes)
 
-#|
-An RDF-backed frame system
-|#
-
 (export '(make-frame
 	  *default-frame-source* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
-	  most-significant-name 
+	  most-significant-name frame-id-suffix
 	  %frame-slots %frame-inverse-slots
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse frame-loaded?
@@ -47,6 +43,10 @@ An RDF-backed frame system
 
 (defun most-significant-name (string)
   (car (last (string-split string #\/))))
+
+(defun frame-id-suffix (frame)
+  (format nil "~{_~a~}" (last (puri:uri-parsed-path (puri:parse-uri (frame-uri frame)))
+			      2)))
 
 ;;; names should be reversed
 (defun %frame-slots (frame)
@@ -221,7 +221,6 @@ An RDF-backed frame system
   (setf (gethash slot (frame-slots-force frame)) value))  
 
 ;;; This is slow, but makes for convenient code
-;;; +++ should disambiguate
 (defun coerce-slot (slot frame &key (error? t))
   (when (frame-p slot) (return-from coerce-slot slot))
   (let ((s (fast-string slot)))
@@ -393,7 +392,7 @@ An RDF-backed frame system
 
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
   (if (%slotv p #$crx:specialhandling)
-      (add-triple-special s p o)	;+++ forward call
+      (add-triple-special s p o)	
       (progn
 	(when remove-old
 	  (remove-triple s p '?o :to-db to-db :test test))
@@ -410,7 +409,7 @@ An RDF-backed frame system
 	    (write-triple source s p o)))
 	nil)))
 
-;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet
+;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet (+++)
 (defun add-triple-special (s p o)
   (pushnew o (%slotv s p)))
 
@@ -528,7 +527,6 @@ An RDF-backed frame system
 	  (for-frame-slots (f s v)
 			   (dolist (elt v)
 			     (when  (and (frame-p elt) (not (member elt done)))
-			       (print elt)
 			       (aif (slotv f #$rdfs:label t)
 				    (return-from find-label (format nil "~A of ~A" (frame-label s) it))
 				    (pushnew elt fringe)))))))))
@@ -547,7 +545,21 @@ An RDF-backed frame system
 
 ;;; Write classes defined in code to a database.  This is only called by hand at the moment.
 (defun write-code-source-classes (to)
-  (with-write-group (to)		;+++ this needs to be moved after definition
+  (with-write-group (to)
     (dolist (class (slotv-inverse #$rdfs:Class #$rdf:type))
       (when (eq *code-source* (frame-source class))
 	(write-frame class :source to)))))
+
+;;; Word homolog stuff -- needs work and separating from Biolisp
+;;; Warning: setting fill? to t without limiting the target set will be pretty slow!
+(defun find-frame-by-homology (string &key (targets (all-frames)) (slot #$rdfs:label) (limit 0.6) (fill? nil))
+  (let ((cstring (utils::compile-word string)))
+    (sort (collecting
+	    (mapcar #'(lambda (frame)
+			(let ((score (utils::score-homology-fast cstring 
+								 (ssv frame slot fill?))))
+			  (when (> score limit) 
+			    (collect (list frame score (ssv frame slot nil))))))
+		    targets))
+	  #'>
+	  :key #'cadr)))

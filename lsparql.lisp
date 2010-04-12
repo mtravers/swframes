@@ -105,7 +105,6 @@
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))
-;  (print command)
   (run-sparql url command 
 	      :make-uri #'(lambda (u) (intern-uri u :source sparql))
 	      ;; this suddenly became necessary since I was geting literals back...no idea why 
@@ -256,7 +255,7 @@
 		(format nil "'''~A'''" (backslash-quote-string thing))
 		(format nil "\"~A\"" (backslash-quote-string thing))))
     (fixnum (fast-string thing))
-    (single-float (fast-string thing))	;+++ in theory these dshoudl be tagged with ^^xsd:double
+    (single-float (fast-string thing))	;+++ in theory these should be tagged with ^^xsd:double
     ;; SPARQL can't handle 3.0D3
     (double-float (fast-string (coerce thing 'single-float)))
     ;; Newish way to generate language-specific literals (ie Melanoma@en) (Melanoma :en)
@@ -420,7 +419,7 @@
     (rdfs-call post-fill frame))	;+++ should be done at higher level for non-sparql sources
   )
 
-;;; Hack
+;;; Hack +++
 (rdfs-defmethod post-fill (frame)
 		)
 
