@@ -247,7 +247,7 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
       (let ((bad-char? nil))
         (loop for ch across sstring do
               (unless (valid-frame-char? ch)
-                (error "Ruh roh. Invalid character: ~S" ch)
+                (error "Invalid character: ~S" ch)
                 (setq bad-char? t)))
         (when bad-char? 
           (error "CONCOCT-VALID-FRAME-NAME: Illegal characters found!"))))

@@ -85,7 +85,7 @@
 	(write-slot frame slot :source source :no-delete? t)) 
       ;; write out dependents
       (dolist (d dependents)
-        (write-frame d))
+        (write-frame d :source source :no-delete? no-delete?))
       ;; if we just wrote this out, then it's up to date!
       (set-frame-loaded? frame t source))
     frame))

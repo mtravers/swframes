@@ -73,6 +73,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		 (cond ((eq old o))
 		       ((null old)
 			(a! s p o))
+		       ;; ++ this needs a continuation method
 		       (t (error "~A already has ~A ~A, can't set to ~A" s p old o)))))
 	     )
       (a! class #$rdf:type #$rdfs:Class)

@@ -9,10 +9,19 @@ Dereferencing is a "frame source" of sorts...
 
 (export '(frame-source writeable? with-frame-source))
 
-(defclass frame-source ()
-  ()
+(defclass* frame-source ()
+  ((name nil)
+   (writeable? nil))
 ;  (:abstract t)
+  :initable-instance-variables
   (:documentation "A CLOS object that represents a source of frame information; possibly writeable as well.  This is an abstract class"))
+
+(defmethod* print-object ((sparql frame-source) stream)
+  (format stream "#<~A ~A ~A>" 
+	  (type-of sparql)
+	  (or name "?")
+	  (if writeable? "[w]" "[nw]")
+	  ))
 
 (defgeneric writeable? (frame-source)
   (:documentation "True if the source is capable of being written to."))
