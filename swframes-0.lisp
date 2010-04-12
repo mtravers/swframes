@@ -146,8 +146,8 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (create-valid-frame-name 
    string
    :space-char-action #\_
-   :from-chars "$&+,/:;=?@<>#%"
-   :to-chars   ".............."))
+   :from-chars "$&+,/:;=?@<>#%'^"
+   :to-chars   ".............._."))
 				   
 ;;; redo this for urls.  Source http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
 ;;; note that chars like : and / are legal for URIs, but only in a certain way...
