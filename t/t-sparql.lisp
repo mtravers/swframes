@@ -11,8 +11,8 @@
     (assert-true 
      (do-sparql *dbpedia* '(:select :all (:distinct t :limit 10) (?s #$rdf:type ?t))))
   (assert-true 
-   (member #$http://dbpedia.org/resource/Illinois
-     (do-sparql-one-var *dbpedia* '(:select (?t) (:distinct t :limit 10) (#$http://dbpedia.org/resource/Chicago #$dbpprop:subdivisionName ?t)))))
+   (member #$http://dbpedia.org/resource/Area_code_312
+     (do-sparql-one-var *dbpedia* '(:select (?t) (:distinct t :limit 10) (#$http://dbpedia.org/resource/Chicago #$dbpprop:areaCode ?t)))))
   (assert-true 
    (do-sparql *dbpedia* '(:select (?t ?f)
 				  (:distinct t :limit 10)
@@ -41,6 +41,7 @@
   (assert-true (> (length  (bulk-load-query nil linkedct-query)) 1))
   )
 
+;;; +++ clean this mess up
 ;;; Trying to track down a subtle SPARQL string quoting problem
 
 (defun test-lisp-deserialize (str)
@@ -50,8 +51,9 @@
     (declare-special-slot s #$crx:slots/LispValueSlot)
     (setf (ssv f s) str)
     (write-frame f)
+    (reset-frame f)
     (fill-frame f :force? t)
-    (assert (equal (ssv f s) str))
+    (assert-equal (ssv f s) str)
     (destroy-frame f)))
 
 ;;; Shit, problems is at an even lower level.
@@ -88,7 +90,7 @@
     (test-sparql-quoting "foo" nil nil)
     (test-sparql-quoting all-printable-chars t t)
     ;; has newline problems so doesn't pass.
-;    (test-sparql-quoting (format nil "~%foo~%bar") t t)
+    (test-sparql-quoting (format nil "~%foo~%bar") t t)
     )
   
 

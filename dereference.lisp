@@ -30,11 +30,10 @@
 ;;; try to standardize the call to this, since there are a few random things we need to do often.
 (defun parse-xml (source)
   (let* (; (s-xml::*ignore-namespaces* t)
-	 #+:CCL
 	 ;; fixes a nasty bug where tags lose their namespaces if their symbol is defined in CL!
 	 ;; not sure how to deal with this in other Lisps.
-	 (ccl:*make-package-use-defaults* nil)
-	 ) 
+	 #+:CCL (ccl:*make-package-use-defaults* nil)
+		) 
     (s-xml:parse-xml-string (adjust-sparql-string source))))
 
 #|
@@ -68,7 +67,7 @@ dereferences things en masse and brings them into a local store.
 	  ;; turns out this processes the 303 redirect without any further intervention
 	  (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
 	    (get-url url :accept "application/rdf+xml"))
-	#+:CCL (declare (ccl::ignore-if-unused response-headers uri))
+	(declare (ignore response-headers uri))
 	(unless (= response-code 200)
 	  (error "Failed to dereference ~A, response code ~A" frame response-code))
 	(let ((xml (parse-xml body)))
@@ -90,7 +89,7 @@ dereferences things en masse and brings them into a local store.
       ;; turns out this processes the 303 redirect without any further intervention
       (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" url))
         (get-url url))
-    #+:CCL (declare (ccl::ignore-if-unused response-headers uri))
+    (declare (ignore response-headers uri))
     (unless (= response-code 200)
       (error "Failed to dereference ~A, response code ~A" url response-code))
     (let ((xml (parse-xml body)))

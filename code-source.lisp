@@ -11,7 +11,7 @@
 (defmethod delete-triple ((source code-source) s p o &key write-graph)
   )
 
-;;; +++ perhaps not necessary not that we specialize %write-triple?
+;;; +++ perhaps not necessary now that we specialize %write-triple?
 (defmethod write-triple ((source code-source) s p o &key write-graph)
   )
 

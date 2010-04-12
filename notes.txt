@@ -13,6 +13,7 @@ Conceptual cleanups:
 - fill-frame
 - default-sparql-endpoint vs default-frame-source
 - sources, especially code-source
+- methodize more and be more regular about passing source
 - classify, when does it happen
 
 
