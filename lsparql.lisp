@@ -19,7 +19,6 @@
 
 (defclass* sparql-endpoint (frame-source)
   (url
-   (writeable? nil)
    (read-graph nil)			;if set, SEXP queries are limited to that graph 
    (write-graph nil))
   :initable-instance-variables
@@ -29,19 +28,14 @@
 
 ;;; Coerce strings to frames and otherwise be reasonable.
 (defmethod* initialize-instance :after ((sparql-endpoint sparql-endpoint) &rest ignore)
+	    (unless name
+	      (setf name url))
 	    (when (stringp read-graph)
 	      (setf read-graph (make-frame read-graph)))
 	    (when (stringp write-graph)
 	      (setf write-graph (make-frame write-graph)))
 	    (when write-graph
 	      (setf writeable? t)))
-
-(defmethod* print-object ((sparql sparql-endpoint) stream)
-  (format stream "#<~A ~A ~A ~A>" 
-	  (type-of sparql)
-	  url
-	  (if writeable? "[w]" "[nw]")
-	  (if read-graph (format nil "[rg: ~A]" read-graph))))
 
 (defvar *default-sparql-timeout* 30)
 

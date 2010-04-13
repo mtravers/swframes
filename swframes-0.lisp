@@ -148,8 +148,8 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (create-valid-frame-name 
    string
    :space-char-action #\_
-   :from-chars "$&+,/:;=?@<>#%"
-   :to-chars   ".............."))
+   :from-chars "$&+,/:;=?@<>#%'^"
+   :to-chars   ".............._."))
 				   
 ;;; redo this for urls.  Source http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
 ;;; note that chars like : and / are legal for URIs, but only in a certain way...
@@ -249,7 +249,7 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
       (let ((bad-char? nil))
         (loop for ch across sstring do
               (unless (valid-frame-char? ch)
-                (error "Ruh roh. Invalid character: ~S" ch)
+                (error "Invalid character: ~S" ch)
                 (setq bad-char? t)))
         (when bad-char? 
           (error "CONCOCT-VALID-FRAME-NAME: Illegal characters found!"))))
