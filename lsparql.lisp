@@ -17,6 +17,13 @@
 		 :url url
 		 :writeable? writeable?))
 
+;;; bit of a crock -- figure out a good sparql source to use.  Will go to default of from-frame is code-source.
+(defun default-sparql-source (from-frame)
+  (cond ((null from-frame) *default-sparql-endpoint*)
+	((typep (frame-source from-frame) 'sparql-endpoint)
+	 (frame-source from-frame))
+	(t *default-sparql-endpoint*)))
+
 (defclass* sparql-endpoint (frame-source)
   (url
    (read-graph nil)			;if set, SEXP queries are limited to that graph 

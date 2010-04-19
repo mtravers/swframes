@@ -10,14 +10,18 @@
 (defvar *dereference-source* (make-instance 'dereference-source))
 
 ;;; Done in memory, so nothing more to do
-;;; +++ alternative: make this an error.
 (defmethod delete-triple ((source dereference-source) s p o &key write-graph)
+  (declare (ignore s p o write-graph))
+  (error "Can't write to dereference source")
   )
 
 (defmethod write-triple ((source dereference-source) s p o &key write-graph)
+  (declare (ignore s p o write-graph))
+  (error "Can't write to dereference source")
   )
 
 (defmethod fill-frame-from (frame (source dereference-source) &key inverse?)
+  (declare (ignore inverse?))
   (dereference frame t)
   )
 

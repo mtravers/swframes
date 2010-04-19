@@ -154,13 +154,6 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 (defun rdfs-make-instance (class &rest slots)
   (apply #'make-instance$ class slots))
 
-;;; bit of a crock -- figure out a good sparql source to use.  Will go to default of from-frame is code-source.
-(defun default-sparql-source (from-frame)
-  (cond ((null from-frame) *default-sparql-endpoint*)
-	((typep (frame-source from-frame) 'sparql-endpoint)
-	 (frame-source from-frame))
-	(t *default-sparql-endpoint*)))
-
 (defun rdfs-find (value &key slot class (source (default-sparql-source class))
 		  word? fill? case-insensitize? limit from)
   #.(doc
@@ -181,7 +174,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
       (mapc #'(lambda (r) (set-frame-class r class)) result))
     result))
 
-;;; generalize to multiple slot/values.  +++
+;;; generalize to multiple slot/values.  ++
 (defun rdfs-find-sparql (value &key slot class word? limit from)
   (let ((vvar (if word? (gensym "?V"))))
     `(:select (?s) (:distinct t :limit ,limit :from ,from)
