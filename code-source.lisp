@@ -14,7 +14,6 @@
 (defmethod write-triple ((source code-source) s p o &key write-graph)
   )
 
-;;; CCC this is getting called from compile, no idea why
 (defmethod make-load-form ((source code-source) &optional env)
   `(or *code-source*
        (setf *code-source* (make-instance 'code-source))))

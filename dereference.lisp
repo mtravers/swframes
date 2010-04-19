@@ -74,12 +74,10 @@ dereferences things en masse and brings them into a local store.
 	  (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
 	    (get-url url :accept "application/rdf+xml"))
 	#+:CCL (declare (ccl::ignore-if-unused response-headers uri))
-;;;	(print `(response-code ,response-code response-headers ,response-headers ,uri))
 	(unless (= response-code 200)
 	  (error "Failed to dereference ~A, response code ~A" frame response-code))
 	(let ((xml (parse-xml body)))
 	  (process-rdf-xml xml :source *dereference-source*)))
-    ;; +++ actually could parse rdf out of html if we were ambitious
     (s-xml:xml-parser-error (e)
       (declare (ignore e))
       (warn "Attempt to dereference ~A got non-XML response" frame)
@@ -98,7 +96,6 @@ dereferences things en masse and brings them into a local store.
       (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" url))
         (get-url url))
     #+:CCL (declare (ccl::ignore-if-unused response-headers uri))
-;;;    (print `(response-code ,response-code response-headers ,response-headers ,uri))
     (unless (= response-code 200)
       (error "Failed to dereference ~A, response code ~A" url response-code))
     (let ((xml (parse-xml body)))
@@ -128,12 +125,11 @@ dereferences things en masse and brings them into a local store.
 		 (setf thing (translate-symbol thing)))
 	       (intern-uri (full-uri thing) :source source))
              (add-value (v frame slot)
-;;;	       (print `(add-triple ,frame ,slot ,v))
                (add-triple frame slot v)
                )
              ;; +++ probably wants to be pulled out, this is a fundamental piece of RDF unfortunately
              (make-blank-node (type)
-               (->frame (format nil "bnode:~A" (gensym (symbol-name type)))))
+               ( ->frame (format nil "bnode:~A" (gensym (symbol-name type)))))
 	     ;; no idea if this is to spec...
 	     (full-uri (thing)
 	       (cond ((position #\: thing)
@@ -143,7 +139,6 @@ dereferences things en masse and brings them into a local store.
 		     (base (string+ base "#" thing))
 		     (t (error "Can't turn ~A into full uri" thing))))
              (process-description (desc &optional top)
-;;;	       (print `(process-description ,desc))
                (let* ((about0 (or (lxml-attribute desc '|rdf|::|about|)
                                   (and (lxml-attribute desc '|rdf|::|ID|)
                                        base
@@ -153,9 +148,7 @@ dereferences things en masse and brings them into a local store.
                                  (make-blank-node (lxml-tag desc))
                                  )))
                  (when top
-                   (push about top-frames)
-;;;		   (print `(about ,about))
-                   )
+                   (push about top-frames))
                  (unless (eq (lxml-tag desc) '|rdf|::|Description|)
                    (add-value (->frame (lxml-tag desc)) about (->frame '|rdf|::|type|)))
                  (dolist (elt (lxml-all-subelements desc))
@@ -176,8 +169,7 @@ dereferences things en masse and brings them into a local store.
 			     (let ((datatype (lxml-attribute elt '|rdf|::|datatype|))
 				   (value (cadr elt)))
 			       (when datatype (setq datatype (intern-uri datatype))) ;need to do this because namespaces apply
-;;;			       (print `(value ,value datataype ,datatype))
-			       ;; +++ highly incomplete list of datatypes, but enough to get unit test working.
+			       ;; ++ highly incomplete list of datatypes, but enough to get unit test working.
 			       ;; see: http://www.w3.org/TR/2001/REC-xmlschema-2-20010502/#built-in-datatypes
 			       (cond ((null datatype))
 				     ((member datatype '(#$xsd:integer #$xsd:int #$xsd:long #$xsd:double #$xsd:float))
@@ -203,7 +195,6 @@ dereferences things en masse and brings them into a local store.
 			(com (car splits))
 			(ns (cadr splits))
 			(full (cadr namespaces)))
-;		   (print `(ns2 ,com ,ns ,full))
 		   (cond ((equal com "xmlns")
 			  (if (null ns)
 			      (setq base full)

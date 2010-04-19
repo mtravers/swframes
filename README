@@ -1,5 +1,12 @@
 An RDF-backed frame system for Common Lisp.
 
+Authors:
+Mike Travers
+David Sobeck
+Randy Gobbel
+
+Incorporates some code and ideasfrom BioBike, http://biobike.org
+
 
 
 

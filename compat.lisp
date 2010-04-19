@@ -1,11 +1,11 @@
 (in-package :swframes)
 
 #|
-The code here attempts to match the API of the older frame system.  As you might expect, it sort of works but there
+The code here attempts to match the API of the older BioBike frame system.  As you might expect, it sort of works but there
 are many rough edges.
 
 If you patch the web code by hand (see the end of this file) it works well enough for the old BioBike frame browser
-to run
+to run.
 |#
 
 (defun frames::make-frame (string)
@@ -38,7 +38,7 @@ to run
 (defun frames::slot-index (slot)
   nil)
 
-;;; +++ this redefinition doesn't work unless you recompile uses, because it's a macro 
+;;; this redefinition doesn't work unless you recompile uses, because it's a macro 
 (defmacro frames::for-all-frames ((var) &body body)
   `(for-all-frames (,var) ,@body))
 
@@ -48,11 +48,11 @@ to run
 (defun frames::isframe? (x)
   (frame-p x))
 
-;;; +++ no-op for now
+;;; no-op for now
 (defun frames::create-inverse-slot (inverse-slot slot pf af)
   )
 
-;;; +++ no-op for now
+;;; no-op for now
 (defun frames::defslot 
        (frame 
         &key

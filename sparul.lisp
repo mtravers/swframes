@@ -26,7 +26,6 @@
        (when (and clauses
 		  (not prior-group))
 	 (flet ((do-it ()
-;		  (print `(clauses ,clauses))
 		  (do-sparql endpoint
 		    (with-output-to-string (out)
 		      (dolist (s clauses)
@@ -37,23 +36,6 @@
 	       (do-it)))))
      retval))
 
-;;; CCC Why is this still here? Should combine into do-write-group
-(defmethod do-grouped-sparul ((sparql sparql-endpoint) string)
-  (if (and *sparul-group*
-           (eq sparql (car *sparul-group*)))
-      (progn
-        (push-end string (cadr *sparul-group*))
-        (when (> (length (cadr *sparul-group*)) *sparul-group-limit*)
-          (do-sparql (car *sparul-group*)
-            (with-output-to-string (out)
-              (dolist (s (cadr *sparul-group*))
-                (write-string s out)
-                (terpri out))))
-          (setf (cadr *sparul-group*) nil)))
-      ;; otherwise do immediately
-      (do-sparql sparql string)))
-
-;;; Note: write-graph is argument as well as slot. defmethod* now ignores slot in this case, so we have to handle it specially.
 (defmethod* write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (assert writeable?)
   (if (%slotv p #$crx:specialhandling)
@@ -63,8 +45,8 @@
 
 (defmethod %write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (let ((write-graph (or write-graph (slot-value sparql 'write-graph))))
-    (do-grouped-sparul sparql
-      (generate-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
+    (with-write-group (sparql)
+      (do-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
       )))
 
 (defmethod %write-triple ((sparql t) s p o &key write-graph)
@@ -74,8 +56,8 @@
 ;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod delete-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (let ((write-graph (or write-graph (slot-value sparql 'write-graph))))
-    (do-grouped-sparul sparql
-      (generate-sparql sparql `(:delete (,s ,p ,o) (:from ,write-graph)))
+    (with-write-group (sparql)
+      (do-sparql sparql `(:delete (,s ,p ,o) (:from ,write-graph)))
       )))
 
 ;;; default these

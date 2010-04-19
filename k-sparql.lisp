@@ -8,9 +8,10 @@
   (multiple-value-bind (body response headers)
       (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" endpoint))
 	(get-url endpoint
-		 ;; some sparql servers only accept GET, we should parameterize this (+++)
+		 ;; some sparql servers only accept GET, we should parameterize this (++)
 		 :method :post
-					;       :accept '("application/rdf+xml")
+;;; breaks Virtuoso
+;;;		 :accept '("application/rdf+xml")
 		 :query `(("query" . ,sparql)
 			  ;; json is more efficient -- and we have json parser (++)
 			  ("format" . "xml")
