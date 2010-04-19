@@ -16,7 +16,6 @@
 	    ((:file "package")
 	     (:file "redefinitions")))
    (:file "package")
-   (:file "xmlu")
    (:file "source")
    (:file "code-source")
    (:file "swframes-0")
