@@ -31,9 +31,10 @@
 (define-test discover-subclasses
   (let* ((*namespace-leniant* t)	;necessary because there are some hinky results
 	 (source (make-instance 'sparql-endpoint :url "http://www.rdfabout.com/sparql"))
-	 (classes (discover-classes source))
+	 (classes (discover-classes source :method :class-typed :fill? t))
 	 (instance
 	  (car (rdfs-find :all :class #$http://www.rdfabout.com/rdf/schema/usgovt/Village :source source :limit 1))))
+    (print classes)
     ;; Check that instance is a member not only of Village but also one of its superclasses
     (assert-true (typep instance (class-name (rdfs-clos-class #$http://www.rdfabout.com/rdf/schema/politico/Organization))))))
     

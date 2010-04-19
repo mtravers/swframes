@@ -53,12 +53,13 @@
       ;; otherwise do immediately
       (do-sparql sparql string)))
 
+;;; Note: write-graph is argument as well as slot. defmethod* now ignores slot in this case, so we have to handle it specially.
 (defmethod* write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (assert writeable?)
   (if (%slotv p #$crx:specialhandling)
       (rdfs-call write-triple-special p s o sparql) ;+++ deal with write-graph here
       ;; normal
-      (%write-triple sparql s p o :write-graph write-graph)))
+      (%write-triple sparql s p o :write-graph (or write-graph (slot-value sparql 'write-graph)))))
 
 (defmethod %write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (let ((write-graph (or write-graph (slot-value sparql 'write-graph))))

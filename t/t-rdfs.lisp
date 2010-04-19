@@ -22,9 +22,10 @@
     (assert-false (rdfs-classp i1 #$crx:TestClass2))
     ))
 
+(def-namespace "ftc" "http://collabrx.com/frametestcase/")
+
 ;;; Tests that lists can be passed as args to rdfs-make-instance and range checking happens properly
 (define-test randy
-  (def-namespace "ftc" "http://collabrx.com/frametestcase/")
   (rdfs-def-class #$ftc:Thing ())
   (rdfs-def-class #$ftc:ThingSet ()
 		  (#$ftc:slots/things :range #$ftc:Thing))

@@ -12,8 +12,8 @@
 		 :method :post
 					;       :accept '("application/rdf+xml")
 		 :query `(("query" . ,sparql)
-                                        ; more efficient probably, but requires a JSON parser
-                                        ;            ("format" . "json")
+			  ;; json is more efficient -- and we have json parser (++)
+			  ("format" . "xml")
 			  )))
     (declare (ignore headers))
     (unless (= response 200)

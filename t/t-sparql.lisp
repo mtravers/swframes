@@ -93,3 +93,22 @@
   
 
   
+
+#|
+Here's a list of endpoints:
+http://esw.w3.org/SparqlEndpoints
+
+(discover-classes (make-instance 'sparql-endpoint :url "http://api.talis.com/stores/periodicals/services/sparql") )
+
+;;; Returns JSON!
+(discover-classes (make-instance 'sparql-endpoint :url "http://zbw.eu/beta/sparql"))
+
+;;; times out
+(discover-classes (make-instance 'sparql-endpoint :url "http://lod.openlinksw.com/sparql/") :limit 20)
+
+;;; works,
+(discover-classes (make-instance 'sparql-endpoint :url "http://services.data.gov.uk/transport/sparql") :limit 20)
+
+
+
+|#
