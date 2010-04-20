@@ -1,28 +1,20 @@
 (in-package :swframes)
 
-(export '(sparql-endpoint make-sparql-source
+(export '(sparql-endpoint 
 	  do-sparql do-sparql-one-var
 	  bulk-load-query augment-query
  	  case-insensitize case-insensitize-2 
 	  post-fill
-	  *default-sparql-endpoint*
 	  *default-sparql-timeout*))
-
-(defvar *default-sparql-endpoint* nil "The SPARQL-ENDPOINT used by default if none is specified.")
-
-;;; might want to register these somewhere
-(defun make-sparql-source (url &key writeable?)
-  "Make a SPARQL endpoint for a given URL"
-  (make-instance 'sparql-endpoint
-		 :url url
-		 :writeable? writeable?))
 
 ;;; bit of a crock -- figure out a good sparql source to use.  Will go to default of from-frame is code-source.
 (defun default-sparql-source (from-frame)
-  (cond ((null from-frame) *default-sparql-endpoint*)
+  (cond ((null from-frame) *default-frame-source*)
 	((typep (frame-source from-frame) 'sparql-endpoint)
 	 (frame-source from-frame))
-	(t *default-sparql-endpoint*)))
+	((typep (frame-source from-frame) *default-frame-source*)
+	 *default-frame-source*)
+	(t (error "Can't figure out a SPARQL endpoint"))))
 
 (defclass* sparql-endpoint (frame-source)
   (url
@@ -93,16 +85,17 @@
 (defmethod do-sparql :around ((sparql string) (command t) &key timeout)
   (declare (ignore timeout))
   (if *sparql-performance-monitor*
-      (ccl::report-time command #'(lambda () (call-next-method))) 
+      #+:ccl (ccl::report-time command #'(lambda () (call-next-method)))
+      #-:ccl (error "Don't know how to time monitoring in this Lisp implementation")
       (call-next-method)))
 
 (defmethod do-sparql ((sparql string) (command t) &key (timeout *default-sparql-timeout*))
   (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout))
 
 (defmethod do-sparql ((sparql null) (command t) &key (timeout *default-sparql-timeout*))
-  (unless *default-sparql-endpoint*
+  (unless (typep *default-frame-source* 'sparql-endpoint)
     (error "No default SPARQL endpoint defined"))
-  (do-sparql *default-sparql-endpoint* command :timeout timeout))
+  (do-sparql *default-frame-source* command :timeout timeout))
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
 (defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))
@@ -274,32 +267,8 @@
 ;       (fast-string thing)
        )))
 
-;;; Virtuoso requires this
 (defun backslash-quote-string (s)
   (string-replace s "\\" "\\\\"))
-
-#| for later
-		 ((frame-p el)
-		  (multiple-value-bind (string ns) (abbreviate-uri (frame-uri el) :sparql)
-		    (if ns
-			(progn 
-			  (pushnew ns *sparql-namespace-uses* :test 'equal)
-			  string)
-			(format nil "<~a>" (frame-uri el)))))
-
-
-		  (let ((transformed (expand-uri el)))
-		    (if (eq el transformed)
-			(cond ((stringp el)
-			       (format nil "~s" el))
-			      ((and (integerp el) (minusp el))
-			       (format nil "\"~A\"^^<http://www.w3.org/2001/XMLSchema#integer>" el))
-			      (t el))
-			(format nil "<~a>" transformed)))))))
-
-
-
-|#
 
 (defun emit-sparql-clause (clause s)
   (flet ((maybe-format-uri (el)
@@ -482,7 +451,7 @@
 		(declare (ignore frame value))
 		nil)
 
-;;; +++ this can time out without the limit, but of course it produces incorrect results.  Maybe ths should only be done on demand.
+;;; +++ this can time out without the limit, but of course with it, it produces incorrect results.  Maybe ths should only be done on demand.
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
   (unless (frame-inverse-slots frame)
     (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
@@ -492,7 +461,7 @@
 		       `(:select (?s ?p) (:limit 100) (?s ?p ,frame))))
       (let ((p (sparql-binding-elt binding "p"))
 	    (s (sparql-binding-elt binding "s")))
-	(when (and s p)			;+++ shouldn't be necessary but some SPARQL endpoints have missing results (dbpedia)
+	(when (and s p)	; shouldn't be necessary but some SPARQL endpoints have missing results (dbpedia)
 	  (add-triple s p frame))
       ))))
 
@@ -505,8 +474,7 @@
   (and (symbolp thing)
        (char= #\? (char (string thing) 0))))
 
-;;; +++ not working in all cases, see drugs-for-genes1
-;;; +++ also too slow
+;;; Rather slow
 (defun case-insensitize (query)
   "Given a SPARLQ query, convert all string literal objects into case-insensitive regex searches."
   (Setq query (copy-tree query))
@@ -552,27 +520,22 @@
 	 ,(caddr query)
 	 ,@(mapcar #'modify-clause (nthcdr 3 query)))))
 
-;;; +++ could be generalized for other dependent properties
-;;; OPTIONAL could be optional
-(defun include-labels (vars query)
-  ;; this defaulting of vars is almost never the right thing.  Also, won't deal with :optional and other constructs
-  (unless vars
-    (setq vars
-	  (collecting 
-	   (dolist (clause (nthcdr 3 query))
-	     (when (var-p (third clause))
-	       (collect-new (third clause)))
-	     (when (var-p (first clause))
-	       (collect-new (first clause)))
-	     ))))
+(defun include-labels (vars query &key (property #$rdfs:label) required?)
+  #.(doc "Add an optional label (or other PROPERTY) clause to QUERY for each var in VARS."
+	 "Labels are returned in the variables VAR_label."
+	 "If REQUIRED? is T, property must be present for any result to be returned." )
   (setq query (copy-tree query))
   (dolist (var vars)
-    (let ((label-var (intern (string+ (string var) "_label") :keyword)))
+    (let* ((label-var (intern (string+ (string var) "_label") :keyword))
+	   (clause `(,var ,property ,label-var)))
       (push-end label-var (second query))
-      (push-end `(:optional (,var #$rdfs:label ,label-var)) query)))
+      (push-end (if required?
+		    clause
+		    `(:optional ,clause))
+		query)))
   query)
 
-;;; An extension to do this to n levels might be useful.
+;;; An extension to do this to n levels might be useful (++).
 ;;; Fill-frame is n=0.  
 ;;; return-all-results? is not currently used
 (defun bulk-load-query (source query &key (var (car (second query))) return-all-results?)

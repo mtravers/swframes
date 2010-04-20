@@ -12,10 +12,12 @@
     (assert-true (typep is (type-of ib)))
     (assert-true (typep is (type-of random-frame)))))
 
-;;; depends on CRX database.
+(defvar *drugbank-frame-source* (make-instance 'sparql-endpoint :url "http://www4.wiwiss.fu-berlin.de/drugbank/sparql"))
+
+;;; depends on drugbank database
 (define-test rdfs-find-classify 
-    (let ((patients (rdfs-find :all :class #$crx:Patient)))
-      (assert-true (typep (car patients) ':|http://collabrx.com/rdf/Patient|))))
+  (let ((drugs (rdfs-find :all :source *drugbank-frame-source* :class #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugs :limit 10)))
+    (assert-true (typep (car drugs) :|http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugs|))))
 
 ;;; depends on drugbank database
 (define-test discover-basic

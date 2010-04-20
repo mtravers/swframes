@@ -3,7 +3,6 @@
 (export '(rdfs-def-class rdfs-make-instance 
 	  rdfs-classes rdfs-classp rdfs-subclasses
 	  rdfs-defmethod rdfs-call rdfs-find
-
 	  defclass$ defmethod$ make-instance$
 	  ))
 

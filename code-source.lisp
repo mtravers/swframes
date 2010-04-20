@@ -11,7 +11,11 @@
 (defmethod delete-triple ((source code-source) s p o &key write-graph)
   )
 
+;;; +++ perhaps not necessary now that we specialize %write-triple?
 (defmethod write-triple ((source code-source) s p o &key write-graph)
+  )
+
+(defmethod %write-triple ((source code-source) s p o &key write-graph)
   )
 
 (defmethod make-load-form ((source code-source) &optional env)

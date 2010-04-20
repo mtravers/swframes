@@ -172,7 +172,7 @@ Tests:
 (fill-sframe f2)
 
 
-(defvar *bio2df-server* (make-sparql-source "http://lod.openlinksw.com/sparql"))
+(defvar *bio2df-server* (make-instance 'sparql-endpoing :url "http://lod.openlinksw.com/sparql"))
 
 (describe-sframe (intern-uri "http://data.linkedct.org/resource/trials/NCT00123435"))
 

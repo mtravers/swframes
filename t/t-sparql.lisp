@@ -3,7 +3,7 @@
 (register-namespace "dbpprop" "http://dbpedia.org/property/") 
 
 (define-test sparql-sanity
-    (assert-true (sanity-check *default-sparql-endpoint*)))
+    (assert-true (sanity-check *default-frame-source*)))
 
 (defvar *dbpedia* (make-instance 'sparql-endpoint :url "http://dbpedia.org/sparql"))
 
@@ -11,8 +11,8 @@
     (assert-true 
      (do-sparql *dbpedia* '(:select :all (:distinct t :limit 10) (?s #$rdf:type ?t))))
   (assert-true 
-   (member #$http://dbpedia.org/resource/Illinois
-     (do-sparql-one-var *dbpedia* '(:select (?t) (:distinct t :limit 10) (#$http://dbpedia.org/resource/Chicago #$dbpprop:subdivisionName ?t)))))
+   (member #$http://dbpedia.org/resource/Area_code_312
+     (do-sparql-one-var *dbpedia* '(:select (?t) (:distinct t :limit 10) (#$http://dbpedia.org/resource/Chicago #$dbpprop:areaCode ?t)))))
   (assert-true 
    (do-sparql *dbpedia* '(:select (?t ?f)
 				  (:distinct t :limit 10)
@@ -41,17 +41,19 @@
   (assert-true (> (length  (bulk-load-query nil linkedct-query)) 1))
   )
 
+;;; +++ clean this mess up
 ;;; Trying to track down a subtle SPARQL string quoting problem
 
 (defun test-lisp-deserialize (str)
   (let ((f (gen-test-frame))
 	(s (gen-test-frame "crx:slot")))
-    (setf (frame-source f) *default-sparql-endpoint*)
+    (setf (frame-source f) *default-frame-source*)
     (declare-special-slot s #$crx:slots/LispValueSlot)
     (setf (ssv f s) str)
     (write-frame f)
+    (reset-frame f)
     (fill-frame f :force? t)
-    (assert (equal (ssv f s) str))
+    (assert-equal (ssv f s) str)
     (destroy-frame f)))
 
 ;;; Shit, problems is at an even lower level.
@@ -62,17 +64,17 @@
 	(mstr (if quoting?
 		  (backslash-quote-string str)
 		  str)))
-    (do-sparql *default-sparql-endpoint*
+    (do-sparql *default-frame-source*
       (format nil
 	      (if triple?
 		  "INSERT INTO GRAPH <http://collabrx.com/main> { <~A> <~A> '''~A''' }"
 		  "INSERT INTO GRAPH <http://collabrx.com/main> { <~A> <~A> \"~A\" }")
 	      (frame-uri f) (frame-uri s) mstr))
     (let ((res
-	   (do-sparql *default-sparql-endpoint* (format nil "SELECT * WHERE { <~A> <~A> ?o }" (frame-uri f) (frame-uri s)))))
+	   (do-sparql *default-frame-source* (format nil "SELECT * WHERE { <~A> <~A> ?o }" (frame-uri f) (frame-uri s)))))
       (assert-equal str (cadr (car (car res))))
       )
-    (destroy-frame f *default-sparql-endpoint*)))
+    (destroy-frame f *default-frame-source*)))
 
 (defun all-chars ()
   (coerce 
@@ -88,7 +90,7 @@
     (test-sparql-quoting "foo" nil nil)
     (test-sparql-quoting all-printable-chars t t)
     ;; has newline problems so doesn't pass.
-;    (test-sparql-quoting (format nil "~%foo~%bar") t t)
+    (test-sparql-quoting (format nil "~%foo~%bar") t t)
     )
   
 

@@ -3,7 +3,7 @@
 (export '(make-frame
 	  *default-frame-source* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
-	  clean-string most-significant-name frame-id-suffix
+	  create-valid-frame-name clean-string most-significant-name frame-id-suffix
 	  %frame-slots %frame-inverse-slots
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse frame-loaded?
@@ -543,16 +543,4 @@
       (when (eq *code-source* (frame-source class))
 	(write-frame class :source to)))))
 
-;;; Word homolog stuff -- needs work and separating from Biolisp
-;;; Warning: setting fill? to t without limiting the target set will be pretty slow!
-(defun find-frame-by-homology (string &key (targets (all-frames)) (slot #$rdfs:label) (limit 0.6) (fill? nil))
-  (let ((cstring (utils::compile-word string)))
-    (sort (collecting
-	    (mapcar #'(lambda (frame)
-			(let ((score (utils::score-homology-fast cstring 
-								 (ssv frame slot fill?))))
-			  (when (> score limit) 
-			    (collect (list frame score (ssv frame slot nil))))))
-		    targets))
-	  #'>
-	  :key #'cadr)))
+
