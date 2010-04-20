@@ -12,7 +12,7 @@
   (cond ((null from-frame) *default-frame-source*)
 	((typep (frame-source from-frame) 'sparql-endpoint)
 	 (frame-source from-frame))
-	((typep (frame-source from-frame) *default-frame-source*)
+	((typep *default-frame-source* 'sparql-endpoint)
 	 *default-frame-source*)
 	(t (error "Can't figure out a SPARQL endpoint"))))
 

@@ -485,14 +485,21 @@
 	  (setf (ssv frame #$crx:slots/last_child) n)
 	  (intern-uri uri)))))
 
-(defun frame-copy (frame &key deep-slots omit-slots (uri-generator #'default-uri-generator))
+(defun frame-delete-slot (frame slot)
+  (let ((v (slotv frame slot)))
+    (remhash slot (frame-slots frame))
+    (dolist (velt v)
+      (when (frame-p velt)
+	(deletef frame (%slotv-inverse velt slot))))))
+
+(defun frame-copy (frame &key new-frame deep-slots omit-slots (uri-generator #'default-uri-generator))
   #.(doc "Make a new frame by copying the contents of FRAME."
 	 "Slots listed in omit-slots are not copied."
 	 "Slots listed in DEEP-SLOTS or marked with #$crx:slots/deep-copy will have copies made of their contents, otherwise a shallow copy is performed.")
   (if (not (frame-p frame))
       frame				;nonframes remain the same (makes recursion easier)
-      (let ((nframe (funcall uri-generator frame)))
-	(setf (frame-loaded? nframe) t)
+      (let ((nframe (or new-frame (funcall uri-generator frame))))
+	(setf (frame-loaded? nframe) t)	;???
 	(maphash #'(lambda (slot value)
 		     (cond ((member slot omit-slots))
 			   ((or (member slot deep-slots)

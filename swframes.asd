@@ -30,6 +30,7 @@
    (:file "rdfs")
    (:file "session")
    (:file "dump")
+   (:file "versioning")
    (:file "homology")
    ;; sources
    (:file "dereference")
