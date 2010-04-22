@@ -59,20 +59,7 @@
   (and (frame-inverse-slots frame)
        (hash-keys (frame-inverse-slots frame))))
 
-(defmacro for-frame-slots ((frame slot value) &body body)
-  "Iterate BODY over all slots of a frame, successively binding SLOT and VALUE vars"
-  `(and (frame-slots ,frame)
-	(maphash #'(lambda (,slot ,value)
-		     #+CCL (declare (ccl::ignore-if-unused ,slot ,value))
-		     ,@body)
-		 (frame-slots ,frame))))
-
-(defmacro for-frame-inverse-slots ((frame slot value) &body body)
-  "Iterate BODY over all inverse slots of a frame, successively binding SLOT and VALUE vars"
-  `(and (frame-inverse-slots ,frame)
-	(maphash #'(lambda (,slot ,value)
-		     ,@body)
-		 (frame-inverse-slots ,frame))))
+;;; for-frame-slots and for-frame-inverse-slots moved to swframes-0
 
 (defmacro for-all-frames ((var) &body body)
   "Map BODY over all known frames"
@@ -551,3 +538,4 @@
 	(write-frame class :source to)))))
 
 
+	 

@@ -59,5 +59,8 @@
 				  (not (member elt frames)))
 			     (collect-new elt)))))))
 			      
-				   
-			      
+;;; Fasl dump
+(defvar *fasl-dump-temp*)
+(defun dump-frames-to-fasl (frames file)
+  (setq *fasl-dump-temp* frames)
+  (dump-vars-to-file (list '*fasl-dump-temp*) file))
