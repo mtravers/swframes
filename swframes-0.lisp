@@ -273,7 +273,8 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
 		     ,@body)
 		 (frame-inverse-slots ,frame)))))
 
-;;; Now with contents!  But need to do dependencies probably.
+;;; Now with contents!  
+
 (defmethod make-load-form ((frame frame) &optional ignore)
   (declare (ignore ignore))
   (values
