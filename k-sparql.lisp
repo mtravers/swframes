@@ -3,7 +3,7 @@
 ;;; From Knewos, the lower level sparql parts
 
 ;;; Raw SPARQL, return string
-(defun run-sparql-0 (endpoint sparql &key timeout)
+(defun run-sparql-0 (endpoint sparql &key timeout (format "xml"))
   (unless timeout (setf timeout 10000))
   (multiple-value-bind (body response headers)
       (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" endpoint))
@@ -14,7 +14,7 @@
 ;;;		 :accept '("application/rdf+xml")
 		 :query `(("query" . ,sparql)
 			  ;; json is more efficient -- and we have json parser (++)
-			  ("format" . "xml")
+			  ("format" . ,format)
 			  )))
     (declare (ignore headers))
     (unless (= response 200)
