@@ -3,7 +3,7 @@
 (export '(make-frame
 	  *default-frame-source* *fill-by-default?*
 	  frame frame-p frame-name frame-named frame-label frame-uri intern-uri
-	  create-valid-frame-name clean-string most-significant-name frame-id-suffix
+	  clean-string most-significant-name frame-id-suffix ;create-valid-frame-name conflicts with biolisp
 	  %frame-slots %frame-inverse-slots
 	  reset-frames for-all-frames all-frames
 	  fill-frame fill-frame-inverse frame-loaded?
