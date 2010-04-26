@@ -3,7 +3,7 @@
 ;;; From Knewos, the lower level sparql parts
 
 ;;; Raw SPARQL, return string
-(defun run-sparql-0 (endpoint sparql &key timeout (format "xml"))
+(defun run-sparql-0 (endpoint sparql &key timeout (result-format "xml"))
   (unless timeout (setf timeout 10000))
   (multiple-value-bind (body response headers)
       (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" endpoint))
@@ -14,7 +14,7 @@
 ;;;		 :accept '("application/rdf+xml")
 		 :query `(("query" . ,sparql)
 			  ;; json is more efficient -- and we have json parser (++)
-			  ("format" . ,format)
+			  ("format" . ,result-format)
 			  )))
     (declare (ignore headers))
     (unless (= response 200)
@@ -27,14 +27,17 @@
   (cond ((char= #\< (char s 0))
 	 s)
 	((minusp limit)
-	 (error "Bad XML string: ~A" s))
+	 (error "Bad SPARQL string: ~A" s))
 	(t (adjust-sparql-string (subseq s 1) (1- limit)))))
 
+(defgeneric run-sparql (endpoint sparql result-format &key make-uri eager-make-uri? timeout))
+
 ;;; eager-make-uri? causes literals to be converted to URIs if they look like one
-(defun run-sparql (endpoint sparql &key (make-uri #'identity) eager-make-uri? timeout)
+(defmethod run-sparql (endpoint sparql (result-format (eql :xml))
+			&key (make-uri #'identity) eager-make-uri? timeout)
   (let* ((s-xml:*ignore-namespaces* t)
          (xml (s-xml:parse-xml-string
-               (adjust-sparql-string (run-sparql-0 endpoint sparql :timeout timeout))
+               (adjust-sparql-string (run-sparql-0 endpoint sparql :timeout timeout :result-format "xml"))
                :output-type :lxml))
          (vars (mapcar #'(lambda (var-elt)
                            (lxml-attribute var-elt :|name|))
@@ -69,7 +72,44 @@
         (push row-result results)))
     (values (nreverse results) vars)))
 
+(defmacro geta (key al) `(cdr (assoc ,key ,al)))
 
+(defmethod run-sparql (endpoint sparql (result-format (eql :json))
+			  &key (make-uri #'identity) eager-make-uri? timeout)
+  (let* ((json (json:decode-json-from-string
+		(run-sparql-0 endpoint sparql :timeout timeout :result-format "json")))
+	 (vars (geta :vars (geta :head json)))
+	 (results nil))
+    (dolist (bindings (geta :bindings (geta :results json)))
+      (let ((row-result nil))
+	(dolist (binding bindings)
+	  ;;(format t "b=~a, datatype=~a~%" binding (geta :datatype (cdr binding)))
+	  (let* ((name (string-downcase (symbol-name (car binding))))
+		 (brest (cdr binding))
+		 (type (intern (string-upcase (geta :type brest)) (find-package :keyword)))
+		 (value-elt (geta :value brest))
+		 (value
+		  (cond ((or (eq type :uri)
+			     (string-prefix-equals value-elt "nodeID:")
+			     (and eager-make-uri?
+				  (string-prefix-equals value-elt "http://")))
+			 (funcall make-uri value-elt))
+			((and (eq type :typed-literal)
+			      (equal (geta :datatype brest)
+				     "http://www.w3.org/2001/XMLSchema#integer"))
+			 (parse-integer value-elt))
+			((and (eq type :typed-literal)
+			      (equal (geta :datatype brest)
+				     "http://www.w3.org/2001/XMLSchema#double"))
+			 (read-from-string value-elt))
+			;; +++ other datatypes?
+			((eq type :bnode)
+			 ;; we do this for bnodes, although it's not really correct -- you could have two colliding. +++
+			 (funcall make-uri (string+ "bnode:" value-elt)))
+			(t value-elt))))
+	    (push (list name value) row-result)))
+	(push row-result results)))
+    (values (nreverse results) vars)))
 
 
 
@@ -86,7 +126,7 @@
         *ec2-agraph-sparql-server*))
 
 (defun server-alive (server)
-  (run-sparql server "select * where {?s ?p ?o} limit 10"))
+  (run-sparql server "select * where {?s ?p ?o} limit 10" :xml))
 
 (defun servers-alive ()
   (mapcar #'(lambda (server)
@@ -97,7 +137,7 @@
 
 (defun server-statement-count (server)
   (report-and-ignore-errors
-    (run-sparql server "select count(*) where {?s ?p ?o}")))
+    (run-sparql server "select count(*) where {?s ?p ?o}" :xml)))
 
 ;;;
 

@@ -38,7 +38,7 @@
 
 (defvar *default-sparql-timeout* 30)
 
-(defgeneric do-sparql (source command &key timeout)
+(defgeneric do-sparql (source command &key timeout result-format)
   (:documentation #.(doc "Perform a SPARQL command"
 "SOURCE is a SPARQL-ENDPOINT."
 ""
@@ -82,34 +82,42 @@
 ;;; transplanted from mb branch
 (defparameter *sparql-performance-monitor* t)
 
-(defmethod do-sparql :around ((sparql string) (command t) &key timeout)
+;; change this to :JSON when we're sure it works...
+(defvar *default-sparql-result-format* :xml)
+
+(defmethod do-sparql :around ((sparql string) (command t) &key timeout result-format)
   (declare (ignore timeout))
   (if *sparql-performance-monitor*
       #+:ccl (ccl::report-time command #'(lambda () (call-next-method)))
       #-:ccl (error "Don't know how to time monitoring in this Lisp implementation")
-      (call-next-method)))
+      (call-next-method :result-format result-format)))
 
-(defmethod do-sparql ((sparql string) (command t) &key (timeout *default-sparql-timeout*))
-  (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout))
+(defmethod do-sparql ((sparql string) (command t) &key (timeout *default-sparql-timeout*)
+		      (result-format *default-sparql-result-format*))
+  (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout :result-format result-format))
 
-(defmethod do-sparql ((sparql null) (command t) &key (timeout *default-sparql-timeout*))
+(defmethod do-sparql ((sparql null) (command t) &key (timeout *default-sparql-timeout*)
+		      (result-format *default-sparql-result-format*))
   (unless (typep *default-frame-source* 'sparql-endpoint)
     (error "No default SPARQL endpoint defined"))
-  (do-sparql *default-frame-source* command :timeout timeout))
+  (do-sparql *default-frame-source* command :timeout timeout :result-format result-format))
 
 ;;; Now will set the source of new frames...which is not always right, but better than nothing
-(defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*))
-  (run-sparql url command 
-	      :make-uri #'(lambda (u) (intern-uri u :source sparql))
-	      ;; this suddenly became necessary since I was geting literals back...no idea why 
-	      :eager-make-uri? t
-	      :timeout timeout
-	      ))
+(defmethod* do-sparql ((sparql sparql-endpoint) (command string) &key (timeout *default-sparql-timeout*)
+		       (result-format *default-sparql-result-format*))
+    (run-sparql url command result-format
+	     :make-uri #'(lambda (u) (intern-uri u :source sparql))
+	     ;; this suddenly became necessary since I was geting literals back...no idea why 
+	     :eager-make-uri? t
+	     :timeout timeout
+	     ))
 
 ;;; Handles translation and breaking up query into chunks if result set is too big
-(defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *default-sparql-timeout*) (chunk-size 5000))
+(defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *default-sparql-timeout*)
+		       (chunk-size 5000) (result-format *default-sparql-result-format*))
+  ;;(format t "format = ~s~%" result-format)
   (flet ((do-it ()
-	   (do-sparql sparql (generate-sparql sparql query) :timeout timeout))
+	   (do-sparql sparql (generate-sparql sparql query) :timeout timeout :result-format result-format))
 	 (modify-query (offset)
 	     (setf (third query)
 		   (append  `(:offset ,offset :limit ,chunk-size)
