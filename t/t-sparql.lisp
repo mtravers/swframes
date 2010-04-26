@@ -56,9 +56,10 @@
     (assert-equal (ssv f s) str)
     (destroy-frame f)))
 
-;;; Shit, problems is at an even lower level.
+;;; Shit, problem is at an even lower level.
 
 (defun test-sparql-quoting (str triple? quoting?)
+;  (test-lisp-deserialize str)
   (let ((f (gen-test-frame))
 	(s (gen-test-frame "crx:slot"))
 	(mstr (if quoting?
@@ -75,13 +76,6 @@
       (assert-equal str (cadr (car (car res))))
       )
     (destroy-frame f *default-frame-source*)))
-
-(defun all-chars ()
-  (coerce 
-   (mt:collecting
-    (dotimes (n 255)
-      (mt:collect (code-char n))))
-   'string))
 
 (defparameter all-printable-chars
   " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")

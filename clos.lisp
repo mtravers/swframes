@@ -22,6 +22,7 @@ Todos:
     (unless uri
       (setf uri (gensym-instance-frame (class-frame (class-of f)) :uri-only? t)))))
 
+;;; +++ should do this through metaclass
 (defun class-frame (class)
   (get (class-name class) :frame))
 
@@ -47,6 +48,7 @@ Todos:
 		)
 	   class)
 	  (force?
+	   (setf (get sym :frame) frame)
 	   (eval (defclass-form frame (slotv frame #$rdfs:subClassOf)))
 	   (find-class sym t))
 	  (error?
