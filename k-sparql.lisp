@@ -24,21 +24,23 @@
 ;;; some endpoints are giving me preceding nulls which break things.
 ;;; inefficient, but this shouldn't be needed at all!
 (defun adjust-sparql-string (s &optional (limit 25))
-  (cond ((char= #\< (char s 0))
-	 s)
-	((minusp limit)
-	 (error "Bad SPARQL string: ~A" s))
-	(t (adjust-sparql-string (subseq s 1) (1- limit)))))
+  (cond ((char= (char s 0) #\Null) (adjust-sparql-string (subseq s 1) (1- limit)))
+	((minusp limit) (error "Bad SPARQL string: ~A" s))
+	(t s)))
 
 (defgeneric run-sparql (endpoint sparql result-format &key make-uri eager-make-uri? timeout))
 
 ;;; eager-make-uri? causes literals to be converted to URIs if they look like one
 (defmethod run-sparql (endpoint sparql (result-format (eql :xml))
 			&key (make-uri #'identity) eager-make-uri? timeout)
+  (unpack-xml-sparql-result (adjust-sparql-string
+			     (run-sparql-0 endpoint sparql :timeout timeout :result-format "xml"))
+			    make-uri
+			    eager-make-uri?))
+
+(defun unpack-xml-sparql-result (s make-uri eager-make-uri?)
   (let* ((s-xml:*ignore-namespaces* t)
-         (xml (s-xml:parse-xml-string
-               (adjust-sparql-string (run-sparql-0 endpoint sparql :timeout timeout :result-format "xml"))
-               :output-type :lxml))
+         (xml (s-xml:parse-xml-string s :output-type :lxml))
          (vars (mapcar #'(lambda (var-elt)
                            (lxml-attribute var-elt :|name|))
                        (lxml-subelements (lxml-find-element xml ':|head|) t)))
@@ -75,41 +77,44 @@
 (defmacro geta (key al) `(cdr (assoc ,key ,al)))
 
 (defmethod run-sparql (endpoint sparql (result-format (eql :json))
-			  &key (make-uri #'identity) eager-make-uri? timeout)
-  (let* ((json (json:decode-json-from-string
-		(run-sparql-0 endpoint sparql :timeout timeout :result-format "json")))
-	 (vars (geta :vars (geta :head json)))
-	 (results nil))
-    (dolist (bindings (geta :bindings (geta :results json)))
-      (let ((row-result nil))
-	(dolist (binding bindings)
-	  ;;(format t "b=~a, datatype=~a~%" binding (geta :datatype (cdr binding)))
-	  (let* ((name (string-downcase (symbol-name (car binding))))
-		 (brest (cdr binding))
-		 (type (intern (string-upcase (geta :type brest)) (find-package :keyword)))
-		 (value-elt (geta :value brest))
-		 (value
-		  (cond ((or (eq type :uri)
-			     (string-prefix-equals value-elt "nodeID:")
-			     (and eager-make-uri?
-				  (string-prefix-equals value-elt "http://")))
-			 (funcall make-uri value-elt))
-			((and (eq type :typed-literal)
-			      (equal (geta :datatype brest)
-				     "http://www.w3.org/2001/XMLSchema#integer"))
-			 (parse-integer value-elt))
-			((and (eq type :typed-literal)
-			      (equal (geta :datatype brest)
-				     "http://www.w3.org/2001/XMLSchema#double"))
-			 (read-from-string value-elt))
-			;; +++ other datatypes?
-			((eq type :bnode)
-			 ;; we do this for bnodes, although it's not really correct -- you could have two colliding. +++
-			 (funcall make-uri (string+ "bnode:" value-elt)))
-			(t value-elt))))
-	    (push (list name value) row-result)))
-	(push row-result results)))
-    (values (nreverse results) vars)))
+		       &key (make-uri #'identity) eager-make-uri? timeout)
+  (let ((raw-result (adjust-sparql-string (run-sparql-0 endpoint sparql :timeout timeout :result-format "json"))))
+    (if (char= (char raw-result 0) #\<)
+	;; oops, looks like XML
+	(unpack-xml-sparql-result raw-result make-uri eager-make-uri?)
+	(let* ((json (json:decode-json-from-string raw-result))
+	       (vars (geta :vars (geta :head json)))
+	       (results nil))
+	  (dolist (bindings (geta :bindings (geta :results json)))
+	    (let ((row-result nil))
+	      (dolist (binding bindings)
+		;;(format t "b=~a, datatype=~a~%" binding (geta :datatype (cdr binding)))
+		(let* ((name (string-downcase (symbol-name (car binding))))
+		       (brest (cdr binding))
+		       (type (intern (string-upcase (geta :type brest)) (find-package :keyword)))
+		       (value-elt (geta :value brest))
+		       (value
+			(cond ((or (eq type :uri)
+				   (string-prefix-equals value-elt "nodeID:")
+				   (and eager-make-uri?
+					(string-prefix-equals value-elt "http://")))
+			       (funcall make-uri value-elt))
+			      ((and (eq type :typed-literal)
+				    (equal (geta :datatype brest)
+					   "http://www.w3.org/2001/XMLSchema#integer"))
+			       (parse-integer value-elt))
+			      ((and (eq type :typed-literal)
+				    (equal (geta :datatype brest)
+					   "http://www.w3.org/2001/XMLSchema#double"))
+			       (read-from-string value-elt))
+			      ;; +++ other datatypes?
+			      ((eq type :bnode)
+			       ;; we do this for bnodes, although it's not really correct -- you could have two colliding. +++
+			       (funcall make-uri (string+ "bnode:" value-elt)))
+			      (t value-elt))))
+		  (push (list name value) row-result)))
+	      (push row-result results)))
+	  (values (nreverse results) vars)))))
 
 
 
