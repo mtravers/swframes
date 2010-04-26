@@ -83,7 +83,7 @@
 (defparameter *sparql-performance-monitor* t)
 
 ;; change this to :JSON when we're sure it works...
-(defvar *default-sparql-result-format* :xml)
+(defvar *default-sparql-result-format* :json)
 
 (defmethod do-sparql :around ((sparql string) (command t) &key timeout result-format)
   (declare (ignore timeout))
