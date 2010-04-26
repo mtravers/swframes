@@ -27,7 +27,7 @@
     (assert-true (member (class-frame (class-of a-frame)) classes))))
 
 ;;;  test that subclass relations are set up properly on discover
-;;; depends on rdfabout
+;;; depends on rdfabout (which doesn't always work).  I can't find many sparql endpoints with subtype relations on their classes.
 ;;; +++ not working yet because of class finalization issues.  Works if you do
 ;;;  (defclass :|http://xmlns.com/foaf/0.1/Organization| () ())
 (define-test discover-subclasses
