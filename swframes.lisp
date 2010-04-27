@@ -341,6 +341,11 @@
   (dolist (frame (listify frames))
     (setf (slotv frame slot) (listify value))))
 
+;;; Called by make-instance$, saves some time and storage
+(defun set-msv-if (frames slot value)
+  (when value
+    (set-msv frames slot value)))
+
 (defun msv-inverse (frames slot)
   (if (listp frames)
       (let ((result nil))
