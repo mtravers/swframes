@@ -1,6 +1,7 @@
 (in-package :sw)
 
 (export '(dump-frames
+	  dump-frames-to-fasl
 	  nt-writer))
 
 ;;; Not a source really, a sink.  Maybe need to refine these classes (and/or integrate with tuplesets) ++
@@ -59,5 +60,8 @@
 				  (not (member elt frames)))
 			     (collect-new elt)))))))
 			      
-				   
-			      
+;;; Fasl dump
+(defvar *fasl-dump-temp*)
+(defun dump-frames-to-fasl (frames file &key (variable '*fasl-dump-temp*))
+  (set variable frames)
+  (dump-vars-to-file (list variable) file))
