@@ -21,6 +21,10 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (report-and-ignore-errors
    (format stream "#$~A" (frame-name frame))))
 
+;;; gets redefined in swframes.lisp
+(defun frame-name (frame)
+  (frame-uri frame))
+
 (defun frame-p (f)
   (typep f 'frame))
 
@@ -136,11 +140,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (setf (frame-uri f) new-name)
   (intern-frame f))
 
-;;; this isn't working for some reason...interned  objects are not frames?
-(defmethod make-load-form ((frame frame) &optional ignore)
-  (declare (ignore ignore))
-  `(intern-uri ,(frame-uri frame)))
-
 ;;; Reuse some biobike machinery
 (defun clean-string (string)
   (create-valid-frame-name 
@@ -255,3 +254,33 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
     ))
 
 (defun valid-frame-char? (x) (null (find x *illegal-frame-chars*)))
+
+;;; These more logically belong in swframes, but are here so they can be used by make-load-form
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+(defmacro for-frame-slots ((frame slot value) &body body)
+  "Iterate BODY over all slots of a frame, successively binding SLOT and VALUE vars"
+  `(and (frame-slots ,frame)
+	(maphash #'(lambda (,slot ,value)
+		     #+CCL (declare (ccl::ignore-if-unused ,slot ,value))
+		     ,@body)
+		 (frame-slots ,frame))))
+
+(defmacro for-frame-inverse-slots ((frame slot value) &body body)
+  "Iterate BODY over all inverse slots of a frame, successively binding SLOT and VALUE vars"
+  `(and (frame-inverse-slots ,frame)
+	(maphash #'(lambda (,slot ,value)
+		     ,@body)
+		 (frame-inverse-slots ,frame)))))
+
+;;; Now with contents!  
+
+(defmethod make-load-form ((frame frame) &optional ignore)
+  (declare (ignore ignore))
+  (values
+   `(intern-uri ,(frame-uri frame))
+   `(progn
+      ,@(collecting
+	 (for-frame-slots (frame slot value)
+	   (collect `(setf (%slotv ,frame ,slot) ',value)))))) )
+
