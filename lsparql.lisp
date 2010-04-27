@@ -167,7 +167,7 @@
 			   ((eq vars :count)
 			    "count(*)")
 			   (t (format nil "~{~a~^ ~}" vars)))
-		     (if from (format nil "~{ FROM ~a ~^~%~}" (mapcar #'sparql-term (mapcar #'intern-uri (if (listp from) from (list from))))) " ")
+		     (if from (format nil "~{ FROM ~a ~^~%~}" (mapcar #'sparql-term (mapcar #'make-frame (if (listp from) from (list from))))) " ")
 		     )
 	     (loop for clause in clauses
 		do (emit-sparql-clause clause s))

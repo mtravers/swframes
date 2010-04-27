@@ -3,7 +3,8 @@
 ;;; transactions
 
 (defvar *sparul-group* nil)
-(defvar *sparul-group-limit* 1000)      ;max # of groups (virtuoso has a 10000 LINE limit, this is groups)
+;;; Experimentally verified that 500 breaks Virtuoso
+(defparameter *sparul-group-limit* 250)      ;max # of groups (virtuoso has a 10000 LINE limit, this is groups)
 
 ;;; error handling +++
 (defmacro in-background-thread (&body body)
@@ -35,7 +36,7 @@
 	       (do-it)))))
      retval))
 
-;;; Why not just get do-sparql to act this way? Well, we'd have to play variable binding games.
+;;; Do a possibly-delayed sparul operation.  Queues stuff for later, if the limit is reached it gets unleashed then and there.
 (defmethod do-grouped-sparul ((sparql sparql-endpoint) (list list))
   (do-grouped-sparul sparql (generate-sparql sparql list)))
 
@@ -53,7 +54,6 @@
           (setf (cadr *sparul-group*) nil)))
       ;; otherwise do immediately
       (do-sparql sparql string)))
-
 
 (defmethod* write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (assert writeable?)
