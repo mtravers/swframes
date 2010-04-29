@@ -282,5 +282,6 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
    `(progn
       ,@(collecting
 	 (for-frame-slots (frame slot value)
-	   (collect `(setf (%slotv ,frame ,slot) ',value)))))) )
+	   (collect `(setf (%slotv ,frame ,slot) ',value))))
+      (set-frame-loaded? ,frame)) ))
 
