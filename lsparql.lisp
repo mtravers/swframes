@@ -80,17 +80,20 @@
 )))
 
 ;;; transplanted from mb branch
-(defparameter *sparql-performance-monitor* t)
+(defparameter *sparql-performance-monitor* nil)
+(defparameter *sparql-heartbeat-monitor* nil)
 
-;; change this to :JSON when we're sure it works...
 (defvar *default-sparql-result-format* :json)
 
-(defmethod do-sparql :around ((sparql string) (command t) &key timeout result-format)
+(defmethod do-sparql :around ((sparql t) (command t) &key timeout result-format)
   (declare (ignore timeout))
+  (when *sparql-heartbeat-monitor*
+    (princ ".")
+    (incf counter))
   (if *sparql-performance-monitor*
       #+:ccl (ccl::report-time command #'(lambda () (call-next-method)))
       #-:ccl (error "Don't know how to time monitoring in this Lisp implementation")
-      (call-next-method :result-format result-format)))
+      (call-next-method)))
 
 (defmethod do-sparql ((sparql string) (command t) &key (timeout *default-sparql-timeout*)
 		      (result-format *default-sparql-result-format*))
@@ -460,13 +463,15 @@
 		nil)
 
 ;;; +++ this can time out without the limit, but of course with it, it produces incorrect results.  Maybe ths should only be done on demand.
+(defvar *inverse-fill-limit* 100)
+
 (defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
   (unless (frame-inverse-slots frame)
     (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
   (let ((*default-frame-source* source))
     (dolist (binding (do-sparql 
 			 source
-		       `(:select (?s ?p) (:limit 100) (?s ?p ,frame))))
+		       `(:select (?s ?p) (:limit ,*inverse-fill-limit*) (?s ?p ,frame))))
       (let ((p (sparql-binding-elt binding "p"))
 	    (s (sparql-binding-elt binding "s")))
 	(when (and s p)	; shouldn't be necessary but some SPARQL endpoints have missing results (dbpedia)
@@ -618,6 +623,9 @@
 
 (defun sparql-type-count (type)
   (parse-integer (cadr (car (car (do-sparql nil `(:select :count () (?s #$rdf:type ,type))))))))
+
+(defun sparql-named-graph-count (graph)
+  (cadr (car (car (do-sparql nil `(:select :count () (:graph ,graph (?s ?p ?o))))))))
 
 (defun random-instance (type)
   (car (do-sparql-one-var nil  `(:select * (:limit 1 :offset ,(random (sparql-type-count type))) (?s #$rdf:type ,type)))))
