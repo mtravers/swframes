@@ -162,7 +162,8 @@
 (defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)) (inverse? t) reset?)
   (when (or force?
 	    (not (frame-loaded? frame))
-	    (not (equal source (frame-source frame)))
+	    (and (frame-source frame) 
+		 (not (equal source (frame-source frame))))
 	    )
     ;; dangerous
     (when reset?
