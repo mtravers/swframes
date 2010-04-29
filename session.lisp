@@ -23,7 +23,7 @@
 (defvar gensym-lock (acl-compat.mp:make-process-lock))
 
 (defun gensym-instance-frame (class &key start (fast? t) (source *default-frame-source*) base uri-only?)
-  (if (eq (frame-source class) *code-source*)
+  (if (eq (frame-source class) *code-source*) ;+++ this seems rather radical, probably a mistake?
       (setf (frame-source class) source)
       ;; Here we might want to do an initial write of frame to db
       )
@@ -32,7 +32,8 @@
     (unless (and fast?
 		 (msv class #$crx:last_used_id))
       (setf (slotv class #$crx:last_used_id) nil) ;in lieu of a full reset
-      (fill-frame class :force? t :inverse? nil))
+      (fill-frame class :force? t :inverse? nil)
+      )
     (let* ((v (slotv class #$crx:last_used_id))
 	   (last (or start
 		     (if (listp v) (first (last v)) v)))
@@ -48,7 +49,7 @@
 	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
 	    (if uri-only?
 		uri
-		(intern-uri uri :class class)))))))
+		(intern-uri uri :class class :source source)))))))
 
 
 (defgeneric uri-used? (source uri))

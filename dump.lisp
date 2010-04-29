@@ -65,3 +65,11 @@
 (defun dump-frames-to-fasl (frames file &key (variable '*fasl-dump-temp*))
   (set variable frames)
   (dump-vars-to-file (list variable) file))
+
+(defun big-dump-frames-to-fasl (frames dir &key (limit 500) (variable '*fasl-dump-temp*))
+  (let ((counter 0))
+    (dolist (sublist (break-list frames limit))
+      (dump-frames-to-fasl sublist (make-pathname :directory dir :name (fast-string (incf counter))) :variable variable)
+      (print `(dump ,counter)))))
+    
+  

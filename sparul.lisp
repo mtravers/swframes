@@ -3,7 +3,8 @@
 ;;; transactions
 
 (defvar *sparul-group* nil)
-(defvar *sparul-group-limit* 1000)      ;max # of groups (virtuoso has a 10000 LINE limit, this is groups)
+;;; Experimentally verified that 500 breaks Virtuoso
+(defparameter *sparul-group-limit* 250)      ;max # of groups (virtuoso has a 10000 LINE limit, this is groups)
 
 ;;; error handling +++
 (defmacro in-background-thread (&body body)
@@ -35,6 +36,25 @@
 	       (do-it)))))
      retval))
 
+;;; Do a possibly-delayed sparul operation.  Queues stuff for later, if the limit is reached it gets unleashed then and there.
+(defmethod do-grouped-sparul ((sparql sparql-endpoint) (list list))
+  (do-grouped-sparul sparql (generate-sparql sparql list)))
+
+(defmethod do-grouped-sparul ((sparql sparql-endpoint) (string string))
+  (if (and *sparul-group*
+           (eq sparql (car *sparul-group*)))
+      (progn
+        (push-end string (cadr *sparul-group*))
+        (when (> (length (cadr *sparul-group*)) *sparul-group-limit*)
+          (do-sparql (car *sparul-group*)
+            (with-output-to-string (out)
+              (dolist (s (cadr *sparul-group*))
+                (write-string s out)
+                (terpri out))))
+          (setf (cadr *sparul-group*) nil)))
+      ;; otherwise do immediately
+      (do-sparql sparql string)))
+
 (defmethod* write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (assert writeable?)
   (if (%slotv p #$crx:specialhandling)
@@ -44,9 +64,9 @@
 
 (defmethod %write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (let ((write-graph (or write-graph (slot-value sparql 'write-graph))))
-    (with-write-group (sparql)
-      (do-sparql sparql `(:insert (,s ,p ,o) (:into ,write-graph)))
-      )))
+    (do-grouped-sparul sparql
+      `(:insert (,s ,p ,o) (:into ,write-graph)))
+      ))
 
 (defmethod %write-triple ((sparql null) s p o &key write-graph)
   (%write-triple *default-frame-source* s p o :write-graph write-graph)
@@ -55,9 +75,8 @@
 ;;; +++ this isn't parallel with add-triple, so rethink names
 (defmethod delete-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (let ((write-graph (or write-graph (slot-value sparql 'write-graph))))
-    (with-write-group (sparql)
-      (do-sparql sparql `(:delete (,s ,p ,o) (:from ,write-graph)))
-      )))
+    (do-grouped-sparul sparql `(:delete (,s ,p ,o) (:from ,write-graph)))
+    ))
 
 ;;; default these
 (defmethod write-triple ((sparql null) s p o &key write-graph)
@@ -151,8 +170,8 @@
    (for-frame-slots (frame slot value)
                     (when (%slotv slot #$crx:slots/dependent)
                       (dolist (v value)
-			(assert (frame-p v) nil "Non-frame value ~A in slot ~A of ~A" v slot frame)
-                        (collect-new v))))))
+			(when (frame-p v)
+			  (collect-new v)))))))
 
 (defgeneric destroy-frame (frame &optional source)
   (:documentation

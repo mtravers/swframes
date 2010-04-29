@@ -147,7 +147,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		  (setf (ssv frame slot) (cadr rest))
 		  (progn
 		    (check-class (cadr rest) (#^rdfs:range slot)) 
-		    (setf (msv frame slot) (cadr rest)))))))))))
+		    (set-msv-if frame slot (cadr rest)))))))))))
 
 ;;; Older form (deprecated)
 (defun rdfs-make-instance (class &rest slots)

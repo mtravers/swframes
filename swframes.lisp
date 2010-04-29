@@ -162,7 +162,8 @@
 (defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)) (inverse? t) reset?)
   (when (or force?
 	    (not (frame-loaded? frame))
-	    (not (equal source (frame-source frame)))
+	    (and (frame-source frame) 
+		 (not (equal source (frame-source frame))))
 	    )
     ;; dangerous
     (when reset?
@@ -340,6 +341,11 @@
 (defun set-msv (frames slot value)
   (dolist (frame (listify frames))
     (setf (slotv frame slot) (listify value))))
+
+;;; Called by make-instance$, saves some time and storage
+(defun set-msv-if (frames slot value)
+  (when value
+    (set-msv frames slot value)))
 
 (defun msv-inverse (frames slot)
   (if (listp frames)
