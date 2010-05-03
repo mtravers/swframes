@@ -283,5 +283,6 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
       ,@(collecting
 	 (for-frame-slots (frame slot value)
 	   (collect `(setf (%slotv ,frame ,slot) ',value))))
-      (set-frame-loaded? ,frame)) ))
+      ,@(when (frame-loaded? frame)
+	      `((set-frame-loaded? ,frame)) ))))
 
