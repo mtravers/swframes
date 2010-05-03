@@ -17,6 +17,11 @@ Todos:
 (defclass rdfs-class (frame)
   ())
 
+;;; Set up some universals
+(setf (get 'rdfs-class :frame) #$rdfs:Resource)
+(defun universal-slot (s)
+  (setf (ssv s #$rdfs:domain) #$rdfs:Resource))
+
 (defmethod initialize-instance :after ((f rdfs-class) &rest ignore)
   (with-slots (uri) f
     (unless uri
