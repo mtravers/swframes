@@ -28,7 +28,7 @@ Caveats:  only works if you use write-frame-versioned.  Other ways of writing co
     (frame-delete-slot version-frame #$rdf:type)
     (setf (ssv version-frame #$crx:version_of) frame)
     (setf (ssv version-frame #$crx:version) version-number)
-    (setf (ssv version-frame #$crx:timestamp) (utils::now))
+    (setf (ssv version-frame #$crx:timestamp) (now))
     (setf (ssv version-frame #$crx:writer) (current-user))
     (setf (ssv frame #$crx:previous_version) version-frame)
     version-frame))

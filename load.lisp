@@ -1,12 +1,14 @@
-;;; Codebase uses MCL, but OpenMCL uses CCL.  Argh.
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (if (member :ccl *features*)
-      (pushnew :mcl *features*)))
+;;; Note: this is for standalone loading of :swframes (outside of 3rdwheel).  
 
-(defvar *swframes-directory* (pathname-directory *load-pathname*))
+;;; Setup
 
-#+SBCL
-(asdf:operate 'asdf:load-op :aserve)
+(require :asdf-install)
+(dolist (l asdf-install::*locations*)	;Why oh lord is this necessary?
+  (push (cadr l) asdf::*central-registry*))
+
+(load "/Users/Biobike/3rdwheel/3utils/3utils.asd") ;+++
+(load "/Users/Biobike/3rdwheel/mtlisp/mtlisp.asd")
+
 
 ;;; Load SWFRAMES
 
@@ -15,6 +17,6 @@
 
 (asdf:operate 'asdf:load-op :swframes)
 
-(pushnew :sw *features*)
+(pushnew :swframes *features*)
   
 
