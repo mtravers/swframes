@@ -111,9 +111,13 @@ dereferences things en masse and brings them into a local store.
 	 (name (symbol-name identifier))
 	 (namespace (find package s-xml::*known-namespaces* :key #'s-xml:get-package))
 	 (namespace-uri (and namespace (s-xml::get-uri namespace))))
-    (unless namespace
-      (error "Unknown XML namespspace for ~A" identifier))
-    (string+ namespace-uri name)))
+
+    (if namespace
+	(string+ namespace-uri name)
+	(aif (namespace-lookup (package-name package))
+	     (string+ (cadr it) name)
+	     (error "Unknown XML namespspace for ~A" identifier))
+	)))
 
 (defun process-rdf-xml (xml &key base (source *default-frame-source*))
   (assert xml)
