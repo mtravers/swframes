@@ -22,8 +22,6 @@
 ;;; Now prepends a null so that single char names work (and start of term 
 ;;; is more significant.)
 
-
-
 (defconstant null-char (code-char 0) "#\Null, except it's not portable")
 
 (defun compile-word (word)

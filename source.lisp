@@ -7,7 +7,11 @@ Dereferencing is a "frame source" of sorts...
 
 |#
 
-(export '(frame-source writeable? with-frame-source))
+(export '(frame-source writeable? with-frame-source *default-frame-source*))
+
+;;; set later on
+(defvar *default-frame-source* nil
+  "A FRAME-SOURCE used by default when frames are created.  Can by dynamically bound.")	
 
 (defclass* frame-source ()
   ((name nil)
@@ -33,7 +37,9 @@ Dereferencing is a "frame source" of sorts...
   (do-write-group *default-frame-source* async? proc))
 
 (defmethod do-write-group ((source frame-source) async? proc)
-  (funcall proc))
+  (if async?
+      (background-funcall proc)
+      (funcall proc)))
 
 (defmacro with-frame-source ((source) &body body)
   "Execute BODY with *default-frame-source* set to SOURCE"

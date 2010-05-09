@@ -1,5 +1,10 @@
 (in-package :swframes)
 
+;;; Needs to be after code-source.lisp but before source is used.
+(eval-when  (:compile-toplevel :load-toplevel :execute)
+  (unless *default-frame-source*
+    (setq *default-frame-source* *code-source*)))
+
 #|
 This file has the minimum needed to get the frame system working (esp. the reader)
 |#
@@ -73,9 +78,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (declare (ignore char arg))
   (let* ((slot (make-reader-frame (read-fname stream))))
     `(lambda (f) (msv-inverse f ,slot))))
-
-;;; +++ needs to default to something reasomable for templates
-(defvar *default-frame-source* *code-source* "A FRAME-SOURCE used by default when frames are created.  Can by dynamically bound.")
 
 (defun make-frame (thing &key (source *default-frame-source*))
   #.(doc

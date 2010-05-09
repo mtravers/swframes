@@ -86,10 +86,9 @@
 (defvar *default-sparql-result-format* :json)
 
 (defmethod do-sparql :around ((sparql t) (command t) &key timeout result-format)
-  (declare (ignore timeout))
+  (declare (ignore timeout result-format))
   (when *sparql-heartbeat-monitor*
-    (princ ".")
-    (incf counter))
+    (princ "."))
   (if *sparql-performance-monitor*
       #+:ccl (ccl::report-time command #'(lambda () (call-next-method)))
       #-:ccl (error "Don't know how to time monitoring in this Lisp implementation")

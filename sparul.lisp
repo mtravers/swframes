@@ -6,14 +6,22 @@
 ;;; Experimentally verified that 500 breaks Virtuoso
 (defparameter *sparul-group-limit* 250)      ;max # of groups (virtuoso has a 10000 LINE limit, this is groups)
 
-;;; error handling +++
+;;; error handling +++ also, move these to utils +++
 (defmacro in-background-thread (&body body)
-  `(#+ACL 
-    mp:process-run-function
-    #-ACL
-    acl-compat.mp:process-run-function
-    (string (gensym "THREAD"))
-    #'(lambda () ,@body)))
+  `(background-funcall #'(lambda () ,@body)))
+
+(defun background-funcall (thunk)
+  (#+ACL mp:process-run-function
+   #-ACL acl-compat.mp:process-run-function
+   (string (gensym "THREAD"))
+   thunk))
+
+(defmacro maybe-asynchronously (async? &body body)
+  (let ((procvar (gensym "PROC")))
+    `(let ((,procvar #'(lambda () ,@body)))
+       (if ,async?
+	   (funcall ,procvar)
+	   (background-funcall ,procvar)))))
 
 (defmethod do-write-group ((endpoint sparql-endpoint) async? proc)
   (let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
@@ -25,16 +33,13 @@
     (let ((clauses (cadr *sparul-group*))) ;make sure this gets captured
        (when (and clauses
 		  (not prior-group))
-	 (flet ((do-it ()
-		  (do-sparql endpoint
+	 (maybe-asynchronously async?
+	     (do-sparql endpoint
 		    (with-output-to-string (out)
 		      (dolist (s clauses)
 			(write-string s out)
-			(terpri out))))))
-	   (if async?
-	       (in-background-thread (do-it))
-	       (do-it)))))
-     retval))
+			(terpri out)))))))
+    retval))
 
 ;;; Do a possibly-delayed sparul operation.  Queues stuff for later, if the limit is reached it gets unleashed then and there.
 (defmethod do-grouped-sparul ((sparql sparql-endpoint) (list list))
