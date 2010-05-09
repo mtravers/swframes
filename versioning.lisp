@@ -20,22 +20,22 @@ Caveats:  only works if you use write-frame-versioned.  Other ways of writing co
 ;;; Spawn a version frame (copying the contents of FRAME)
 ;;; No db writes
 (defun version-frame (frame)
-  (let* ((last-version (ssv frame #$crx:previous_version))
-	 (version-number (if last-version (1+ (ssv last-version #$crx:version)) 0))
+  (let* ((last-version (ssv frame #$sw:previous_version))
+	 (version-number (if last-version (1+ (ssv last-version #$sw:version)) 0))
 	 (version-uri (string+ (frame-name frame) "/v/" (fast-string version-number)))
 	 (version-frame (intern-uri version-uri)))
     (frame-copy frame :new-frame version-frame)
     (frame-delete-slot version-frame #$rdf:type)
-    (setf (ssv version-frame #$crx:version_of) frame)
-    (setf (ssv version-frame #$crx:version) version-number)
-    (setf (ssv version-frame #$crx:timestamp) (now))
-    (setf (ssv version-frame #$crx:writer) (current-user))
-    (setf (ssv frame #$crx:previous_version) version-frame)
+    (setf (ssv version-frame #$sw:version_of) frame)
+    (setf (ssv version-frame #$sw:version) version-number)
+    (setf (ssv version-frame #$sw:timestamp) (now))
+    (setf (ssv version-frame #$sw:writer) (current-user))
+    (setf (ssv frame #$sw:previous_version) version-frame)
     version-frame))
 
 ;;; NL overwrites this -- the idea is that SW is independent of a user-management scheme
 (defun current-user ()
-  #$crx:TestUser)
+  #$sw:TestUser)
 
 (defun write-frame-versioned (frame)
   (write-frame (version-frame frame))
@@ -45,7 +45,7 @@ Caveats:  only works if you use write-frame-versioned.  Other ways of writing co
 
 ;;; Get a history
 (defun frame-version-history (frame)
-  (sort (copy-list (slotv-inverse frame #$crx:version_of)) #'> :key (ssv-accessor #$crx:version)))
+  (sort (copy-list (slotv-inverse frame #$sw:version_of)) #'> :key (ssv-accessor #$sw:version)))
 
 
 

@@ -87,7 +87,7 @@
 ;;; No longer used, I was apparently brain damaged.
 (defmethod reset-frame-limited ((frame frame))
   (for-frame-slots (frame slot value)
-		   (when (%slotv slot #$crx:specialhandling)
+		   (when (%slotv slot #$sw:specialhandling)
 		     (remhash slot (frame-slots frame)))))
 
 
@@ -99,7 +99,7 @@
 (defmethod delete-frame ((frame frame))
   ;;; remove references (that we know about)
   (for-frame-slots (frame slot value)
-		   (unless (%slotv slot #$crx:specialhandling)
+		   (unless (%slotv slot #$sw:specialhandling)
 		     (dolist (elt value)
 		       (when (and (frame-p elt) (frame-inverse-slots elt))
 			 (deletef frame (gethash slot (frame-inverse-slots elt))))))) ;NNN
@@ -251,7 +251,7 @@
 ;;; this can't really do inverses, can it? we'd have to a difference...
 (defun set-slotv (frame slot value)
   (setf slot (coerce-slot slot frame))
-  (if (%slotv slot #$crx:specialhandling)
+  (if (%slotv slot #$sw:specialhandling)
       (%set-slotv frame slot value)
       (progn
 	(when *check-slot-domains?*
@@ -384,7 +384,7 @@
   (member value (slotv frame slot)))
 
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
-  (if (%slotv p #$crx:specialhandling)
+  (if (%slotv p #$sw:specialhandling)
       (add-triple-special s p o)	
       (progn
 	(when remove-old
@@ -470,12 +470,12 @@
 ;;; Another method for generating unique URIs, if no class is found.
 (defun gen-child-uri (frame &optional n)
   (unless n
-    (setf n (or (ssv frame #$crx:slots/last_child) 0)))
+    (setf n (or (ssv frame #$sw:slots/last_child) 0)))
   (let ((uri (string+ (frame-uri frame) "/" (fast-string n))))
     (if (uri-used? (or (frame-source frame) *default-frame-source*) uri)
 	(gen-child-uri frame (+ n 1))
 	(progn
-	  (setf (ssv frame #$crx:slots/last_child) n)
+	  (setf (ssv frame #$sw:slots/last_child) n)
 	  (intern-uri uri)))))
 
 (defun frame-delete-slot (frame slot)
@@ -488,7 +488,7 @@
 (defun frame-copy (frame &key new-frame deep-slots omit-slots (uri-generator #'default-uri-generator))
   #.(doc "Make a new frame by copying the contents of FRAME."
 	 "Slots listed in omit-slots are not copied."
-	 "Slots listed in DEEP-SLOTS or marked with #$crx:slots/deep-copy will have copies made of their contents, otherwise a shallow copy is performed.")
+	 "Slots listed in DEEP-SLOTS or marked with #$sw:slots/deep-copy will have copies made of their contents, otherwise a shallow copy is performed.")
   (if (not (frame-p frame))
       frame				;nonframes remain the same (makes recursion easier)
       (let ((nframe (or new-frame (funcall uri-generator frame))))
@@ -496,12 +496,12 @@
 	(maphash #'(lambda (slot value)
 		     (cond ((member slot omit-slots))
 			   ((or (member slot deep-slots)
-				(ssv slot #$crx:slots/deep-copy))
+				(ssv slot #$sw:slots/deep-copy))
 			    (setf (slotv nframe slot) (mapcar #'(lambda (sf)
 								  (frame-copy sf :deep-slots deep-slots :omit-slots omit-slots :uri-generator uri-generator))
 							      value)))
 			   ;;; Shallow copy
-			   ((%slotv slot #$crx:specialhandling)
+			   ((%slotv slot #$sw:specialhandling)
 			    (setf (%slotv nframe slot) value))
 			   (t
 			    (setf (slotv nframe slot) (copy-list value)))
@@ -525,17 +525,7 @@
 				    (pushnew elt fringe)))))))))
 				  
  
-#|
-;;; Debugging, search db for templates with bad template
-(dolist (temp (rdfs-find :all :class #$crx:Template)) 
-  (print (list temp (report-and-ignore-errors (template-string temp)))))
-|#
-
-;;; for debugging, of course
-;(trace set-ssv set-slotv set-msv add-triple remove-triple)
-
 ;;; Logically belongs to code-source, but has to come after more frame machinery is defined.
-
 ;;; Write classes defined in code to a database.  This is only called by hand at the moment.
 (defun write-code-source-classes (to)
   (with-write-group (to)

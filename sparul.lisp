@@ -62,7 +62,7 @@
 
 (defmethod* write-triple ((sparql sparql-endpoint) s p o &key write-graph)
   (assert writeable?)
-  (if (%slotv p #$crx:specialhandling)
+  (if (%slotv p #$sw:specialhandling)
       (rdfs-call write-triple-special p s o sparql) ;+++ deal with write-graph here
       ;; normal
       (%write-triple sparql s p o :write-graph (or write-graph (slot-value sparql 'write-graph)))))
@@ -126,7 +126,7 @@
   (unless no-delete?
     (delete-triple source frame slot '?o))
   ;;; CCC -- write-triple should be a method that dispatches on slot type, maybe on source
-  (let ((special (%slotv slot #$crx:specialhandling)))
+  (let ((special (%slotv slot #$sw:specialhandling)))
     (dolist (val (slotv frame slot nil))
       (if special
 	  (rdfs-call write-triple-special slot frame val source)
@@ -137,19 +137,19 @@
 (defun declare-special-slot (slot type)
   #.(doc 
      "Declares SLOT to have special behavior defined by TYPE.  Current TYPEs are:"
-     "#$crx:slots/LispValueSlot:"
+     "#$sw:slots/LispValueSlot:"
      "   Slots of this class can hold any printable Lisp object."
-     "#$crx:slots/TransientSlot:"
+     "#$sw:slots/TransientSlot:"
      "  Slots of this class never write their values to the database.")
   (setf (ssv slot #$rdf:type) type
-        (ssv slot #$crx:specialhandling) t))
+        (ssv slot #$sw:specialhandling) t))
 
 ;;; debugging only
 (defun undeclare-special-slot (slot)
   (setf (slotv slot #$rdf:type) nil
-        (slotv slot #$crx:specialhandling) nil)  )
+        (slotv slot #$sw:specialhandling) nil)  )
 
-(rdfs-defmethod write-triple-special ((p #$crx:slots/LispValueSlot) s o sparql)
+(rdfs-defmethod write-triple-special ((p #$sw:slots/LispValueSlot) s o sparql)
 		(with-standard-io-syntax ;aka print-readably
 		  (let ((oo (typecase o
 			      (fixnum o)
@@ -161,19 +161,19 @@
 			(error "Can't save nonreadable object ~A in ~A / ~A" o s p)
 			)))))
 
-(rdfs-defmethod write-triple-special ((p #$crx:slots/TransientSlot) s o sparql)
+(rdfs-defmethod write-triple-special ((p #$sw:slots/TransientSlot) s o sparql)
 		(declare (ignore s o sparql))
 		)
 
 ;;; Sometimes these unserializable slots get serialized, so ignore them
-(rdfs-defmethod deserialize-value ((p #$crx:slots/TransientSlot) value)
+(rdfs-defmethod deserialize-value ((p #$sw:slots/TransientSlot) value)
 		(declare (ignore value))
 		nil)
 
 (defun frame-dependents (frame)
   (collecting
    (for-frame-slots (frame slot value)
-                    (when (%slotv slot #$crx:slots/dependent)
+                    (when (%slotv slot #$sw:slots/dependent)
                       (dolist (v value)
 			(when (frame-p v)
 			  (collect-new v)))))))

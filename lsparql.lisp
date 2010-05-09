@@ -425,13 +425,13 @@
     (dolist (bindingset
 	    (do-sparql (frame-source frame)
 	      `(:select * ()
-			(,frame #$crx:slots/includes-tuple ?tuple)
+			(,frame #$sw:slots/includes-tuple ?tuple)
 			(?tuple ?tprop ?value))))
       (setf (gethash (sparql-binding-elt bindingset '?tuple) tuples) t)
       (setf (ssv (sparql-binding-elt bindingset '?tuple)
 		 (sparql-binding-elt bindingset '?tprop))
 	    (sparql-binding-elt bindingset '?value)))
-    (setf (slotv frame  #$crx:slots/includes-tuple)
+    (setf (slotv frame  #$sw:slots/includes-tuple)
 	  (hash-keys tuples)
 	  (frame-loaded? frame)
 	  t)))
@@ -439,25 +439,25 @@
 
 (rdfs-def-class #$rdf:Property ())
 
-(rdfs-def-class #$crx:slots/specialSlot (#$rdf:Property))
+(rdfs-def-class #$sw:slots/specialSlot (#$rdf:Property))
 
-(rdfs-def-class #$crx:slots/LispValueSlot (#$crx:slots/specialSlot))
+(rdfs-def-class #$sw:slots/LispValueSlot (#$sw:slots/specialSlot))
 
 ;;; Maybe this should be folded into add-triple
 (defun process-value (slot value)
-  (if (%slotv slot #$crx:specialhandling)
+  (if (%slotv slot #$sw:specialhandling)
       (rdfs-call deserialize-value slot value)
       value))
 
-(rdfs-defmethod deserialize-value ((slot #$crx:slots/LispValueSlot) value)
+(rdfs-defmethod deserialize-value ((slot #$sw:slots/LispValueSlot) value)
 		(if (stringp value)
 		    (read-from-string value)
 		    value))
 
-(rdfs-def-class #$crx:slots/TransientSlot (#$crx:slots/specialSlot))
+(rdfs-def-class #$sw:slots/TransientSlot (#$sw:slots/specialSlot))
 
 ;;; Sometimes these unserializable slots get serialized, so ignore them
-(rdfs-defmethod deserialize-slot ((p #$crx:slots/TransientSlot) frame value)
+(rdfs-defmethod deserialize-slot ((p #$sw:slots/TransientSlot) frame value)
 		(declare (ignore frame value))
 		nil)
 

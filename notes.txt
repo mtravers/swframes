@@ -5,6 +5,11 @@ Key:
 ++ good ideas
 CCC Clos conversion related
 PPP performance related
+MMM modularization related
+
+Modulariztion todos:
+- remove crx: wherever possible
+- remove refs to tuples/tuplesets
 
 Conceptual cleanups:
 - coerce-slot needs to firmed up, worked for inverses

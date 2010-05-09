@@ -1,10 +1,10 @@
 (in-package :sw)
 
 (define-test basic-clos
-    (rdfs-def-class #$crx:BigClass ())
-  (rdfs-def-class #$crx:SmallClass  (#$crx:BigClass))
-  (let* ((ib (rdfs-make-instance #$crx:BigClass))
-	 (is (rdfs-make-instance #$crx:SmallClass))
+    (rdfs-def-class #$sw:BigClass ())
+  (rdfs-def-class #$sw:SmallClass  (#$sw:BigClass))
+  (let* ((ib (rdfs-make-instance #$sw:BigClass))
+	 (is (rdfs-make-instance #$sw:SmallClass))
 	 (random-frame (gen-test-frame)))
     ;; test that frames have appropriate clos classes and the classes have the right relationship
     (assert-true (not (eq (type-of ib) (type-of random-frame))))

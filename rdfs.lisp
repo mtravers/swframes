@@ -95,9 +95,9 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		    (a!x slot #$rdfs:domain class)
 		    (handle-slot-property :range (a!x slot #$rdfs:range (cadr it)))
 		    (handle-slot-property :class (push `(declare-special-slot ,slot ,(cadr it)) clauses))
-		    (handle-slot-property :uitype (push `(setf (ssv ,slot #$crx:slots/uitype) ,(cadr it)) clauses))
-		    (handle-slot-property :dependent (push `(setf (ssv ,slot #$crx:slots/dependent) t) clauses))
-		    (handle-slot-property :deep-copy (push `(setf (ssv ,slot #$crx:slots/deep-copy) t) clauses))
+		    (handle-slot-property :uitype (push `(setf (ssv ,slot #$sw:slots/uitype) ,(cadr it)) clauses)) ;MMM?
+		    (handle-slot-property :dependent (push `(setf (ssv ,slot #$sw:slots/dependent) t) clauses))
+		    (handle-slot-property :deep-copy (push `(setf (ssv ,slot #$sw:slots/deep-copy) t) clauses))
 		    (when (cdr slotdef)
 		      (error "Unknown slot properties in ~A" slotdef))
 		    )))
@@ -141,7 +141,7 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	    (let* ((slot (or (coerce-slot (car rest) frame :error? nil)
 			     (coerce-slot-for-class (car rest) class)
 			     ))
-		   (lisp-slot? (rdfs-classp slot #$crx:slots/LispValueSlot)))
+		   (lisp-slot? (rdfs-classp slot #$sw:slots/LispValueSlot)))
 	      (check-class frame (#^rdfs:domain slot)) 
 	      (if lisp-slot?
 		  (setf (ssv frame slot) (cadr rest))

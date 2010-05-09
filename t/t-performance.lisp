@@ -2,10 +2,10 @@
 
 (defun jp ()
   (dotimes (n 10000000) 
-    (let* ((uri (format nil "crx:test/~A" n))
+    (let* ((uri (format nil "sw:test/~A" n))
 	   (frame (intern-uri uri)))
-      (setf (ssv frame #$crx:test/slot) (random 100)))))
+      (setf (ssv frame #$sw:test/slot) (random 100)))))
 
 (defun jp-2 (n)
   (dotimes (i n)
-    (make-frame (format nil "crx:test/~A" i) )))
+    (make-frame (format nil "sw:test/~A" i) )))

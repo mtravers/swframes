@@ -32,9 +32,12 @@
     ("bp" "http://www.biopax.org/release/biopax-level2.owl#")
 
     ;; Local
-    ("crx" "http://collabrx.com/rdf/")
+    ("sw" "http://swframes.org/rdf/")	;+++ well, who should own this?
+    ("crx" "http://collabrx.com/rdf/")	;MMM this should go away
 
     ))
 
-  (dolist (n *standard-namespaces*)
-    (register-namespace (car n) (cadr n) t)))
+(dolist (n *standard-namespaces*)
+  (register-namespace (car n) (cadr n) t))
+
+)

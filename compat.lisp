@@ -56,7 +56,7 @@ to run.
 (defun frames::defslot 
        (frame 
         &key
-        (base #$crx:slot)
+        (base #$sw:slot)
         (applicable-to nil) ;default is applies to everything
         (value-type nil) ;default is anything
         (set-valued? nil)

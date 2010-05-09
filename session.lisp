@@ -1,7 +1,7 @@
 (in-package :sw)
 
-(rdfs-def-class #$crx:session ()
-		(#$crx:session/machine))
+(rdfs-def-class #$sw:session ()
+		(#$sw:session/machine))
 
 (defvar *unique-session* nil)
 
@@ -9,8 +9,8 @@
 (defun make-unique-session ()
   (let* ((*fast-instances?* nil)
 	 (session
-	  (rdfs-make-instance #$crx:session 
-			      #$crx:session/machine (machine-instance))))
+	  (rdfs-make-instance #$sw:session 
+			      #$sw:session/machine (machine-instance))))
     (write-frame session)
     (setf *unique-session* session)))
 
@@ -30,11 +30,11 @@
   (unless base (setq base (frame-uri class)))
   (acl-compat.mp:with-process-lock (gensym-lock)	;+++ I hope this won't slow down the world too much.
     (unless (and fast?
-		 (msv class #$crx:last_used_id))
-      (setf (slotv class #$crx:last_used_id) nil) ;in lieu of a full reset
+		 (msv class #$sw:last_used_id))
+      (setf (slotv class #$sw:last_used_id) nil) ;in lieu of a full reset
       (fill-frame class :force? t :inverse? nil)
       )
-    (let* ((v (slotv class #$crx:last_used_id))
+    (let* ((v (slotv class #$sw:last_used_id))
 	   (last (or start
 		     (if (listp v) (first (last v)) v)))
 	   (next (if last
@@ -46,7 +46,7 @@
       (if (and (not fast?) (uri-used? source uri))
 	  (gensym-instance-frame class :start next :fast? fast?)
 	  (progn
-	    (add-triple class #$crx:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
+	    (add-triple class #$sw:last_used_id next :to-db (and (not fast?) *default-frame-source*) :remove-old t)
 	    (if uri-only?
 		uri
 		(intern-uri uri :class class :source source)))))))

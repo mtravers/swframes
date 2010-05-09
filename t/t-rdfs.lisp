@@ -1,25 +1,25 @@
 (in-package :sw)
 
 (define-test rdfs-basic
-    (assert-error t (rdfs-make-instance #$crx:NotAClass))
-  (rdfs-def-class #$crx:TestClass ())
-  (let ((i (rdfs-make-instance #$crx:TestClass #$crx:slot "foo")))
+    (assert-error t (rdfs-make-instance #$sw:NotAClass))
+  (rdfs-def-class #$sw:TestClass ())
+  (let ((i (rdfs-make-instance #$sw:TestClass #$sw:slot "foo")))
     (write-frame i)
     (assert-equal (list i)
-		  (rdfs-find "foo" :class #$crx:TestClass :slot  #$crx:slot))
+		  (rdfs-find "foo" :class #$sw:TestClass :slot  #$sw:slot))
     (destroy-frame i)
     ))
 
 
 (define-test rdfs-classp
-    (rdfs-def-class #$crx:TestClass1 ())
-  (rdfs-def-class #$crx:TestClass2 (#$crx:TestClass1))
-  (let ((i1 (rdfs-make-instance #$crx:TestClass1 #$crx:slot "foo"))
-	(i2 (rdfs-make-instance #$crx:TestClass2 #$crx:slot "bar")))
-    (assert-true (rdfs-classp i1 #$crx:TestClass1))
-    (assert-true (rdfs-classp i2 #$crx:TestClass2))
-    (assert-true (rdfs-classp i2 #$crx:TestClass1))
-    (assert-false (rdfs-classp i1 #$crx:TestClass2))
+    (rdfs-def-class #$sw:TestClass1 ())
+  (rdfs-def-class #$sw:TestClass2 (#$sw:TestClass1))
+  (let ((i1 (rdfs-make-instance #$sw:TestClass1 #$sw:slot "foo"))
+	(i2 (rdfs-make-instance #$sw:TestClass2 #$sw:slot "bar")))
+    (assert-true (rdfs-classp i1 #$sw:TestClass1))
+    (assert-true (rdfs-classp i2 #$sw:TestClass2))
+    (assert-true (rdfs-classp i2 #$sw:TestClass1))
+    (assert-false (rdfs-classp i1 #$sw:TestClass2))
     ))
 
 (def-namespace "ftc" "http://collabrx.com/frametestcase/")

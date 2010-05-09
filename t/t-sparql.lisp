@@ -46,9 +46,9 @@
 
 (defun test-lisp-deserialize (str)
   (let ((f (gen-test-frame))
-	(s (gen-test-frame "crx:slot")))
+	(s (gen-test-frame "sw:slot")))
     (setf (frame-source f) *default-frame-source*)
-    (declare-special-slot s #$crx:slots/LispValueSlot)
+    (declare-special-slot s #$sw:slots/LispValueSlot)
     (setf (ssv f s) str)
     (write-frame f)
     (reset-frame f)
@@ -61,7 +61,7 @@
 (defun test-sparql-quoting (str triple? quoting?)
 ;  (test-lisp-deserialize str)
   (let ((f (gen-test-frame))
-	(s (gen-test-frame "crx:slot"))
+	(s (gen-test-frame "sw:slot"))
 	(mstr (if quoting?
 		  (backslash-quote-string str)
 		  str)))
