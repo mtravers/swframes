@@ -6,6 +6,20 @@
 ;;; Experimentally verified that 500 breaks Virtuoso
 (defparameter *sparul-group-limit* 250)      ;max # of groups (virtuoso has a 10000 LINE limit, this is groups)
 
+;;; Background write thread
+
+(defvar *background-write-queue* nil)
+
+(eval-when (:execute)
+  (background-funcall 
+   #'(lambda ()
+       (do () (())
+	 (acl-compat.mp:process-wait "SPARQL background writer" #'(lambda () *background-write-queue*))
+	 (report-and-ignore-errors
+	   (print `(running a thunk))
+	   (funcall (pop *background-write-queue*)))))))
+
+
 ;;; error handling +++ also, move these to utils +++
 (defmacro in-background-thread (&body body)
   `(background-funcall #'(lambda () ,@body)))
@@ -20,8 +34,16 @@
   (let ((procvar (gensym "PROC")))
     `(let ((,procvar #'(lambda () ,@body)))
        (if ,async?
-	   (funcall ,procvar)
-	   (background-funcall ,procvar)))))
+	   (background-funcall ,procvar)
+	   (funcall ,procvar)))))
+
+;;; New better technique
+(defmacro maybe-in-background-thread (async? &body body)
+  (let ((procvar (gensym "PROC")))
+    `(let ((,procvar #'(lambda () ,@body)))
+       (if ,async?
+	   (push-end ,procvar *background-write-queue*)
+	   (funcall ,procvar)))))
 
 (defmethod do-write-group ((endpoint sparql-endpoint) async? proc)
   (let ((prior-group *sparul-group*)   ;make sure we only do it after all groups unwound
@@ -33,7 +55,7 @@
     (let ((clauses (cadr *sparul-group*))) ;make sure this gets captured
        (when (and clauses
 		  (not prior-group))
-	 (maybe-asynchronously async?
+	 (maybe-in-background-thread async?
 	     (do-sparql endpoint
 		    (with-output-to-string (out)
 		      (dolist (s clauses)

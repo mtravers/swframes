@@ -22,6 +22,8 @@ Todos:
 (defun universal-slot (s)
   (setf (ssv s #$rdfs:domain) #$rdfs:Resource))
 
+(universal-slot #$rdfs:label)
+
 (defmethod initialize-instance :after ((f rdfs-class) &rest ignore)
   (with-slots (uri) f
     (unless uri
