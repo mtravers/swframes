@@ -380,8 +380,8 @@
   #'(lambda (f) 
       (ssv f slot)))
 
-(defun slot-has? (frame slot value)
-  (member value (slotv frame slot)))
+(defun slot-has? (frame slot value &key (test #'eq))
+  (member value (slotv frame slot) :test test))
 
 (defun add-triple (s p o &key (test (if (frame-p o) #'eq #'equal)) to-db remove-old)
   (if (%slotv p #$sw:specialhandling)
