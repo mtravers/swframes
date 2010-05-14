@@ -18,7 +18,7 @@
 	  frame-copy rename-frame delete-frame write-frame destroy-frame with-write-group
 	  write-slot write-triple
 	  describe-frame df dft
-	  register-namespace def-namespace expand-uri abbreviate-uri))
+	  register-namespace def-namespace expand-uri abbreviate-uri frame-namespace))
 
 (defun frame-name (frame)
   "Returns the URI of a frame, possibly abbreviated"

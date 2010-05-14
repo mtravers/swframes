@@ -119,7 +119,14 @@ dereferences things en masse and brings them into a local store.
 	     (error "Unknown XML namespspace for ~A" identifier))
 	)))
 
-(defun process-rdf-xml (xml &key base (source *default-frame-source*))
+;;; default source should be something else +++
+(defun process-rdf-xml (xml &key base (source *default-frame-source*) closed-world-proc)
+  #.(doc
+     "Process some RDF XML (in LXML form)"
+     "BASE: base uri (default is to get it from RDF properties"
+     "SOURCE: SOURCE for new frames"
+     "CLOSED-WORLD-PROC: a procedure that takes a frame and returns true if frame should get reset before stuffing it with data from the RDF"
+     )
   (assert xml)
   ;; base can be set as an argument or from the header attributes
   (let ((top-frames nil))
@@ -150,6 +157,8 @@ dereferences things en masse and brings them into a local store.
                                  (->frame about0)
                                  (make-blank-node (lxml-tag desc))
                                  )))
+		 (when (and closed-world-proc (funcall closed-world-proc about))
+		   (reset-frame about))
                  (when top
                    (push about top-frames))
                  (unless (eq (lxml-tag desc) '|rdf|::|Description|)

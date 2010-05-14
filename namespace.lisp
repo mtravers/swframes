@@ -56,6 +56,9 @@
 
 (defvar *namespace-leniant* nil)
 
+(defun frame-namespace (frame)
+  (namespacify (frame-uri frame)))
+
 (defun expand-uri (uri &optional (no-error? *namespace-leniant*))
   "Given an abbreviated URI as a string, expand it using known namespaces.  An error is signalled if the namespace is unknown unless NO-ERROR? is true."
   (let* ((colonpos (position #\: uri))
