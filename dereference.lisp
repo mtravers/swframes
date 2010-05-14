@@ -178,8 +178,10 @@ dereferences things en masse and brings them into a local store.
 				     ((member datatype '(#$xsd:integer #$xsd:int #$xsd:long #$xsd:double #$xsd:float))
 				      (setq value (read-from-string value)))
 				     ((member datatype '(#$xsd:string)))
+				     ((eq datatype #$xsd:dateTime)
+				      (setq value (cybertiggyr-time:parse-time value)))
 				     (datatype ;good to know about
-				      (warn "Dereference found unknown datatype ~A" datatype)
+				      (warn "Found unknown datatype ~A" datatype)
 				      ))
 			       (add-value value about property)))
                             (t (dolist (sub (lxml-all-subelements elt))
