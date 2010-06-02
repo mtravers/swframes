@@ -50,7 +50,7 @@
       ("go" "http://purl.org/obo/owl/GO#GO_")
       ("oboont" "http://purl.org/obo/owl/")
       ("proto" "http://www.biopax.org/prototype#")
-      ("reactome" "http://www.reactome.org/biopax#")
+;;;      ("reactome" "http://www.reactome.org/biopax#")
       ("cas" "http://www.biopax.org/xref/cas/#")
       ("kegg" "http://www.biopax.org/xref/kegg/#")
       ("bug" "http://karma.med.harvard.edu/wiki/Debugging_the_bug/bug.owl#")
