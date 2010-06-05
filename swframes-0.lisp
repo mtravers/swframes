@@ -43,9 +43,9 @@ This file has the minimum needed to get the frame system working (esp. the reade
       "The URI of the frame as a string")
 
 ;;; We set this globally.
-(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader )
-(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader )
-(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader )
+(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader)
+(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader)
+(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader)
 
 (defun make-reader-frame (s)
   (make-frame s :source *default-frame-source*)) 
