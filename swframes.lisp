@@ -35,9 +35,11 @@
 	     (car (slotv frame slot fill?))))
     (or (ssv-safe frame #$rdfs:label) 
 	(ssv-safe frame #$skos:prefLabel)
+#| MMM
 	(ssv-safe frame #$http://purl.org/science/owl/sciencecommons/ggp_has_primary_symbol)
 	(ssv-safe frame #$bp:SHORT-NAME)
 	(ssv-safe frame #$bp:NAME)
+|#
 	(most-significant-name (frame-name frame))
 	)))
 

@@ -159,14 +159,15 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
      "Find instances of CLASS that have VALUE on SLOT."
      "VALUE can be :all, in which case all instances of CLASS are returned"
      "If SLOT is nil, VALUE can be on any slot of instance. "
-     "If WORD? is true, does a text search of VALUE as a word contained in the actual slot value")
+     "If WORD? is true, does a text search of VALUE as a word contained in the actual slot value"
+     "LIMIT is a limit on the TRIPLES returned.  If FIll? is set, this won't be the same as the number of instances returned")
   (let ((sparql (rdfs-find-sparql value :slot slot :class class :word? word? :limit limit :from from))
 	result)
     (when case-insensitize?
       (setf sparql (case-insensitize-2 sparql)))
     (setf result
 	  (if fill?
-	      (bulk-load-query source sparql)
+	      (bulk-load-query source sparql :inverse? nil) ;changed to omit inverse slots
 	      (do-sparql-one-var source sparql)))
     ;; Set the class if we know it.  Seems like this should be done more places.
     (when class

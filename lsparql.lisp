@@ -550,24 +550,24 @@
 ;;; An extension to do this to n levels might be useful (++).
 ;;; Fill-frame is n=0.  
 ;;; return-all-results? is not currently used
-(defun bulk-load-query (source query &key (var (car (second query))) return-all-results?)
+(defun bulk-load-query (source query &key (var (car (second query))) return-all-results? (inverse? t))
   #.(doc
      "Given a SPARQL query and a VAR extend the query to load all slots and inverse-slots of frames that match VAR, and mark them as loaded."
      "This function actually peforms the query and returns the list of frames matching VAR.")
   (setq query (copy-tree query))	;we mutate query, so copy it first
   (push-end `(:union ((,var ?bl_p ?bl_o))
-		     ((?bl_s ?bl_p ,var)))
+		     ,@(if inverse? `(((?bl_s ?bl_p ,var)))))
 	    query)
   (push-end '?bl_p (second query))
   (push-end '?bl_o (second query))
-  (push-end '?bl_s (second query))
+  (if inverse? (push-end '?bl_s (second query)))
   (let* ((res (do-sparql source query))
 	 (processed? nil)
 	 (frames
 	  (collecting
 	    (dolist (bind res)
 	      (let ((sm (sparql-binding-elt bind var))
-		    (s (sparql-binding-elt bind "bl_s"))
+		    (s (and inverse? (sparql-binding-elt bind "bl_s")))
 		    (p (sparql-binding-elt bind "bl_p"))
 		    (o (sparql-binding-elt bind "bl_o")))
 		;; do a reset on frames we bring in

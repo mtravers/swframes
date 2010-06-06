@@ -48,6 +48,7 @@ Todos:
 	 (class (find-class sym nil)))
     (cond ((and class 
 		;; +++ I'm not sure how to do this in an implementation-indepent way. 
+		;; +++ seems not to be working
 		#+:CCL
 		(not (typep class 'ccl:forward-referenced-class))
 		#+:SBCL			;untested
@@ -56,7 +57,9 @@ Todos:
 	   class)
 	  (force?
 	   (setf (get sym :frame) frame)
-	   (eval (defclass-form frame (slotv frame #$rdfs:subClassOf)))
+	   (let ((supertypes (slotv frame #$rdfs:subClassOf)))
+	     (mapcar 'rdfs-clos-class supertypes)
+	     (eval (defclass-form frame supertypes)))
 	   (find-class sym t))
 	  (error?
 	   (error "Can't turn ~A into class" frame))
