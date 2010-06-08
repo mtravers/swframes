@@ -17,7 +17,7 @@
 
       ;; Local
       ("sw" "http://swframes.org/rdf/")	;+++ well, who should own this?
-
+      ("crx" "http://collabrx.com/rdf/")
       ))
 
 (dolist (n *standard-namespaces*)
