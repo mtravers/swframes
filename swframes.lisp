@@ -11,7 +11,7 @@
 	  slotv slotv-inverse
 	  slot-accessor inverse-slot-accessor
 	  msv msv-inverse 
-	  ssv ssv-inverse ssv-accessor
+	  ssv ssv-inverse ssv-accessor ssv-inverse-accessor
 	  declare-special-slot
 	  for-frame-slots for-frame-inverse-slots
 	  add-triple remove-triple
@@ -381,6 +381,10 @@
 (defun ssv-accessor (slot)
   #'(lambda (f) 
       (ssv f slot)))
+
+(defun ssv-inverse-accessor (slot)
+  #'(lambda (f) 
+      (ssv-inverse f slot)))
 
 (defun slot-has? (frame slot value &key (test #'eq))
   (member value (slotv frame slot) :test test))
