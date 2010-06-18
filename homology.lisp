@@ -8,10 +8,10 @@
   (let ((cstring (compile-word string)))
     (sort (collecting
 	    (mapcar #'(lambda (frame)
-			(let ((score (score-homology-fast cstring 
-								 (ssv frame slot fill?))))
-			  (when (> score limit) 
-			    (collect (list frame score (ssv frame slot nil))))))
+			(dolist (name (slotv frame slot fill?))
+			  (let ((score (score-homology-fast cstring name)))
+			    (when (> score limit) 
+			      (collect (list frame score name))))))
 		    targets))
 	  #'>
 	  :key #'cadr)))

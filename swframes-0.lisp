@@ -147,17 +147,18 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (create-valid-frame-name 
    string
    :space-char-action #\_
-   :from-chars "$&+,/:;=?@<>#%'^"
-   :to-chars   ".............._."))
+   :from-chars "()$&+,/:;=?@<>#%'^"
+   :to-chars   "[].............._."))
 				   
 ;;; redo this for urls.  Source http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
 ;;; note that chars like : and / are legal for URIs, but only in a certain way...
+;;; Parens aren't allowed in frame names because it fucks up lisp syntax (but they are legal so could come from an outside source).
+;;; +++ need to distinguish between legal chars and "unsafe" chars and syntax chars.  Ugh.
 (defparameter *illegal-frame-chars*
   (coerce 
-   (string+ "$&+:;,/=?<>#%"*whitespace*) 
+   (string+ "()$&+:;,/=?<>#%'^" *whitespace*) 
    'simple-string)
   "Characters that are not allowed in strings representing frame names")
-
 
 #|
 An attempt to get a cleaner version of (setf (#^ ... but doesn't work.

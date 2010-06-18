@@ -69,8 +69,8 @@ Todos:
   (rdfs-clos-class frame :force? t :error? t))
 
 ;;; Set class of frame based on its RDF type
-(defun classify-frame (f &optional error?)
-  (when (eq 'frame (type-of f))
+(defun classify-frame (f &key error? force?)
+  (when (or force? (eq 'frame (type-of f)))
     (let ((rclasses (collapse-class-list (slotv f #$rdf:type))))
       (cond ((= 1 (length rclasses))
 	     (set-frame-class f (car rclasses) error?))
@@ -78,10 +78,17 @@ Todos:
 	     (if error? (error "Can't set class, no type for ~A" f)))
 	    (t
 	     ;; Multiple types, so heuristicate -- pick one that already is a CLOS class
-	     (dolist (c rclasses)
-	       (when (rdfs-clos-class c :force? nil :error? nil)
-		 (set-frame-class f c error?)
-		 (return c))))))))
+	     ;; minimal thing is redundnat with collapse-class-list
+	     (let ((minimal nil))
+	       (dolist (c rclasses)
+		 (let ((clos (rdfs-clos-class c :force? nil :error? nil)))
+		   (when (and clos
+			      (or (null minimal)
+				  (member clos (subclasses minimal))))
+		   (setf minimal clos))))
+	       (when minimal
+		 (change-class f minimal)
+		 minimal)))))))
 
 (defun set-frame-class (frame rdf-class &optional error?)
   (let ((cclass (rdfs-clos-class rdf-class :force? t :error? error?)))
@@ -89,7 +96,7 @@ Todos:
 	(change-class frame cclass)
 	(if error?
 	    (error "Can't set class for ~A, no class found" frame)))
-    frame))
+    cclass))
 
 ;;; handle full range of defmethod hair +++
 (defmacro defmethod$ (name args &body body)
