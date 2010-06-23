@@ -98,9 +98,12 @@ Todos:
 	    (error "Can't set class for ~A, no class found" frame)))
     cclass))
 
-;;; handle full range of defmethod hair +++
-(defmacro defmethod$ (name args &body body)
-  (let* ((&pos (position #\& args :key #'(lambda (arg) (and (symbolp arg) (char (symbol-name arg) 0)))))
+(defmacro defmethod$ (name &rest rargs)
+  (let* ((argpos (position 'cons rargs :key #'type-of))
+	 (qualifiers (subseq rargs 0 argpos))
+	 (args (nth argpos rargs))
+	 (body (nthcdr (1+ argpos) rargs))
+	 (&pos (position #\& args :key #'(lambda (arg) (and (symbolp arg) (char (symbol-name arg) 0)))))
 	 (qualified-args (subseq args 0 &pos))
 	 (rest-args (and &pos (subseq args &pos)))
 	 (trans-args (mapcar #'(lambda (arg)
@@ -108,6 +111,6 @@ Todos:
 				     (list (car arg) (class-name (sw::rdfs-clos-class (cadr arg) :force? t)))
 				     arg))
 			     qualified-args)))
-    `(defmethod ,name ,(nconc trans-args rest-args) ,@body)))
+    `(defmethod ,name ,@qualifiers ,(nconc trans-args rest-args) ,@body)))
 
 
