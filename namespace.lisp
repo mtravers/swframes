@@ -1,7 +1,7 @@
 (in-package :swframes)
 
 ;;; was colliding with s-xml.  Actually, why don't I just reuse it, it's about the same code.  
-(defparameter *sw-namespaces* nil)
+(defvar *sw-namespaces* nil)
 
 (defun register-namespace (abbrev full &optional force?)
   "Register ABBREV as a namespace definition for FULL.  Ie, (register-namespace \"dbpedia\" \"http://dbpedia.org/property/\")"
