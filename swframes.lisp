@@ -20,6 +20,9 @@
 	  describe-frame df dft
 	  register-namespace def-namespace expand-uri abbreviate-uri frame-namespace))
 
+;;; A flag to turn off tracking of inverse values.  Not the right thing, but can help with some performance issues.
+(defvar *track-inverses* t)
+
 (defun frame-name (frame)
   "Returns the URI of a frame, possibly abbreviated"
   (abbreviate-uri (frame-uri frame)))
@@ -103,12 +106,14 @@
   (for-frame-slots (frame slot value)
 		   (unless (%slotv slot #$sw:specialhandling)
 		     (dolist (elt value)
-		       (when (and (frame-p elt) (frame-inverse-slots elt))
-			 (deletef frame (gethash slot (frame-inverse-slots elt))))))) ;NNN
+		       (when (and *track-inverses*
+				  (frame-p elt)
+				  (frame-inverse-slots elt))
+			 (deletef frame (gethash slot (frame-inverse-slots elt))))))) 
   (for-frame-inverse-slots (frame slot value)
 			   (dolist (elt value)
 			     (when (frame-p elt)
-			       (deletef frame (gethash slot (frame-slots elt)))))) ;NNN
+			       (deletef frame (gethash slot (frame-slots elt))))))
 
   (reset-frame frame)
   (unintern-uri (frame-uri frame)))
@@ -155,13 +160,13 @@
    #.(doc
       "Ensure that the contents of FRAME (its slots and inverse-slots) are up to date as defined by SOURCE."
       "Does nothing if FRAME is already marked as loaded, unless FORCE? is true."
-      "INVERSE? loads inverse-slots, default is T")))
+      "INVERSE? loads inverse-slots, default is *track-inverses*")))
 
 (defvar *fill-by-default?* t "True if slot functions do a fill by default.  Initally T, can be dynamically bound")
 
 (defparameter *dereference?* nil)
 
-(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)) (inverse? t) reset?)
+(defmethod fill-frame ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)) (inverse? *track-inverses*) reset?)
   (when (or force?
 	    (not (frame-loaded? frame))
 	    (and (frame-source frame) 
@@ -267,14 +272,15 @@
 	    (error "Arg to set-slotv must be list: ~A ~A ~A" frame slot value))
 	  (%set-slotv frame slot value)
 	  ;; (too slow for long lists) PPP
-	  (when old
-      (dolist (removed (set-difference old value :test #'equal))
-	(when (frame-p removed)
-	  (deletef frame (gethash slot (frame-inverse-slots-force removed))))))
-	  (dolist (added (set-difference value old :test #'equal))
-	    (when (frame-p added)
-	      (pushnew frame (gethash slot (frame-inverse-slots-force added)))))
-	  value))))
+	  (when *track-inverses*
+	    (when old
+	      (dolist (removed (set-difference old value :test #'equal))
+		(when (frame-p removed)
+		  (deletef frame (gethash slot (frame-inverse-slots-force removed))))))
+	    (dolist (added (set-difference value old :test #'equal))
+	      (when (frame-p added)
+		(pushnew frame (gethash slot (frame-inverse-slots-force added)))))
+	    value)))))
 
 (defsetf slotv set-slotv)
 
@@ -399,7 +405,7 @@
 	(pushnew o (%slotv s p) :test test)
 	;; PPP this can be a performance bottleneck for things like types that can have thousands of members.  
 	;; Need to use hashtables or some structure with better performance 
-	(when (frame-p o)
+	(when (and (frame-p o) *track-inverses*)
 	  (pushnew s (%slotv-inverse o p) :test #'eq))
 	(when to-db
 	  (let ((source (if (typep to-db 'frame-source)
@@ -422,9 +428,9 @@
       (deletef o (%slotv s p) :test test))
   (if savedo
       (dolist (o savedo)
-	(when (frame-p o)
+	(when (and *track-inverses* (frame-p o))
 	  (deletef s (%slotv-inverse o p) :test test)))
-      (when (frame-p o)
+      (when (and *track-inverses* (frame-p o))
 	(deletef s (%slotv-inverse o p) :test test)))
   (when to-db
     (let ((source (if (typep to-db 'frame-source)
@@ -488,7 +494,7 @@
   (let ((v (slotv frame slot)))
     (remhash slot (frame-slots frame))
     (dolist (velt v)
-      (when (frame-p velt)
+      (when (and *track-inverses* (frame-p velt))
 	(deletef frame (%slotv-inverse velt slot))))))
 
 (defun frame-copy (frame &key new-frame deep-slots omit-slots (uri-generator #'default-uri-generator))
