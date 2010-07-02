@@ -276,6 +276,9 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
 		     ,@body)
 		 (frame-inverse-slots ,frame)))))
 
+;;; Supports fasl dump.  This has to come early to allow later files to compile.  
+;;; Other slot-load-forms are defined later once the defmethod$ machinery exists.
+
 (defmethod make-load-form ((frame frame) &optional ignore)
   (declare (ignore ignore))
   (values
@@ -293,8 +296,3 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
 
 (defmethod slot-load-form (frame slot value)
   `(setf (%slotv ,frame ,slot) ',value))
-
-(defmethod$ slot-load-form (frame (slot #$sw:slots/TransientSlot) value)
-  (declare (ignore frame value))
-  nil)
-

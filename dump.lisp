@@ -72,4 +72,8 @@
       (dump-frames-to-fasl sublist (make-pathname :directory dir :name (fast-string (incf counter))) :variable variable)
       (print `(dump ,counter)))))
     
-  
+;;; Supports fasl dump -- see swframes-0 for the make-load-form machinery
+
+(defmethod$ slot-load-form (frame (slot #$sw:slots/TransientSlot) value)
+  (declare (ignore frame value))
+  nil)
