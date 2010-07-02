@@ -164,7 +164,8 @@
      "#$sw:slots/TransientSlot:"
      "  Slots of this class never write their values to the database.")
   (setf (ssv slot #$rdf:type) type
-        (ssv slot #$sw:specialhandling) t))
+        (ssv slot #$sw:specialhandling) t) ;CCC +++ if we methodize slot functions this flag may be able to go away
+  (classify-frame slot))
 
 ;;; debugging only
 (defun undeclare-special-slot (slot)

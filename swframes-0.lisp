@@ -276,16 +276,25 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
 		     ,@body)
 		 (frame-inverse-slots ,frame)))))
 
-;;; Now with contents!  
-
 (defmethod make-load-form ((frame frame) &optional ignore)
   (declare (ignore ignore))
   (values
    `(intern-uri ,(frame-uri frame))
-   `(progn
-      ,@(collecting
-	 (for-frame-slots (frame slot value)
-	   (collect `(setf (%slotv ,frame ,slot) ',value))))
-      ,@(when (frame-loaded? frame)
-	      `((set-frame-loaded? ,frame)) ))))
+   (let ((forms
+	  `(,@(collecting
+	       (for-frame-slots (frame slot value)
+		 (collect-if (slot-load-form frame slot value))))
+	      ,@(when (frame-loaded? frame)
+		      `((set-frame-loaded? ,frame)) ))))
+     (if forms
+	 `(progn ,@forms)
+	 nil)
+     )))
+
+(defmethod slot-load-form (frame slot value)
+  `(setf (%slotv ,frame ,slot) ',value))
+
+(defmethod$ slot-load-form (frame (slot #$sw:slots/TransientSlot) value)
+  (declare (ignore frame value))
+  nil)
 
