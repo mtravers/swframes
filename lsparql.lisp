@@ -435,31 +435,13 @@
 	  (hash-keys tuples)
 	  (frame-loaded? frame)
 	  t)))
-	       
 
-(rdfs-def-class #$rdf:Property ())
-
-(rdfs-def-class #$sw:slots/specialSlot (#$rdf:Property))
-
-(rdfs-def-class #$sw:slots/LispValueSlot (#$sw:slots/specialSlot))
 
 ;;; Maybe this should be folded into add-triple
 (defun process-value (slot value)
   (if (%slotv slot #$sw:specialhandling)
       (rdfs-call deserialize-value slot value)
       value))
-
-(rdfs-defmethod deserialize-value ((slot #$sw:slots/LispValueSlot) value)
-		(if (stringp value)
-		    (read-from-string value)
-		    value))
-
-(rdfs-def-class #$sw:slots/TransientSlot (#$sw:slots/specialSlot))
-
-;;; Sometimes these unserializable slots get serialized, so ignore them
-(rdfs-defmethod deserialize-slot ((p #$sw:slots/TransientSlot) frame value)
-		(declare (ignore frame value))
-		nil)
 
 ;;; +++ this can time out without the limit, but of course with it, it produces incorrect results.  Maybe ths should only be done on demand.
 (defvar *inverse-fill-limit* 100)

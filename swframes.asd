@@ -28,6 +28,7 @@
    (:file "compat")
    (:file "clos")
    (:file "rdfs")
+   (:file "special-slots")
    (:file "session")
    (:file "dump")
    (:file "versioning")
