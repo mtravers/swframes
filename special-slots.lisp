@@ -1,26 +1,10 @@
 (in-package :swframes)
 
+;;; Note: this has been pulled out of sparql machinery, some further cleanup may be required.
+
 (rdfs-def-class #$rdf:Property ())
 
 (rdfs-def-class #$sw:slots/specialSlot (#$rdf:Property))
-
-(rdfs-def-class #$sw:slots/LispValueSlot (#$sw:slots/specialSlot))
-
-(rdfs-defmethod deserialize-value ((slot #$sw:slots/LispValueSlot) value)
-		(if (stringp value)
-		    (read-from-string value)
-		    value))
-
-(rdfs-def-class #$sw:slots/TransientSlot (#$sw:slots/specialSlot))
-
-;;; Sometimes these unserializable slots get serialized, so ignore them
-(rdfs-defmethod deserialize-slot ((p #$sw:slots/TransientSlot) frame value)
-		(declare (ignore frame value))
-		nil)
-
-(rdfs-defmethod deserialize-value ((p #$sw:slots/TransientSlot) value)
-		(declare (ignore value))
-		nil)
 
 ;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
 
@@ -39,3 +23,27 @@
 (defun undeclare-special-slot (slot)
   (setf (slotv slot #$rdf:type) nil
         (slotv slot #$sw:specialhandling) nil)  )
+
+;;; LispValueSlot
+
+(rdfs-def-class #$sw:slots/LispValueSlot (#$sw:slots/specialSlot))
+
+(rdfs-defmethod deserialize-value ((slot #$sw:slots/LispValueSlot) value)
+		(if (stringp value)
+		    (read-from-string value)
+		    value))
+
+;;; TransientSlot
+
+(rdfs-def-class #$sw:slots/TransientSlot (#$sw:slots/specialSlot))
+
+;;; Sometimes these unserializable slots get serialized, so ignore them
+(rdfs-defmethod deserialize-slot ((p #$sw:slots/TransientSlot) frame value)
+		(declare (ignore frame value))
+		nil)
+
+(rdfs-defmethod deserialize-value ((p #$sw:slots/TransientSlot) value)
+		(declare (ignore value))
+		nil)
+
+

@@ -154,44 +154,22 @@
 	  (rdfs-call write-triple-special slot frame val source)
 	  (write-triple source frame slot val)))))
 
-;;; special write behaviors:  don't write, serialize/deserialize lisp, list handling...
-
-(defun declare-special-slot (slot type)
-  #.(doc 
-     "Declares SLOT to have special behavior defined by TYPE.  Current TYPEs are:"
-     "#$sw:slots/LispValueSlot:"
-     "   Slots of this class can hold any printable Lisp object."
-     "#$sw:slots/TransientSlot:"
-     "  Slots of this class never write their values to the database.")
-  (setf (ssv slot #$rdf:type) type
-        (ssv slot #$sw:specialhandling) t) ;CCC +++ if we methodize slot functions this flag may be able to go away
-  (classify-frame slot))
-
-;;; debugging only
-(defun undeclare-special-slot (slot)
-  (setf (slotv slot #$rdf:type) nil
-        (slotv slot #$sw:specialhandling) nil)  )
 
 (rdfs-defmethod write-triple-special ((p #$sw:slots/LispValueSlot) s o sparql)
-		(with-standard-io-syntax ;aka print-readably
-		  (let ((oo (typecase o
-			      (fixnum o)
-			      (otherwise (prin1-to-string o)))))
-		    (handler-case
-			(%write-triple sparql s p oo)
-		      (print-not-readable (e)
-			(declare (ignore e))
-			(error "Can't save nonreadable object ~A in ~A / ~A" o s p)
-			)))))
+  (with-standard-io-syntax ;aka print-readably
+    (let ((oo (typecase o
+		(fixnum o)
+		(otherwise (prin1-to-string o)))))
+      (handler-case
+	  (%write-triple sparql s p oo)
+	(print-not-readable (e)
+	  (declare (ignore e))
+	  (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
+	  )))))
 
 (rdfs-defmethod write-triple-special ((p #$sw:slots/TransientSlot) s o sparql)
-		(declare (ignore s o sparql))
-		)
-
-;;; Sometimes these unserializable slots get serialized, so ignore them
-(rdfs-defmethod deserialize-value ((p #$sw:slots/TransientSlot) value)
-		(declare (ignore value))
-		nil)
+  (declare (ignore s o sparql))
+  )
 
 (defun frame-dependents (frame)
   (collecting
