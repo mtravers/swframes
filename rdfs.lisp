@@ -165,20 +165,24 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	result)
     (when case-insensitize?
       (setf sparql (case-insensitize-2 sparql)))
-    (setf result
-	  (if fill?
-	      (bulk-load-query source sparql :inverse? nil) ;changed to omit inverse slots
-	      (do-sparql-one-var source sparql)))
-    ;; Set the class if we know it.  Seems like this should be done more places.
-    (when class
-      (mapc #'(lambda (r) (set-frame-class r class)) result))
-    result))
+    (if (eq value :count)
+	(cadr (car (car (do-sparql source sparql))))
+	(progn
+	  (setf result
+		(if fill?
+		    (bulk-load-query source sparql :inverse? nil) ;changed to omit inverse slots
+		    (do-sparql-one-var source sparql)))
+	  ;; Set the class if we know it.  Seems like this should be done more places.
+	  (when class
+	    (mapc #'(lambda (r) (set-frame-class r class)) result))
+	  result))))
 
 ;;; generalize to multiple slot/values.  ++
 (defun rdfs-find-sparql (value &key slot class word? limit from)
   (let ((vvar (if word? (gensym "?V"))))
-    `(:select (?s) (:distinct t :limit ,limit :from ,from)
-	      ,@(unless (eq value :all)
+    `(:select ,(if (eq value :count) ':count '(?s))
+	      (:distinct t :limit ,limit :from ,from)
+	      ,@(unless (keywordp value)
 			`((?s ,(if slot slot '?p) ,(if word? vvar value))))
 	      ,@(if class `((?s #$rdf:type ,class)))
 	      ;; UGH quoting, but I think this is right...
