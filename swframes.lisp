@@ -499,7 +499,7 @@
 
 (defun frame-copy (frame &key new-frame deep-slots omit-slots (uri-generator #'default-uri-generator))
   #.(doc "Make a new frame by copying the contents of FRAME."
-	 "Slots listed in omit-slots are not copied."
+	 "Slots listed in OMIT-SLOTS are not copied."
 	 "Slots listed in DEEP-SLOTS or marked with #$sw:slots/deep-copy will have copies made of their contents, otherwise a shallow copy is performed.")
   (if (not (frame-p frame))
       frame				;nonframes remain the same (makes recursion easier)

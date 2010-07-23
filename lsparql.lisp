@@ -419,6 +419,22 @@
       (set-frame-loaded? frame))
     ))
 
+;;; +++ this can time out without the limit, but of course with it, it produces incorrect results.  Maybe ths should only be done on demand.
+(defvar *inverse-fill-limit* 100)
+
+(defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
+  (unless (frame-inverse-slots frame)
+    (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
+  (let ((*default-frame-source* source))
+    (dolist (binding (do-sparql 
+			 source
+		       `(:select (?s ?p) (:limit ,*inverse-fill-limit*) (?s ?p ,frame))))
+      (let ((p (sparql-binding-elt binding "p"))
+	    (s (sparql-binding-elt binding "s")))
+	(when (and s p)	; shouldn't be necessary but some SPARQL endpoints have missing results (dbpedia)
+	  (add-triple s p frame))
+      ))))
+
 ;;; Special hack to fill tuplesets efficiently.  Fill-frame is not cutting it.
 (defun fill-tupleset (frame)
   (let ((tuples (make-hash-table :test #'eq)))
@@ -442,22 +458,6 @@
   (if (%slotv slot #$sw:specialhandling)
       (rdfs-call deserialize-value slot value)
       value))
-
-;;; +++ this can time out without the limit, but of course with it, it produces incorrect results.  Maybe ths should only be done on demand.
-(defvar *inverse-fill-limit* 100)
-
-(defmethod fill-frame-inverse-sparql ((frame frame) (source sparql-endpoint))
-  (unless (frame-inverse-slots frame)
-    (setf (frame-inverse-slots frame) (make-hash-table :test #'eq)))
-  (let ((*default-frame-source* source))
-    (dolist (binding (do-sparql 
-			 source
-		       `(:select (?s ?p) (:limit ,*inverse-fill-limit*) (?s ?p ,frame))))
-      (let ((p (sparql-binding-elt binding "p"))
-	    (s (sparql-binding-elt binding "s")))
-	(when (and s p)	; shouldn't be necessary but some SPARQL endpoints have missing results (dbpedia)
-	  (add-triple s p frame))
-      ))))
 
 (defmethod uri-used? ((source sparql-endpoint) uri)
   (do-sparql 

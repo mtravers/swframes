@@ -9,4 +9,6 @@
     (setf (ssv f s) "bar")
     (write-frame-versioned f)
     (assert-equal '("bar" "foo")
-		  (mapcar (ssv-accessor s) (frame-version-history f)))))
+		  (mapcar (ssv-accessor s) (frame-version-history f)))
+    (destroy-frame f)
+    (destroy-frame s)))

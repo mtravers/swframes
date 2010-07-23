@@ -88,7 +88,9 @@ This file has the minimum needed to get the frame system working (esp. the reade
     (frame thing)
     (string (intern-uri thing :source source))))
 
-(defun intern-uri (uri &key source (class 'frame))
+(defvar *force-source?* nil)
+
+(defun intern-uri (uri &key source (class 'frame) (force-source? *force-source?*))
   #.(doc
      "Coerce THING (typically a URI as a string) into a frame, creating it if necessary."
      "SOURCE specifies a source, argument is ignored if frame already exists.")
@@ -100,7 +102,8 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (assert (> (length uri) 0))
   (aif (frame-named uri)
        (progn
-	 (when (and source (null (frame-source it)))
+	 (when (and source (or (null (frame-source it))
+			       force-source?))
 	   (setf (frame-source it) source))
 	 it)
        (intern-frame

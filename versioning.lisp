@@ -24,8 +24,8 @@ Caveats:  only works if you use write-frame-versioned.  Other ways of writing co
 	 (version-number (if last-version (1+ (ssv last-version #$sw:version)) 0))
 	 (version-uri (string+ (frame-name frame) "/v/" (fast-string version-number)))
 	 (version-frame (intern-uri version-uri)))
-    (frame-copy frame :new-frame version-frame)
-    (frame-delete-slot version-frame #$rdf:type)
+    (frame-copy frame :new-frame version-frame :omit-slots (list #$rdf:type))
+;    (frame-delete-slot version-frame #$rdf:type)
     (setf (ssv version-frame #$sw:version_of) frame)
     (setf (ssv version-frame #$sw:version) version-number)
     (setf (ssv version-frame #$sw:timestamp) (now))
@@ -33,7 +33,7 @@ Caveats:  only works if you use write-frame-versioned.  Other ways of writing co
     (setf (ssv frame #$sw:previous_version) version-frame)
     version-frame))
 
-;;; NL overwrites this -- the idea is that SW is independent of a user-management scheme
+;;; NL overwrites this -- the idea is that SW should be independent of a user-management scheme
 (defun current-user ()
   #$sw:TestUser)
 
