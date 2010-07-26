@@ -109,7 +109,7 @@
 		       (result-format *default-sparql-result-format*))
     (run-sparql url command result-format
 	     :make-uri #'(lambda (u) (intern-uri u :source sparql))
-	     ;; this suddenly became necessary since I was geting literals back...no idea why 
+	     ;; this suddenly became necessary since I was incorrectly geting literals back from Virtuoso
 	     :eager-make-uri? t
 	     :timeout timeout
 	     ))
@@ -389,19 +389,25 @@
 (defmethod sanity-check ((endpoint sparql-endpoint))
   (do-sparql endpoint `(:select (?s ?p ?o) (:limit 10) (?s ?p ?o) )))
 
-(defmethod fill-frame-from ((frame frame) (source sparql-endpoint) &key inverse?)
+(defmethod fill-frame-from ((frame frame) (source sparql-endpoint))
 ;;; this causes too many problems...needs rethinking
 ;  (reset-frame frame)	
   (fill-frame-sparql frame source)
-  (when inverse?
-    (fill-frame-inverse-sparql frame source))
+;  (when inverse?
+;    (fill-frame-inverse-sparql frame source))
   (let ((*fill-by-default?* nil))
     (rdfs-call post-fill frame))	;+++ should be done at higher level for non-sparql sources
   )
 
-;;; Hack +++
-(rdfs-defmethod post-fill (frame)
-		)
+;;; Default to no-op
+(defmethod fill-frame-inverse-from ((frame frame) (source t))
+  )
+
+(defmethod fill-frame-inverse-from ((frame frame) (source sparql-endpoint))
+  (fill-frame-inverse-sparql frame source))
+
+;;; Classes can add methods to this for special actions
+(rdfs-defmethod post-fill (frame) )
 
 (defmethod fill-frame-sparql ((frame frame) (source sparql-endpoint))
   (let* ((*default-frame-source* source) ;not sure

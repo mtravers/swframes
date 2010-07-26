@@ -6,7 +6,7 @@
 	  clean-string most-significant-name frame-id-suffix ;create-valid-frame-name conflicts with biolisp
 	  %frame-slots %frame-inverse-slots
 	  reset-frames for-all-frames all-frames
-	  fill-frame fill-frame-inverse frame-loaded?
+	  fill-frame fill-frame-inverse frame-loaded? post-fill
 	  %slotv
 	  slotv slotv-inverse
 	  slot-accessor inverse-slot-accessor
@@ -152,8 +152,11 @@
 	(return-from frame-fresh? nil)))
   t)
 
-(defmethod fill-frame-inverse ((frame frame))
-  (fill-frame frame))
+(defmethod fill-frame-inverse ((frame frame) &key force? (source (or (frame-source frame) *default-frame-source*)))
+  (when (or force?
+	    (not (frame-inverse-loaded? frame)))
+    (fill-frame-inverse-from frame source)
+    (setf (frame-inverse-loaded? frame) t)))
 
 (defgeneric fill-frame (frame &key force? source inverse?)
   (:documentation
@@ -170,8 +173,7 @@
   (when (or force?
 	    (not (frame-loaded? frame))
 	    (and (frame-source frame) 
-		 (not (equal source (frame-source frame))))
-	    )
+		 (not (equal source (frame-source frame)))))
     ;; dangerous
     (when reset?
       (clrhash (frame-slots frame))
@@ -179,17 +181,26 @@
 	(clrhash (frame-inverse-slots frame))))
     (let ((*fill-by-default?* nil))	;prevent recursion
       (if source
-	  (progn (fill-frame-from frame source :inverse? inverse?)
-		 ;; if nothing from db, try dereferencing
-		 (unless (frame-loaded? frame)
-		   (progn		;was report-and-ignore-errors
-		    (setf (frame-source frame) nil)
-		    (when *dereference?*
-		      (dereference frame force?))))) ;+++
+	  (progn
+	    (fill-frame-from frame source)
+	    (when inverse?
+	      (fill-frame-inverse frame :source source :force? force?))
+	    ;; if nothing from db, try dereferencing
+	    (unless (frame-loaded? frame)
+	      (progn		;was report-and-ignore-errors
+		(setf (frame-source frame) nil)
+		(when *dereference?*
+		  (dereference frame force?))))) ;+++
 	  (when *dereference?* (dereference frame force?)))		;+++
       (classify-frame frame)		
-      (set-frame-loaded? frame t source)))
+      (set-frame-loaded? frame t source)
+      (let ((*fill-by-default?* nil))
+	(rdfs-call post-fill frame))
+      ))
   frame)
+
+;;; Classes can add methods to this for special actions
+(defmethod post-fill ((frame frame)) )
 
 ;;; Gets overwritten later, here to support load, probably not the right solution +++
 (defmethod dereference ((frame frame) &optional force?)
@@ -299,7 +310,7 @@
        (gethash slot (frame-inverse-slots frame))))
 
 (defun slotv-inverse (frame slot &optional (fill? *fill-by-default?*))
-  (if fill? (fill-frame frame))
+  (if fill? (fill-frame-inverse frame))
   (%slotv-inverse frame slot))
 
 (defsetf slotv-inverse set-slotv-inverse)

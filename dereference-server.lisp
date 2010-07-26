@@ -93,10 +93,9 @@ as(rdf, "data.frame")
 	   )))
     `((,(frame-xml-tag slot) ,@(when datatype `(:|rdf:datatype| ,datatype)))
       ,(cond ((frame-p value)
-	      (frame-description-xml-1 value)) ;+++ need to do some depth calc
+	      (frame-description-xml-1 value)) 
 	     (t
-	      (princ-to-string value))))
-    ))
+	      (princ-to-string value))))))
 
 (defun frame-xml-tag (frame)
   (multiple-value-bind (uri namespace) (abbreviate-uri (frame-uri frame))

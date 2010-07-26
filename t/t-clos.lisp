@@ -19,7 +19,7 @@
   (let ((drugs (rdfs-find :all :source *drugbank-frame-source* :class #$http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugs :limit 10)))
     (assert-true (typep (car drugs) :|http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugs|))))
 
-;;; depends on drugbank database
+;;; depends on drugbank database (+++ probably not a good idea to make unit test that depends on foreign flaky source)
 (define-test discover-basic
   (let ((classes (discover-classes *drugbank-frame-source*))
 	(a-frame (car (do-sparql-one-var *drugbank-frame-source* '(:select (?s) () (?s ?p "Aspirin"))))))

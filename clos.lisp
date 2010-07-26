@@ -47,8 +47,7 @@ Todos:
   (let* ((sym (frame-as-symbol frame))
 	 (class (find-class sym nil)))
     (cond ((and class 
-		;; +++ I'm not sure how to do this in an implementation-indepent way. 
-		;; +++ seems not to be working
+		;; ++ I'm not sure how to do this in an implementation-indepent way. 
 		#+:CCL
 		(not (typep class 'ccl:forward-referenced-class))
 		#+:SBCL			;untested

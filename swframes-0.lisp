@@ -13,11 +13,9 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (uri
   (slots nil)
   (inverse-slots nil)
-  ;; Below here is various state-manipulation info; very in flux
-  source
-  (loaded? nil)				;T if slots have been loaded
-;;;  (dirty? nil) ;T if needs to be written back out, or list of preds to write out. (++ not used yet)
-  )
+  source				;Source 
+  (loaded? nil)				;T if slots have been loaded (+++ should be called FILLED?)
+  (inverse-loaded? nil))
   (:initable-instance-variables uri source)
   :writable-instance-variables		
   :readable-instance-variables)
@@ -163,26 +161,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
    'simple-string)
   "Characters that are not allowed in strings representing frame names")
 
-#|
-An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
-
-(defpackage :swfuncs)
-
-;;; New, works with setf without a lot of hair.   But it means we have to type #'#^ to use it as a functional argument...ugh.
-;;; Whups -- fun defined at read time, won't necessarily be available later. Damn! 
-;;; Poss solution -- put all def'd symbols in a special variable somewhere, which gets written to a fasl as the last step of compilation
-;;; of a system, and read back in early.  Ugly...
-(defun pound-carat-frame-reader (stream char arg)
-  (declare (ignore char arg))
-  (let* ((slot (make-frame (frames::read-fname stream)))
-	 (symbol (intern (frame-uri slot) :swfuncs)))
-    (compile symbol #'(lambda (f) (msv f slot)))
-    (eval `(defsetf ,symbol (f) (v) `(set-msv ,f ,,slot ,v)))
-    symbol
-    ))
-
-|#
-
 ;;; Following borrowed from BioLisp more or less verbaitm.
 
 (defun create-valid-frame-name 
@@ -281,7 +259,6 @@ An attempt to get a cleaner version of (setf (#^ ... but doesn't work.
 
 ;;; Supports fasl dump.  This has to come early to allow later files to compile.  
 ;;; Other slot-load-forms are defined later once the defmethod$ machinery exists.
-
 (defmethod make-load-form ((frame frame) &optional ignore)
   (declare (ignore ignore))
   (values

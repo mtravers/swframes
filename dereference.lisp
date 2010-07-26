@@ -20,8 +20,7 @@
   (error "Can't write to dereference source")
   )
 
-(defmethod fill-frame-from (frame (source dereference-source) &key inverse?)
-  (declare (ignore inverse?))
+(defmethod fill-frame-from (frame (source dereference-source))
   (dereference frame t)
   )
 
@@ -81,7 +80,6 @@ dereferences things en masse and brings them into a local store.
       (declare (ignore e))
       (warn "Attempt to dereference ~A got non-XML response" frame)
       nil)
-    ;; +++ deal with 404
     (error (e)
       (warn "Unexpected error ~A while dereferencing ~A" e frame)
       nil)
@@ -103,8 +101,8 @@ dereferences things en masse and brings them into a local store.
 ;;; undo some s-xml damage (translates its NS-2 style names back into uris)
 (defun translate-symbol (identifier)
   ;; weird bug in xml parser results in SEQUENCE instead of bp:sequence, ie:
-  ;; (get-pathways #$http://cbio.mskcc.org/cpath#CPATH-71202)
-  ;; +++ kludge around it because I don't have time to fix it.
+  ;; (sw::get-pathways #$cpath:CPATH-67762)
+  ;; +++ kludge around it because I don't have time to fix it properly.
   (when (eq identifier 'cl:sequence)
     (return-from translate-symbol (expand-uri "bp:sequence")))
   (let* ((package (symbol-package identifier))
@@ -119,8 +117,7 @@ dereferences things en masse and brings them into a local store.
 	     (error "Unknown XML namespspace for ~A" identifier))
 	)))
 
-;;; default source should be something else +++
-(defun process-rdf-xml (xml &key base (source *default-frame-source*) closed-world-proc)
+(defun process-rdf-xml (xml &key base (source *dereference-source*) closed-world-proc)
   #.(doc
      "Process some RDF XML (in LXML form)"
      "BASE: base uri (default is to get it from RDF properties"
@@ -137,10 +134,9 @@ dereferences things en masse and brings them into a local store.
              (add-value (v frame slot)
                (add-triple frame slot v)
                )
-             ;; +++ probably wants to be pulled out, this is a fundamental piece of RDF unfortunately
+             ;; +++ probably wants to be pulled out, this is a fundamental piece of RDF technology
              (make-blank-node (type)
-               ( ->frame (format nil "bnode:~A" (gensym (symbol-name type)))))
-	     ;; no idea if this is to spec...
+               (->frame (format nil "bnode:~A" (gensym (symbol-name type)))))
 	     (full-uri (thing)
 	       (cond ((position #\: thing)
 		      thing)

@@ -3,17 +3,14 @@
 ;;; From Knewos, the lower level sparql parts
 
 ;;; Raw SPARQL, return string
-(defun run-sparql-0 (endpoint sparql &key timeout (result-format "xml"))
+(defun run-sparql-0 (endpoint sparql &key timeout (result-format "json"))
   (unless timeout (setf timeout 10000))
   (multiple-value-bind (body response headers)
       (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" endpoint))
 	(get-url endpoint
 		 ;; some sparql servers only accept GET, we should parameterize this (++)
 		 :method :post
-;;; breaks Virtuoso
-;;;		 :accept '("application/rdf+xml")
 		 :query `(("query" . ,sparql)
-			  ;; json is more efficient -- and we have json parser (++)
 			  ("format" . ,result-format)
 			  )))
     (declare (ignore headers))
@@ -64,7 +61,7 @@
 			      (equal (lxml-attribute value-elt :|datatype|)
 				     "http://www.w3.org/2001/XMLSchema#double"))
 			 (read-from-string (cadr value-elt)))
-			;; +++ other datatypes?
+			;; +++ other datatypes
 			((eq (car value-elt) ':|bnode|)
 			 ;; we do this for bnodes, although it's not really correct -- you could have two colliding. +++
 			 (funcall make-uri (string+ "bnode:" (cadr value-elt))))

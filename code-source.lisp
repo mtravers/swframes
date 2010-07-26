@@ -26,6 +26,6 @@
        (setf *code-source* (make-instance 'code-source))))
 
 ;;; class FRAME not defined yet.
-(defmethod fill-frame-from (frame (source code-source) &key inverse?)
-  (declare (ignore frame source inverse?))
+(defmethod fill-frame-from (frame (source code-source))
+  (declare (ignore frame source))
   )
