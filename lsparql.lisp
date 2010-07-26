@@ -4,7 +4,6 @@
 	  do-sparql do-sparql-one-var
 	  bulk-load-query augment-query
  	  case-insensitize case-insensitize-2 
-	  post-fill
 	  *default-sparql-timeout*))
 
 ;;; bit of a crock -- figure out a good sparql source to use.  Will go to default of from-frame is code-source.
@@ -392,12 +391,7 @@
 (defmethod fill-frame-from ((frame frame) (source sparql-endpoint))
 ;;; this causes too many problems...needs rethinking
 ;  (reset-frame frame)	
-  (fill-frame-sparql frame source)
-;  (when inverse?
-;    (fill-frame-inverse-sparql frame source))
-  (let ((*fill-by-default?* nil))
-    (rdfs-call post-fill frame))	;+++ should be done at higher level for non-sparql sources
-  )
+  (fill-frame-sparql frame source) )
 
 ;;; Default to no-op
 (defmethod fill-frame-inverse-from ((frame frame) (source t))
@@ -405,9 +399,6 @@
 
 (defmethod fill-frame-inverse-from ((frame frame) (source sparql-endpoint))
   (fill-frame-inverse-sparql frame source))
-
-;;; Classes can add methods to this for special actions
-(rdfs-defmethod post-fill (frame) )
 
 (defmethod fill-frame-sparql ((frame frame) (source sparql-endpoint))
   (let* ((*default-frame-source* source) ;not sure

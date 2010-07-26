@@ -195,7 +195,7 @@
       (classify-frame frame)		
       (set-frame-loaded? frame t source)
       (let ((*fill-by-default?* nil))
-	(rdfs-call post-fill frame))
+	(post-fill frame))
       ))
   frame)
 
