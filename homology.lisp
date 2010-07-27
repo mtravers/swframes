@@ -16,6 +16,10 @@
 	  #'>
 	  :key #'cadr)))
 
+(defun find-one-frame-by-homology (&rest args)
+  (caar (apply #'find-frame-by-homology args)))
+
+
 ;;; Word Homology package. Orignally Jeff's; Side-graded by Mike.
 ;;; 'Fast' versions by JP.
        
