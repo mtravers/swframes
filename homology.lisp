@@ -20,8 +20,7 @@
   (caar (apply #'find-frame-by-homology args)))
 
 
-;;; Word Homology package. Orignally Jeff's; Side-graded by Mike.
-;;; 'Fast' versions by JP.
+;;; Word Homology package. Orignally Jeff's; Side-graded by Mike, 'Fast' versions by JP.
        
 ;;; Now prepends a null so that single char names work (and start of term 
 ;;; is more significant.)
@@ -52,6 +51,8 @@
 	    as next-cc fixnum = (char-code (char-upcase (schar word p)))
 	    as result = (the fixnum (+ next-cc (the fixnum (ash prev-cc 7))))
 	    do (setq prev-cc next-cc)
+	   ;;; +++ TEMP -- just ignore Unicode chars for now
+	 unless (> result #.(expt 2 14))
 	    collect result
 	    ))))
 
