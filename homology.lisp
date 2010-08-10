@@ -4,6 +4,7 @@
 
 ;;; Word homology 
 ;;; Warning: setting fill? to t without limiting the target set will be pretty slow!
+;;; But not setting fill? will limit the search to what happens to be in memory at the time.
 (defun find-frame-by-homology (string &key (targets (all-frames)) (slot #$rdfs:label) (limit 0.6) (fill? nil))
   (let ((cstring (compile-word string)))
     (sort (collecting
