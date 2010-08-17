@@ -82,11 +82,12 @@
   "Returns list of all known frames"
   (collecting (for-all-frames (f) (collect f))))
 
-(defmethod reset-frame ((frame frame))
+(defmethod reset-frame ((frame frame) &optional (inverse? t))
   "Clears frame slot and load information"
   (setf (frame-slots frame) nil)
   (setf (frame-loaded? frame) nil)
-  (setf (frame-inverse-slots frame) nil))
+  (setf (frame-inverse-slots frame) nil)
+  (setf (frame-inverse-loaded? frame) nil))
 
 ;;; Just clear out special frames, since equality doesn't work on them
 ;;; No longer used, I was apparently brain damaged.

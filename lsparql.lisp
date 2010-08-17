@@ -551,7 +551,7 @@
 		    (o (sparql-binding-elt bind "bl_o")))
 		;; do a reset on frames we bring in
 		(unless (member sm processed?)
-		  (reset-frame sm)
+		  (reset-frame sm inverse?)
 		  (push sm processed?))
 		(when o
 		  (add-triple sm p (process-value p o)))
