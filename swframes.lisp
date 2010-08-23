@@ -166,7 +166,8 @@
       "Does nothing if FRAME is already marked as loaded, unless FORCE? is true."
       "INVERSE? loads inverse-slots, default is *track-inverses*")))
 
-(defvar *fill-by-default?* t "True if slot functions do a fill by default.  Initally T, can be dynamically bound")
+(defvar *fill-by-default?* nil
+  "True if slot functions do a fill by default. Can be dynamically bound. ")
 
 (defparameter *dereference?* nil)
 
