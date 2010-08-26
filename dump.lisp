@@ -51,6 +51,7 @@
 
 ;;; given a set of frames, finds references to frames outside the set
 ;;; for now, does not process predicates or inverse links (++ add those as options)
+;;; Not called at present
 (defun frameset-external-refs (frames)
   (collecting
     (dolist (f frames)

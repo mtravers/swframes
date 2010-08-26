@@ -267,7 +267,6 @@
 (defvar *check-slot-domains?* nil)
 
 ;;; note that this and set-slotv-inverse never do fills
-;;; this can't really do inverses, can it? we'd have to a difference...
 (defun set-slotv (frame slot value)
   (setf slot (coerce-slot slot frame))
   (if (%slotv slot #$sw:specialhandling)
@@ -381,7 +380,7 @@
   "Returns the value of SLOT in FRAME, which must be a single element (or missing) or an error is signalled."
   (let ((v (slotv frame slot fill?)))
     (if (> (length v) 1)
-	(error "Multiple values where one expected: ~A/~A was ~A" frame slot v))
+	(error "Multiple values where one expected: ~A.~A was ~A" frame slot v))
     (car v)))
 
 (defun set-ssv (frame slot value)

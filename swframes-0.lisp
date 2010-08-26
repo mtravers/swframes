@@ -275,4 +275,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
      )))
 
 (defmethod slot-load-form (frame slot value)
-  `(setf (%slotv ,frame ,slot) ',value))
+;;; +++ temp patch for experimenting -- try doing a full-blown set so inverses get tracked
+;  `(setf (%slotv ,frame ,slot) ',value)
+ `(setf (slotv ,frame ,slot) ',value))	
+  
