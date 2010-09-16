@@ -291,7 +291,7 @@
 		  (deletef frame (gethash slot (frame-inverse-slots-force removed))))))
 	    (dolist (added (set-difference value old :test #'equal))
 	      (when (frame-p added)
-		(pushnew frame (gethash slot (frame-inverse-slots-force added)))))
+		(pushnew-end frame (gethash slot (frame-inverse-slots-force added)))))
 	    value)))))
 
 (defsetf slotv set-slotv)
@@ -414,11 +414,11 @@
 	(when remove-old
 	  (remove-triple s p '?o :to-db to-db :test test))
 	(if (frame-p o) (frame-fresh? o))
-	(pushnew o (%slotv s p) :test test)
+	(pushnew-end o (%slotv s p) :test test)
 	;; PPP this can be a performance bottleneck for things like types that can have thousands of members.  
 	;; Need to use hashtables or some structure with better performance 
 	(when (and (frame-p o) *track-inverses*)
-	  (pushnew s (%slotv-inverse o p) :test #'eq))
+	  (pushnew-end s (%slotv-inverse o p) :test #'eq))
 	(when to-db
 	  (let ((source (if (typep to-db 'frame-source)
 			    to-db
@@ -428,7 +428,7 @@
 
 ;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet (+++)
 (defun add-triple-special (s p o)
-  (pushnew o (%slotv s p)))
+  (pushnew-end o (%slotv s p)))
 
 ;;; see comment on delete-triple
 ;;; +++ should handle vars in ?s -- and needs to be nailed down in general.
