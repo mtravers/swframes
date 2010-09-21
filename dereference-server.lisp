@@ -118,5 +118,6 @@ as(rdf, "data.frame")
   )
 
 
+;;; testing only
 (defun dereference-local (frame)
   (dereference-1 frame (string+ "http://localhost:8002" *dereference-path* "?uri=" (frame-uri frame) )))
