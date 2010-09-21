@@ -1,7 +1,5 @@
 (in-package :sw)
 
-(use-package :lisp-unit)
-
 (define-test deref-test
     (delete-frame #$http://dbpedia.org/resource/Panitumumab)
   (let ((f (intern-uri "http://dbpedia.org/resource/Panitumumab")))
