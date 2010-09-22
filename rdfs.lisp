@@ -2,7 +2,7 @@
 
 (export '(rdfs-def-class rdfs-make-instance 
 	  rdfs-classes rdfs-classp rdfs-subclasses
-	  rdfs-defmethod rdfs-call rdfs-find
+	  rdfs-defmethod rdfs-call rdfs-find memory-rdfs-find
 	  defclass$ defmethod$ make-instance$
 	  ))
 
@@ -176,6 +176,16 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	  (when class
 	    (mapc #'(lambda (r) (set-frame-class r class)) result))
 	  result))))
+
+;;; In-memory analog of rdfs-find
+;;; ++ redo rdfs-find to take source as a fixed argument, so can do method dispatch...
+(defun memory-rdfs-find (val &key slot class instances)
+  (collecting
+    (dolist (f (or instances 
+		   (and class (slotv-inverse class #$rdf:type))
+		   (all-frames)))
+      (when (slot-has? f slot val :test #'equal)
+	(collect f)))))
 
 ;;; generalize to multiple slot/values.  ++
 (defun rdfs-find-sparql (value &key slot class word? limit from)

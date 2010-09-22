@@ -32,7 +32,7 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (typep f 'frame))
 
 (setf (documentation #'frame-loaded? 'function)
-      "T if frame has been completely loaded from it's source")
+      "T if frame has been completely loaded from its source")
 
 (setf (documentation #'frame-source 'function)
       "An object that represents the source of this frame's contents (ie, a SPARQL-ENDPOINT)")
