@@ -11,11 +11,11 @@ This file has the minimum needed to get the frame system working (esp. the reade
 
 (defclass* frame ();  (:print-function frame-printer) (:constructor %make-frame))
   (uri
-  (slots nil)
-  (inverse-slots nil)
-  source				;Source 
-  (loaded? nil)				;T if slots have been loaded (+++ should be called FILLED?)
-  (inverse-loaded? nil))
+   (slots nil)
+   (inverse-slots nil)
+   source				;Source 
+   (loaded? nil)				;T if slots have been loaded (+++ should be called FILLED?)
+   (inverse-loaded? nil))
   (:initable-instance-variables uri source)
   :writable-instance-variables		
   :readable-instance-variables)

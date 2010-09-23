@@ -385,7 +385,7 @@
     (car v)))
 
 (defun set-ssv (frame slot value)
-  (setf (slotv frame slot) (list value))
+  (setf (slotv frame slot) (when value (list value)))
   value)
 
 (defsetf ssv set-ssv)
