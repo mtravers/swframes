@@ -103,7 +103,7 @@ dereferences things en masse and brings them into a local store.
   ;; weird bug in xml parser results in SEQUENCE instead of bp:sequence, ie:
   ;; (sw::get-pathways #$cpath:CPATH-67762)
   ;; +++ kludge around it because I don't have time to fix it properly.
-  (when (eq identifier 'cl:sequence)
+  (when (member identifier '(cl:sequence cl:structure))
     (return-from translate-symbol (expand-uri "bp:sequence")))
   (let* ((package (symbol-package identifier))
 	 (name (symbol-name identifier))
