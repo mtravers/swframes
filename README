@@ -1,11 +1,12 @@
 An RDF-backed frame system for Common Lisp.
 
 Authors:
-Mike Travers
-David Sobeck
-Randy Gobbel
+Mike Travers mt@alum.mit.edu
+David Sobeck 
+Randy Gobbel gobbel@acm.org
 
-Incorporates some code and ideasfrom BioBike, http://biobike.org
+Incorporates some code and ideas from BioBike (http://biobike.org).  In fact, it was designed to be a drop-in replacement for the BioBike frame system and reflects some of that heritage.
+
 
 
 

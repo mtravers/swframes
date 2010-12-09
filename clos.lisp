@@ -34,7 +34,15 @@ Todos:
   (get (class-name class) :frame))
 
 (defun frame-as-symbol (frame)
-  (keywordize (frame-uri frame)))
+;;MT+++ not working in fucking ACL					;  (keywordize (frame-uri frame))
+  (intern (string-replace
+	   (string-replace 
+	   (string-replace (string-upcase (frame-uri frame))
+			   ":" "")
+	   "/" "")
+	   "." "")
+	  :sw)
+  )
 
 (defun defclass-form (frame supertypes)
   `(defclass ,(frame-as-symbol frame)
