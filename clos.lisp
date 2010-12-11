@@ -34,7 +34,16 @@ Todos:
   (get (class-name class) :frame))
 
 (defun frame-as-symbol (frame)
-;;MT+++ not working in fucking ACL					;  (keywordize (frame-uri frame))
+  (keywordize (frame-uri frame)))
+
+(defun frame-as-symbol (frame)
+  (keywordize (string+ "%RDF-" (subseq (frame-uri frame) 
+				       (1+ (position #\/ (frame-uri frame) :from-end t))
+				       ))))
+
+#|  Written because I thought some implementations couldn't hack keyword class names, but now I think I was mistaken and the problem is elsewhere.
+
+'(defun frame-as-symbol (frame)
   (intern (string-replace
 	   (string-replace 
 	   (string-replace (string-upcase (frame-uri frame))
@@ -43,6 +52,7 @@ Todos:
 	   "." "")
 	  :sw)
   )
+|#
 
 (defun defclass-form (frame supertypes)
   `(defclass ,(frame-as-symbol frame)
@@ -60,6 +70,8 @@ Todos:
 		(not (typep class 'ccl:forward-referenced-class))
 		#+:SBCL			;untested
 		(not (type class 'sb-mop:forward-referenced-class))
+		#+:ALLEGRO		;untested
+		(not (excl::forward-referenced-class-p class))
 		)
 	   class)
 	  (force?

@@ -70,7 +70,7 @@ dereferences things en masse and brings them into a local store.
       (multiple-value-bind (body response-code response-headers uri)
 	  ;; turns out this processes the 303 redirect without any further intervention
 	  (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
-	    (get-url url :accept "application/rdf+xml"))
+	    (net.aserve.client:do-http-request url :accept "application/rdf+xml"))
 	(declare (ignore response-headers uri))
 	(unless (= response-code 200)
 	  (error "Failed to dereference ~A, response code ~A" frame response-code))

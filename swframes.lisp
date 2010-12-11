@@ -557,5 +557,5 @@
       (when (eq *code-source* (frame-source class))
 	(write-frame class :source to)))))
 
-
-	 
+;;; Declare ourselves
+(pushnew :swframes *features*)

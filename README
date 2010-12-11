@@ -7,7 +7,10 @@ Randy Gobbel gobbel@acm.org
 
 Incorporates some code and ideas from BioBike (http://biobike.org).  In fact, it was designed to be a drop-in replacement for the BioBike frame system and reflects some of that heritage.
 
+TODO:
+- clean up tests
 
+- make-instance 'sparql-endpoint has instance var NAME problem?  Fuck
 
 
 

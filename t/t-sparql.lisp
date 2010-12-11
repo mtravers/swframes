@@ -21,6 +21,9 @@
 			  ))))
 
 
+;;; +++ or is there another "linkedct/" on the end?
+(register-namespace "linkedct" "http://data.linkedct.org/resource/linkedct/")
+
 (defvar linkedct-query 
   '(:select
     (?trial ?title ?inttype ?intname)

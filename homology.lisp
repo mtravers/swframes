@@ -44,7 +44,6 @@
   (unless (simple-string-p word)
     (error "COMPILE-WORD-FAST only accepts *SIMPLE* strings!"))
   (let ((word word))
-    #.(optimization-declaration)
     (declare (simple-string word))
     (let ((prev-cc (char-code null-char)))
       (declare (fixnum prev-cc))
@@ -84,7 +83,6 @@
 (defvar *word-homology-array* nil)
 
 (defun score-homology-fast (word1 word2)
-  #.(optimization-declaration)
   (unless (and (or (listp word1) (typep word1 'simple-string))
                (or (listp word2) (typep word2 'simple-string)))
     (error "SCORE-HOMOLOGY-FAST only accepts simple strings."))
@@ -156,7 +154,6 @@
   #.(doc
      "Score how WORD compares with the words in LIST using character-pair "
      "homology and return the top N words in LIST along with their scores")
-  #.(optimization-declaration)
   (declare (fixnum n))
   (let ((topn nil) 
         (topn-length 0)
