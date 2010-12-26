@@ -9,9 +9,7 @@
   :author "Mike Travers"
   :serial t
   :depends-on
-  (:mtlisp :s-xml :cl-json
-	   ;; really we just use the client part of aserve, so probably should split that out
-	   #-:ALLEGRO :aserve) 
+  (:mtlisp :s-xml :cl-json #-:ALLEGRO :aserve) 
   :components
   (;; setup and utilities
    (:module :lib
@@ -34,6 +32,7 @@
    (:file "namespace")
    (:file "standard-namespaces")
    (:file "swframes")
+   (:file "swframes-2")
    #+BIOLISP
    (:file "compat")
    (:file "clos")

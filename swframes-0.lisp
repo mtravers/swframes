@@ -9,7 +9,7 @@
 This file has the minimum needed to get the frame system working (esp. the reader)
 |#
 
-(defclass* frame ();  (:print-function frame-printer) (:constructor %make-frame))
+defclass* frame ();  (:print-function frame-printer) (:constructor %make-frame))
   (uri
    (slots nil)
    (inverse-slots nil)

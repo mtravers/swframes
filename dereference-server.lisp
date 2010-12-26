@@ -1,23 +1,20 @@
 (in-package :sw)
 
 #|
-Idea: generate RDF-XML from Virtuoso and serve as linked data.
-We would need to redo our URI schemas to use rdf.collabrx.com rather than collabrx.com, and arrange some kind of remap in Apache.
+Generate RDF-XML from Frames and serve as linked data.
 
-In the interim, set this up as a normal http service
+Can be consumed by R, for instance (see below):
 
 Of course what exactly gets included with a linked-data query is undefined, as far as I can tell.
 
-Security?
-
+Todo:
 Should provide n3 also?
-
 Get rid of temporary namespaces.  Seems wrong that we need to make them
 
-Announce:
-So, here's a technique that ought to be allow R programs to read our RDF data.
+Usage:
+(start-server :port 8002)		;or wherete
 
-HTTP GET http://lila.collabrx.com/dereference?uri=<frame-uri>
+HTTP GET http://localhost:8002/dereference?uri=<frame-uri>
  returns RDF XML that describes <frame-uri>
 
 This is a standin for proper dereferencable URLs, but ought to be fine for now
@@ -29,7 +26,9 @@ as(rdf, "data.frame")
 
 |#
 
+;;; Not used -- but the idea is to map...
 (defparameter *uri-prefix* "http://rdf.collabrx.com/")
+
 (defparameter *dereference-path* "/dereference")
 
 ;;; State vars
