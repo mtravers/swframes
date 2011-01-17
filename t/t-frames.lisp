@@ -16,9 +16,9 @@
 	(setf (ssv f s) (fast-string v)))) ;uses strings because numbers break +++
     f))
 
-(define-test intern
-    (assert-eq (intern-uri "sw:blither")
-	       (intern-uri "sw:blither")))
+(define-test internment
+  (assert-eq (intern-uri "sw:blither")
+	     (intern-uri "sw:blither")))
 
 (define-test frame-reader
     (let ((f1 (read-from-string "#$sw:frame0"))

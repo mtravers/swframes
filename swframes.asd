@@ -9,7 +9,10 @@
   :author "Mike Travers"
   :serial t
   :depends-on
-  (:mtlisp :s-xml :cl-json #-:ALLEGRO :aserve) 
+
+  (:mtlisp :s-xml :cl-json #-:ALLEGRO :aserve 
+	   :puri  ;; +++ puri is not needed for much, maybe get rid of it
+	   ::acl-compat)			;; +++ ditto
   :components
   (;; setup and utilities
    (:module :lib
@@ -37,8 +40,7 @@
    (:file "compat")
    (:file "clos")
    (:file "rdfs")
-   ;; Allegro has a problem with this file, so skip it until resolved (+++)
-   #-:ALLEGRO
+   ;; Allegro has a problem with this file, so skip it until resolved (+++)   #-:ALLEGRO
    (:file "special-slots")
    (:file "session")
    (:file "dump")

@@ -36,13 +36,14 @@
     (?intervention #$linkedct:intervention_name ?intname)))
 
 (define-test linkedct-test
+  (let ((linkedct-source (make-instance 'sparql-endpoint :url "http://data.linkedct.org/sparql")))
     ;; normal
-    (assert-true (> (length (do-sparql nil linkedct-query)) 3))
-  ;; case insensitized
-
-  (assert-true (> (length (do-sparql nil (case-insensitize linkedct-query))) 3))
-  (assert-true (> (length  (bulk-load-query nil linkedct-query)) 1))
-  )
+    (assert-true (> (length (do-sparql linkedct-source linkedct-query)) 3))
+    ;; case insensitized
+    ;; ++ failing, query is returning nil
+    (assert-true (> (length (do-sparql linkedct-source (case-insensitize linkedct-query))) 3))
+    (assert-true (> (length  (bulk-load-query nil linkedct-query)) 1))
+    ))
 
 ;;; +++ clean this mess up
 ;;; Trying to track down a subtle SPARQL string quoting problem

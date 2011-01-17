@@ -15,8 +15,7 @@
 
 (defun parse-rdf-xml-file (file)
   "Parse an RDF/XML file into frames"
-  (let ((*default-frame-source* (make-instance 'file-frame-source :file file)))
-    (process-rdf-xml (s-xml:parse-xml-file file))))
+  (process-rdf-xml (s-xml:parse-xml-file file) :source (make-instance 'file-frame-source :file file)))
 
 (defun parse-owl-file (file)
   "Parse an OWL file into frames"
