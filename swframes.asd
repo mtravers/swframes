@@ -9,12 +9,13 @@
   :author "Mike Travers"
   :serial t
   :depends-on
-
   (:mtlisp :s-xml :cl-json #-:ALLEGRO :aserve 
 	   :puri  ;; +++ puri is not needed for much, maybe get rid of it
 	   ::acl-compat)			;; +++ ditto
   :components
-  (;; setup and utilities
+  ((:static-file "swframes.asd")
+
+   ;; setup and utilities
    (:module :lib
 	    :serial t
 	    :components
@@ -26,36 +27,41 @@
 	    :components 
 	    ((:file "package")
 	     (:file "redefinitions")))
-   #+BIOLISP
-   (:file "bio-package")
-   (:file "package")
-   (:file "source")
-   (:file "code-source")
-   (:file "swframes-0")
-   (:file "namespace")
-   (:file "standard-namespaces")
-   (:file "swframes")
-   (:file "swframes-2")
-   #+BIOLISP
-   (:file "compat")
-   (:file "clos")
-   (:file "rdfs")
-   ;; Allegro has a problem with this file, so skip it until resolved (+++)   #-:ALLEGRO
-   (:file "special-slots")
-   (:file "session")
-   (:file "dump")
-   (:file "versioning")
-   (:file "homology")
-   ;; sources
-   (:file "dereference")
-   (:file "dereference-server")
-   (:file "k-sparql")
-   (:file "lsparql")
-   (:file "sparul")
-   (:file "discovery")
-   (:file "files")
-   )
-)
+
+   (:module :src
+	    :serial t
+	    :components
+	    (
+	     #+BIOLISP
+	     (:file "bio-package")
+	     (:file "package")
+	     (:file "source")
+	     (:file "code-source")
+	     (:file "swframes-0")
+	     (:file "namespace")
+	     (:file "standard-namespaces")
+	     (:file "swframes")
+	     (:file "swframes-2")
+	     #+BIOLISP
+	     (:file "compat")
+	     (:file "clos")
+	     (:file "rdfs")
+	     ;; Allegro has a problem with this file, so skip it until resolved (+++)   #-:ALLEGRO
+	     (:file "special-slots")
+	     (:file "session")
+	     (:file "dump")
+	     (:file "versioning")
+	     (:file "homology")
+	     ;; sources
+	     (:file "dereference")
+	     (:file "dereference-server")
+	     (:file "k-sparql")
+	     (:file "lsparql")
+	     (:file "sparul")
+	     (:file "discovery")
+	     (:file "files")
+	     )))
+  )
 
 ;;;; eof
 
