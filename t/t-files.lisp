@@ -52,7 +52,7 @@ Patch this into xml.lisp, long term fix is to smarten up the parser
   (dolist (s (cdr sos))
     (write-frame s :source *default-frame-source* :no-delete? t)))
 
-(owl-file-to-virtuoso "/misc/kbs/swan.owl" "http://collabrx.com/graphs/swan")
+(owl-file-to-virtuoso "/misc/kbs/swan.owl" "http://swframes.org/graphs/swan")
 (local-term-query "Journal Article")	;see if it wrote it...
 
 

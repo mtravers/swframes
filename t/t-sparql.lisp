@@ -72,8 +72,8 @@
     (do-sparql *default-frame-source*
       (format nil
 	      (if triple?
-		  "INSERT INTO GRAPH <http://collabrx.com/main> { <~A> <~A> '''~A''' }"
-		  "INSERT INTO GRAPH <http://collabrx.com/main> { <~A> <~A> \"~A\" }")
+		  "INSERT INTO GRAPH <http://swframes.org/main> { <~A> <~A> '''~A''' }"
+		  "INSERT INTO GRAPH <http://swframes.org/main> { <~A> <~A> \"~A\" }")
 	      (frame-uri f) (frame-uri s) mstr))
     (let ((res
 	   (do-sparql *default-frame-source* (format nil "SELECT * WHERE { <~A> <~A> ?o }" (frame-uri f) (frame-uri s)))))

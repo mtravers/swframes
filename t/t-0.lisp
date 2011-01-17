@@ -7,6 +7,8 @@
 
 (print "Note: many of these tests require a SPARQL endpoint, in some cases a writeable one")
 
+(register-namespace "test" "http://swframes.org/test")
+
 ;;; in the meantime, try something public.
 (setf *default-frame-source*
       (make-instance 'sparql-endpoint 

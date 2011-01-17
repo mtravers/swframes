@@ -26,9 +26,6 @@ as(rdf, "data.frame")
 
 |#
 
-;;; Not used -- but the idea is to map...
-(defparameter *uri-prefix* "http://rdf.collabrx.com/")
-
 (defparameter *dereference-path* "/dereference")
 
 ;;; State vars

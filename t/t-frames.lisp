@@ -138,13 +138,13 @@ Lisp slots handle any printable Lisp object,
       ))
 
 (define-test namespaces
-    (register-namespace "test" "http://swframes.org/test")
-  (assert-equal "http://swframes.org/testfoo"
-		(expand-uri "test:foo"))
-  (assert-eq (intern-uri "test:foo")
-	     (intern-uri "http://swframes.org/testfoo"))
-  (unregister-namespace "test")
-  (assert-error 'error (intern-uri "test:foo")))
+    (register-namespace "nstest" "http://swframes.org/nstest")
+    (assert-equal "http://swframes.org/nstestfoo"
+		  (expand-uri "nstest:foo"))
+    (assert-eq (intern-uri "nstest:foo")
+	       (intern-uri "http://swframes.org/nstestfoo"))
+    (unregister-namespace "nstest")
+    (assert-error 'error (intern-uri "nstest:foo")))
 
 ;;; +++ test dependency delete
 

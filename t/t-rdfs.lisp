@@ -22,14 +22,10 @@
     (assert-false (rdfs-classp i1 #$sw:TestClass2))
     ))
 
-(def-namespace "ftc" "http://collabrx.com/frametestcase/")
-
 ;;; Tests that lists can be passed as args to make-instance$ and range checking happens properly
-(def-namespace "ftc" "http://collabrx.com/frametestcase/")
-
 (define-test randy
-  (defclass$ #$ftc:Thing ())
-  (defclass$ #$ftc:ThingSet ()
-		  (#$ftc:slots/things :range #$ftc:Thing))
-  (let ((things (loop for i from 1 to 3 collect (make-instance$ #$ftc:Thing))))
-    (make-instance$ #$ftc:ThingSet #$ftc:slots/things things)))
+  (defclass$ #$test:Thing ())
+  (defclass$ #$test:ThingSet ()
+		  (#$test:slots/things :range #$test:Thing))
+  (let ((things (loop for i from 1 to 3 collect (make-instance$ #$test:Thing))))
+    (make-instance$ #$test:ThingSet #$test :slots/things things)))
