@@ -24,7 +24,7 @@
 	    (write-triple source s p o)))
 	nil)))
 
-;;; this should do rdfs-defmethod, but that mechanism doesn't exist yet (+++)
+;;; this should do defmethod$, but that mechanism doesn't exist yet (+++)
 (defun add-triple-special (s p o)
   (pushnew-end o (%slotv s p)))
 

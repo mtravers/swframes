@@ -1,9 +1,8 @@
 (in-package :swframes)
 
-(export '(rdfs-def-class rdfs-make-instance 
+(export '(defclass$ defmethod$ make-instance$
 	  rdfs-classes rdfs-classp rdfs-subclasses
-	  rdfs-defmethod rdfs-call rdfs-find memory-rdfs-find
-	  defclass$ defmethod$ make-instance$
+	  rdfs-call rdfs-find memory-rdfs-find
 	  ))
 
 #|
@@ -107,10 +106,6 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 	 ,(defclass-form class superclasses)
 	      ,class))))
 
-;;; Support older name (deprecated, I guess)
-(defmacro rdfs-def-class (&rest rest)
-  `(defclass$ ,@rest))
-
 ;;; Put in some checking;  should be under a flag. 
 ;;; Also option for specifying a name or partial name.
 (defvar *fast-instances?* t)
@@ -148,10 +143,6 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
 		  (progn
 		    (check-class (cadr rest) (#^rdfs:range slot)) 
 		    (set-msv-if frame slot (cadr rest)))))))))))
-
-;;; Older form (deprecated)
-(defun rdfs-make-instance (class &rest slots)
-  (apply #'make-instance$ class slots))
 
 (defun rdfs-find (value &key slot class (source (default-sparql-source class))
 		  word? fill? case-insensitize? limit from)
@@ -220,18 +211,6 @@ rdfs-lists (important...to translate from/to frame rep, slots need to have a pro
   (slotv-inverse class #$rdfs:subClassOf))
 
 ;;; Method system; now based on CLOS
-
-;;; This now can just be an ordinary defmethod.  
-;;; +++ support method types.
-;;; +++ other args can be frame classes as well.
-(defmacro rdfs-defmethod (name args &body body)
-  "Define a method that dispatches on the RDFS class of the first element of ARGS. Synatx is similar to CLOS defmethod."
-  (let ((arg1 (if (listp (car args)) (car (car args)) (car args)))
-	(class (if (listp (car args))
-		   (rdfs-clos-class (cadr (car args)))
-		   'frame)))
-    `(defmethod ,name ((,arg1 ,class) ,@(cdr args))
-       ,@body)))
 
 (defun classify-arg (arg)
   (when (frame-p arg)

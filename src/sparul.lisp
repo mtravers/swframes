@@ -155,7 +155,7 @@
 	  (write-triple source frame slot val)))))
 
 
-(rdfs-defmethod write-triple-special ((p #$sw:slots/LispValueSlot) s o sparql)
+(defmethod$ write-triple-special ((p #$sw:slots/LispValueSlot) s o sparql)
   (with-standard-io-syntax ;aka print-readably
     (let ((oo (typecase o
 		(fixnum o)
@@ -167,7 +167,7 @@
 	  (error "Can't save nonreadable object ~A in ~A / ~A" o s p)
 	  )))))
 
-(rdfs-defmethod write-triple-special ((p #$sw:slots/TransientSlot) s o sparql)
+(defmethod$ write-triple-special ((p #$sw:slots/TransientSlot) s o sparql)
   (declare (ignore s o sparql))
   )
 

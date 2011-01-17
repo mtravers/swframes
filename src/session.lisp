@@ -1,7 +1,7 @@
 (in-package :sw)
 
-(rdfs-def-class #$sw:session ()
-		(#$sw:session/machine))
+(defclass$ #$sw:session ()
+  (#$sw:session/machine))
 
 (defvar *unique-session* nil)
 
@@ -9,8 +9,8 @@
 (defun make-unique-session ()
   (let* ((*fast-instances?* nil)
 	 (session
-	  (rdfs-make-instance #$sw:session 
-			      #$sw:session/machine (machine-instance))))
+	  (make-instance$ #$sw:session 
+			  #$sw:session/machine (machine-instance))))
     (write-frame session)
     (setf *unique-session* session)))
 
