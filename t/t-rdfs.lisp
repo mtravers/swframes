@@ -28,4 +28,4 @@
   (defclass$ #$test:ThingSet ()
 		  (#$test:slots/things :range #$test:Thing))
   (let ((things (loop for i from 1 to 3 collect (make-instance$ #$test:Thing))))
-    (make-instance$ #$test:ThingSet #$test :slots/things things)))
+    (make-instance$ #$test:ThingSet :slots/things things)))

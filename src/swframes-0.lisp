@@ -69,11 +69,6 @@ This file has the minimum needed to get the frame system working (esp. the reade
 (setf (documentation #'frame-uri 'function)
       "The URI of the frame as a string")
 
-;;; We set this globally.
-(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader)
-(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader)
-(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader)
-
 (defun make-reader-frame (s)
   (make-frame s :source *default-frame-source*)) 
 
@@ -105,6 +100,11 @@ This file has the minimum needed to get the frame system working (esp. the reade
   (declare (ignore char arg))
   (let* ((slot (make-reader-frame (read-fname stream))))
     `(lambda (f) (msv-inverse f ,slot))))
+
+;;; We set this globally.
+(set-dispatch-macro-character #\# #\$ 'pound-dollar-frame-reader)
+(set-dispatch-macro-character #\# #\^ 'pound-carat-frame-reader)
+(set-dispatch-macro-character #\# #\v 'pound-inverse-frame-reader)
 
 (defun make-frame (thing &key (source *default-frame-source*))
   #.(doc

@@ -1,16 +1,15 @@
 An RDF-backed frame system for Common Lisp.
 
-Authors:
+Author:
 Mike Travers mt@alum.mit.edu
+
+With help from other CollabRx engineers:
 David Sobeck 
 Randy Gobbel gobbel@acm.org
+Jeff Shrager
 
 Incorporates some code and ideas from BioBike (http://biobike.org).  In fact, it was designed to be a drop-in replacement for the BioBike frame system and reflects some of that heritage.
 
 TODO:
-- clean up tests
-
-- make-instance 'sparql-endpoint has instance var NAME problem?  Fuck
-
-
+ see TODO file
 

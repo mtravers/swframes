@@ -28,8 +28,8 @@
 
 ;;; Author:  Mike Travers
 
-
 (export '(version-frame write-frame-versioned frame-version-history current-user))
+
 #|
 Versioning theory:
 

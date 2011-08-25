@@ -100,7 +100,8 @@
         (push row-result results)))
     (values (nreverse results) vars)))
 
-(defmacro geta (key al) `(cdr (assoc ,key ,al)))
+;;; upgraded for Json 0.4.  Different versions seem to have different upcase policies
+(defmacro geta (key al) `(cdr (assoc ,(mt:keywordize (symbol-name key)) ,al)))
 
 (defmethod run-sparql (endpoint sparql (result-format (eql :json))
 		       &key (make-uri #'identity) eager-make-uri? timeout)

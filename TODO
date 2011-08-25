@@ -1,0 +1,4 @@
+- clean up tests
+- make-instance 'sparql-endpoint has instance var NAME problem?  
+- won't build in SBCL (OK in ACL, MCL)
+- load in acl sometimes doesn't work, defmethod* broken
