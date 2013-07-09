@@ -11,6 +11,7 @@
   :depends-on
   (:mtlisp :s-xml :cl-json #-:ALLEGRO :aserve 
 	   :puri  ;; +++ puri is not needed for much, maybe get rid of it
+	   :drakma ;; +++ brings in a ton of stuff and is somewhat broken, so maybe get rid of dependencies
 	   ::acl-compat)			;; +++ ditto
   :components
   ((:static-file "swframes.asd")

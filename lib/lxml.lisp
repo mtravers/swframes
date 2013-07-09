@@ -1,3 +1,5 @@
+(in-package :cl-user)
+
 (defpackage "LXML"
   (:documentation "Utilities for searching LXML structures.")
   (:use "MT" "COMMON-LISP"))
@@ -60,9 +62,10 @@ LXML format is described here: http://opensource.franz.com/xmlutils/xmlutils-dis
 
 (defun lxml-tag-p (tag elt)
   (or (eq tag elt)
-      (if (listp (car elt))
-	  (eq tag (caar elt))
-	  (eq tag (car elt)))))
+      (when (listp elt)
+	(if (listp (car elt))
+	    (eq tag (caar elt))
+	    (eq tag (car elt))))))
 
 (defun lxml-find-element-with-tag (element tag &rest more-tags)
   (if (eq tag (lxml-tag element))

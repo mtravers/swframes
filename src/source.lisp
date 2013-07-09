@@ -47,6 +47,7 @@ Dereferencing is a "frame source" of sorts...
   ((name nil)
    (writeable? nil))
 ;  (:abstract t)
+  :readable-instance-variables
   :initable-instance-variables
   (:documentation "A CLOS object that represents a source of frame information; possibly writeable as well.  This is an abstract class"))
 

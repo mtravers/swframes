@@ -29,23 +29,36 @@
 ;;; Author:  Mike Travers
 
 ;;; From Knewos, the lower level sparql parts
+(push '("application" . "sparql-results+json") drakma:*text-content-types*)
 
 ;;; Raw SPARQL, return string
 (defun run-sparql-0 (endpoint sparql &key timeout (result-format "json"))
   (unless timeout (setf timeout 10000))
   (multiple-value-bind (body response headers)
       (net.aserve::with-timeout-local (timeout (error "SPARQL timeout from ~A" endpoint))
-	(net.aserve.client:do-http-request
+	(drakma:http-request 
 	    endpoint
 	  ;; some sparql servers only accept GET, we should parameterize this (++)
-	  :method :post
-	  :query `(("query" . ,sparql)
+	  :method :get
+	  :redirect t
+	  :parameters `(("query" . ,sparql)
 		   ("format" . ,result-format)
 		   )))
     (declare (ignore headers))
     (unless (= response 200)
       (error (format nil "SPARQL Error ~A: ~A" response body)))
     body))
+#|
+	(drakma:http-request 
+	    endpoint
+	  ;; some sparql servers only accept GET, we should parameterize this (++)
+	  :method :get
+	  :redirect t
+	  :parameters `(("query" . ,sparql)
+		   ("format" . ,result-format)
+		   )))
+
+|#
 
 ;;; some endpoints are giving me preceding nulls which break things.
 ;;; inefficient, but this shouldn't be needed at all!

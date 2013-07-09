@@ -39,6 +39,9 @@ Still has some problems with the order of class creation.
 ;;; PPP slow because it fills each frame independently 
 ;;; +++ try using bulk-loader
 ;;; LIMIT interacts badly with FILL using :TYPE-OBJECT (limits the binding-sets returned, not the classes).
+(defmethod discover-classes ((endpoint string) &key limit clauses from (method :type-object) fill?)
+  (discover-classes (make-instance 'sparql-endpoint :url endpoint) :from from) )
+
 (defmethod discover-classes ((endpoint sparql-endpoint) &key limit clauses from (method :type-object) fill?)
   #.(doc "Query the endpoint for RDFS classes that it contains, and define the corresponding CLOS classes")
   (mapc #'rdfs-clos-class

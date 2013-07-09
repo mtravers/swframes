@@ -94,12 +94,16 @@ dereferences things en masse and brings them into a local store.
       (dereference-1 frame)))
   frame)
 
+;;; +++ do once
+(push '("application" . "rdf+xml") drakma:*text-content-types*)
+
 (defmethod dereference-1 ((frame frame) &optional (url (frame-uri frame)))
   (handler-case 
       (multiple-value-bind (body response-code response-headers uri)
 	  ;; turns out this processes the 303 redirect without any further intervention
-	  (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
-	    (net.aserve.client:do-http-request url :accept "application/rdf+xml"))
+;	  (net.aserve::with-timeout-local (15 (error "timeout dereferencing ~A" frame))
+;	    (net.aserve.client:do-http-request url :accept "application/rdf+xml"))
+	  (drakma:http-request url)
 	(declare (ignore response-headers uri))
 	(unless (= response-code 200)
 	  (error "Failed to dereference ~A, response code ~A" frame response-code))

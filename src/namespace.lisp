@@ -95,6 +95,7 @@
 	 (namespace (namespace-expand prefix))
 	 (suffix (if prefix (subseq uri (1+ colonpos)) uri)))
     (cond 
+      ((null prefix) uri)
       ((null namespace)
        (if no-error?
 	   uri
