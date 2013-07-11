@@ -82,12 +82,12 @@
       (string+ prefix (subseq suffix 1))
       (string+ prefix suffix)))
 
-(defvar *namespace-leniant* nil)
+(defvar *namespace-lenient* nil)
 
 (defun frame-namespace (frame)
   (namespacify (frame-uri frame)))
 
-(defun expand-uri (uri &optional (no-error? *namespace-leniant*))
+(defun expand-uri (uri &optional (no-error? *namespace-lenient*))
   "Given an abbreviated URI as a string, expand it using known namespaces.  An error is signalled if the namespace is unknown unless NO-ERROR? is true."
   (let* ((colonpos (position #\: uri))
 	 (prefix (and colonpos
