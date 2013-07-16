@@ -30,6 +30,7 @@
 
 ;;; From Knewos, the lower level sparql parts
 (push '("application" . "sparql-results+json") drakma:*text-content-types*)
+(push '("application" . "sparql-results+xml")  drakma:*text-content-types*)
 
 ;;; Raw SPARQL, return string
 (defun run-sparql-0 (endpoint sparql &key timeout (result-format "json"))

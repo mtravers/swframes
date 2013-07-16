@@ -47,7 +47,8 @@
 (defclass* sparql-endpoint (frame-source)
   (url
    (read-graph nil)			;if set, SEXP queries are limited to that graph 
-   (write-graph nil))
+   (write-graph nil)
+   (result-format *default-sparql-result-format*))
   :initable-instance-variables
   (:readable-instance-variables url read-graph write-graph)
   (:documentation "A FRAME-SOURCE that represents a SPARQL endpoint, optionally with given named graphs for reading and writing.")
@@ -123,11 +124,11 @@
       (call-next-method)))
 
 (defmethod do-sparql ((sparql string) (command t) &key (timeout *default-sparql-timeout*)
-		      (result-format *default-sparql-result-format*))
-  (do-sparql (make-instance 'sparql-endpoint :url sparql) command :timeout timeout :result-format result-format))
+						    (result-format *default-sparql-result-format*))
+  (do-sparql (make-instance 'sparql-endpoint :url sparql :result-format result-format) command :timeout timeout))
 
 (defmethod do-sparql ((sparql null) (command t) &key (timeout *default-sparql-timeout*)
-		      (result-format *default-sparql-result-format*))
+						  (result-format *default-sparql-result-format*))
   (unless (typep *default-frame-source* 'sparql-endpoint)
     (error "No default SPARQL endpoint defined"))
   (do-sparql *default-frame-source* command :timeout timeout :result-format result-format))
@@ -144,7 +145,7 @@
 
 ;;; Handles translation and breaking up query into chunks if result set is too big
 (defmethod* do-sparql ((sparql sparql-endpoint) (query list) &key (timeout *default-sparql-timeout*)
-		       (chunk-size 5000) (result-format *default-sparql-result-format*))
+		       (chunk-size 5000) (result-format (slot-value sparql 'result-format)))
   ;;(format t "format = ~s~%" result-format)
   (flet ((do-it ()
 	   (do-sparql sparql (generate-sparql sparql query) :timeout timeout :result-format result-format))
